@@ -3,7 +3,7 @@ package nl.fontys.db3.backend.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "test_table")
+@Table(name = "test_messages")
 public class TestMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
