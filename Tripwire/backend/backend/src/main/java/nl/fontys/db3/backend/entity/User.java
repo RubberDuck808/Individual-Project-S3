@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
 
-
+@Table(name = "app_user")
 @Entity
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
@@ -17,6 +17,11 @@ public class User {
     private Long id;
 
     private String username;
+
+    private String name;
+
+    private String password;
+    
     private String email;
 
     @ManyToOne

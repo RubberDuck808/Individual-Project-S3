@@ -55,7 +55,7 @@ public class HazardReport {
 
     public boolean isExpired() {
         return getLastInteractionTime()
-                .plusSeconds(50)
+                .plusHours(24)
                 .isBefore(LocalDateTime.now());
     }
 
