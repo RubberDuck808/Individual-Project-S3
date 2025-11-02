@@ -32,7 +32,7 @@ public class HazardReportController {
             @RequestParam Long userId,
             @RequestParam VoteType type
     ) {
-        User dummyUser = new User(); // TODO: fetch real user via repo/auth
+        User dummyUser = new User();
         dummyUser.setId(userId);
         return hazardService.addVote(id, dummyUser, type);
     }

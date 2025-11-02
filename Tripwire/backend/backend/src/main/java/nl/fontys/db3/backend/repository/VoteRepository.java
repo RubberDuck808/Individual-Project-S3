@@ -9,12 +9,10 @@ import java.util.List;
 @Repository
 public interface VoteRepository extends JpaRepository<Vote, Long> {
 
-    // all votes for a hazard
     List<Vote> findByHazardReport_Id(Long hazardReportId);
 
-    // check if a user already voted on a hazard
     boolean existsByHazardReport_IdAndUser_Id(Long hazardId, Long userId);
 
-    // count upvotes/downvotes
-    long countByHazardReport_IdAndType(Long hazardId, VoteType type);
+    long countByHazardReport_IdAndVoteType(Long hazardId, VoteType voteType);
+
 }

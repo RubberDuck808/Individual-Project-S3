@@ -1,5 +1,6 @@
 package nl.fontys.db3.backend.service;
 
+import nl.fontys.db3.backend.dto.VoteDTO;
 import nl.fontys.db3.backend.entity.*;
 import nl.fontys.db3.backend.repository.VoteRepository;
 import nl.fontys.db3.backend.repository.UserRepository;
@@ -24,6 +25,15 @@ public class VoteService {
         this.hazardReportRepository = hazardReportRepository;
     }
 
+    public VoteDTO toDTO(Vote vote) {
+        return VoteDTO.builder()
+                .id(vote.getId())
+                .voteType(vote.getVoteType().name())
+                .userId(vote.getUser().getId())
+                .hazardId(vote.getHazardReport().getId())
+                .build();
+    }
+
     public List<Vote> getAllVotes() {
         return voteRepository.findAll();
     }
@@ -40,7 +50,7 @@ public class VoteService {
                 .orElseThrow(() -> new IllegalArgumentException("Hazard not found"));
 
         Vote vote = Vote.builder()
-                .type(type)
+                .voteType(type)
                 .user(user)
                 .hazardReport(hazard)
                 .createdAt(LocalDateTime.now())
@@ -50,6 +60,6 @@ public class VoteService {
     }
 
     public long countVotes(Long hazardId, VoteType type) {
-        return voteRepository.countByHazardReport_IdAndType(hazardId, type);
+        return voteRepository.countByHazardReport_IdAndVoteType(hazardId, type);
     }
 }

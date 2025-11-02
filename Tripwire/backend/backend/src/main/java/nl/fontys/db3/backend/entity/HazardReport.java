@@ -10,6 +10,7 @@ import java.util.List;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
 public class HazardReport {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -69,7 +70,7 @@ public class HazardReport {
         Vote vote = Vote.builder()
                 .user(user)
                 .hazardReport(this)
-                .type(type)
+                .voteType(type)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -78,13 +79,13 @@ public class HazardReport {
 
     public long getUpvoteCount() {
         return votes.stream()
-                .filter(v -> v.getType() == VoteType.UPVOTE)
+                .filter(v -> v.getVoteType() == VoteType.UPVOTE)
                 .count();
     }
 
     public long getDownvoteCount() {
         return votes.stream()
-                .filter(v -> v.getType() == VoteType.DOWNVOTE)
+                .filter(v -> v.getVoteType() == VoteType.DOWNVOTE)
                 .count();
     }
 
@@ -92,4 +93,3 @@ public class HazardReport {
         return (int) (getUpvoteCount() - getDownvoteCount());
     }
 }
-

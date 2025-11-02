@@ -1,5 +1,7 @@
 package nl.fontys.db3.backend.controller;
 
+import nl.fontys.db3.backend.dto.VoteDTO;
+import nl.fontys.db3.backend.dto.VoteRequestDTO;
 import nl.fontys.db3.backend.entity.Vote;
 import nl.fontys.db3.backend.entity.VoteType;
 import nl.fontys.db3.backend.service.VoteService;
@@ -16,24 +18,27 @@ public class VoteController {
         this.voteService = voteService;
     }
 
+    // Get all votes
     @GetMapping
     public ResponseEntity<?> getAllVotes() {
         return ResponseEntity.ok(voteService.getAllVotes());
     }
 
-
-    @PostMapping("/{hazardId}/user/{userId}")
-    public ResponseEntity<?> vote(@PathVariable Long hazardId,
-                                  @PathVariable Long userId,
-                                  @RequestParam VoteType type) {
+    
+    @PostMapping
+    public ResponseEntity<?> voteJson(@RequestBody VoteRequestDTO dto) {
         try {
-            Vote vote = voteService.vote(userId, hazardId, type);
-            return ResponseEntity.ok(vote);
+            VoteType type = VoteType.valueOf(dto.getVoteType().toUpperCase());
+            Vote vote = voteService.vote(dto.getUserId(), dto.getHazardId(), type);
+            VoteDTO response = voteService.toDTO(vote);
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
+
+    // Get vote counts
     @GetMapping("/{hazardId}/count")
     public ResponseEntity<?> getVotes(@PathVariable Long hazardId) {
         long upvotes = voteService.countVotes(hazardId, VoteType.UPVOTE);
