@@ -15,10 +15,10 @@ public class HazardReportDTO {
     private String description;
     private Double latitude;
     private Double longitude;
-    private String category;     // e.g. ENVIRONMENT
-    private String status;       // e.g. OPEN or CLOSED
-    private String createdBy;    // username or name
+    private String category;     // e.g. "Accident", "Speed camera"
+    private String status;       // e.g. "OPEN", "CLOSED"
+    private String createdBy;    // username of reporter
     private long upvotes;
     private long downvotes;
-    private int score;
+    private int score;           // computed: upvotes - downvotes
 }

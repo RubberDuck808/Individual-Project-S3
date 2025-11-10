@@ -5,8 +5,10 @@ import nl.fontys.db3.backend.entity.HazardReport;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
-public interface HazardReportMapper {
+public interface HazardMapper {
 
     @Mapping(source = "category.name", target = "category")
     @Mapping(source = "createdBy.username", target = "createdBy")
@@ -14,4 +16,6 @@ public interface HazardReportMapper {
     @Mapping(target = "downvotes", expression = "java(hazard.getDownvoteCount())")
     @Mapping(target = "score", expression = "java(hazard.getScore())")
     HazardReportDTO toDTO(HazardReport hazard);
+
+    List<HazardReportDTO> toDTOList(List<HazardReport> hazards);
 }

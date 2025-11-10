@@ -54,4 +54,18 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    public Optional<User> findByUsernameOrEmail(String username, String email) {
+        if (username != null && !username.isBlank()) {
+            return userRepository.findByUsername(username);
+        } else if (email != null && !email.isBlank()) {
+            return userRepository.findByEmail(email);
+        }
+        return Optional.empty();
+    }
+
+    public boolean checkPassword(String rawPassword, String encodedPassword) {
+        return passwordEncoder.matches(rawPassword, encodedPassword);
+    }
+
+
 }

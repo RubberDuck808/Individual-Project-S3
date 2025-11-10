@@ -4,6 +4,9 @@ import nl.fontys.db3.backend.entity.User;
 import nl.fontys.db3.backend.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import nl.fontys.db3.backend.dto.UserDTO;
+// import java.util.Optional;
+
 
 import java.util.List;
 
@@ -29,16 +32,6 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    public ResponseEntity<?> createUser(@RequestBody User user) {
-        try {
-            User created = userService.createUser(user);
-            return ResponseEntity.ok(created);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         try {
@@ -48,5 +41,38 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PostMapping
+    public ResponseEntity<?> createUser(@RequestBody User user) {
+        try {
+            User created = userService.createUser(user);
+            return ResponseEntity.ok(UserDTO.fromEntity(created));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
+        var userOpt = userService.findByUsernameOrEmail(
+            loginRequest.getUsername(), loginRequest.getEmail());
+
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(401).body("User not found");
+        }
+
+        var user = userOpt.get();
+        if (!userService.checkPassword(loginRequest.getPassword(), user.getPassword())) {
+            return ResponseEntity.status(401).body("Invalid password");
+        }
+
+        return ResponseEntity.ok(UserDTO.fromEntity(user));
+    }
+
+
+    
+
+    
+
 
 }
