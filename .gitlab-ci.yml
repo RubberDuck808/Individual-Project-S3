@@ -1,21 +1,8 @@
-docker-build:
-  stage: docker
-  image: docker:24
-  services:
-    - docker:dind
-  variables:
-    DOCKER_TLS_CERTDIR: ""
-  before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin
+stages:
+  - test
+
+test_runner:
+  stage: test
   script:
-    - echo "Building backend image"
-    - docker build -t "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" ./Tripwire/backend
-    - docker push "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA"
-    - echo "Building frontend image"
-    - docker build -t "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" ./Tripwire/frontend
-    - docker push "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA"
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-  needs:
-    - backend-build
-    - frontend-build
+    - echo "Runner is working!"
+    - docker --version
