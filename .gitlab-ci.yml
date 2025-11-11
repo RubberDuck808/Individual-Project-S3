@@ -15,7 +15,7 @@ cache:
 # === Backend build ===
 backend-build:
   stage: build
-  image: gradle:8.5-jdk17
+  image: gradle:8.9-jdk21
   script:
     - cd backend
     - ./gradlew clean build
