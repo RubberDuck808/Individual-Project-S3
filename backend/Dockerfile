@@ -1,7 +1,7 @@
 # Stage 1: Build with Gradle
 FROM gradle:8.9-jdk21 AS build
 WORKDIR /app
-COPY backend/ .
+COPY . .
 RUN gradle bootJar --no-daemon
 
 # Stage 2: Run with JDK
