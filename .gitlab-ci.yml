@@ -5,6 +5,10 @@ stages:
 variables:
   DOCKER_IMAGE: "$CI_REGISTRY_IMAGE/app:$CI_COMMIT_SHORT_SHA"
   DOCKER_DRIVER: overlay2
+  GIT_STRATEGY: fetch          # avoids re-cloning from scratch each time
+  DOCKER_TLS_CERTDIR: ""       # required for DinD on GitLab
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_VERIFY: ""
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
@@ -27,7 +31,7 @@ backend-build:
 # === Frontend build ===
 frontend-build:
   stage: build
-  image: node:18
+  image: node:22
   script:
     - cd frontend
     - npm ci
@@ -43,13 +47,15 @@ docker-build:
   stage: docker
   image: docker:24
   services:
-    - docker:dind
+    - name: docker:dind
+      command: ["--tls=false"]  # disable TLS inside DinD for simpler CI
   variables:
-    DOCKER_TLS_CERTDIR: ""   # Required for DinD on GitLab
+    DOCKER_TLS_CERTDIR: ""
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin
   script:
     - 'echo "Building Docker image: $DOCKER_IMAGE"'
+    - docker version
     - docker build -t "$DOCKER_IMAGE" .
     - docker push "$DOCKER_IMAGE"
   only:
@@ -58,3 +64,4 @@ docker-build:
   needs:
     - backend-build
     - frontend-build
+  privileged: true    # <=== critical: allows DinD to run
