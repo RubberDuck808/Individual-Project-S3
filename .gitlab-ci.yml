@@ -3,6 +3,7 @@ stages:
 
 test_runner:
   stage: test
+  image: alpine:latest
   script:
-    - echo "Runner is working!"
-    - docker --version
+    - echo "GitLab Runner is working correctly inside Docker!"
+    - cat /etc/os-release
