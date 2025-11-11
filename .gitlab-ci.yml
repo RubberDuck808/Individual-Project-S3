@@ -1,5 +1,3 @@
-# trigger push
-
 stages:
   - build
   - docker
@@ -58,7 +56,7 @@ docker-build:
     - apk add --no-cache git      
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin
   script:
-    - 'echo "Building Docker image: $DOCKER_IMAGE"'
+    - echo "Building Docker image: $DOCKER_IMAGE"
     - docker version
     - docker build -t "$DOCKER_IMAGE" .
     - docker push "$DOCKER_IMAGE"
@@ -68,4 +66,3 @@ docker-build:
   only:
     - main
     - current-backend
-  privileged: true                 
