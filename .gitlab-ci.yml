@@ -9,19 +9,19 @@ variables:
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
-    - Tripwire/backend/.gradle/
-    - Tripwire/frontend/node_modules/
+    - backend/.gradle/
+    - frontend/node_modules/
 
 # === Backend build ===
 backend-build:
   stage: build
   image: gradle:8.5-jdk17
   script:
-    - cd Tripwire/backend
+    - cd backend
     - ./gradlew clean build
   artifacts:
     paths:
-      - Tripwire/backend/build/libs/
+      - backend/build/libs/
     expire_in: 1 week
 
 # === Frontend build ===
@@ -29,12 +29,13 @@ frontend-build:
   stage: build
   image: node:18
   script:
-    - cd Tripwire/frontend
+    - cd frontend
     - npm ci
     - npm run build
   artifacts:
     paths:
-      - Tripwire/frontend/dist/
+      - frontend/dist/
+      - frontend/build/
     expire_in: 1 week
 
 # === Docker build & push ===
@@ -44,17 +45,16 @@ docker-build:
   services:
     - docker:dind
   variables:
-    DOCKER_TLS_CERTDIR: ""
+    DOCKER_TLS_CERTDIR: ""   # Required for DinD on GitLab
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin
   script:
-  - 'echo "Building Docker image: $DOCKER_IMAGE"'
-  - docker build -t "$DOCKER_IMAGE" .
-  - docker push "$DOCKER_IMAGE"
-
+    - 'echo "Building Docker image: $DOCKER_IMAGE"'
+    - docker build -t "$DOCKER_IMAGE" .
+    - docker push "$DOCKER_IMAGE"
   only:
     - main
     - current-backend
   needs:
-    - job: backend-build
-    - job: frontend-build
+    - backend-build
+    - frontend-build
