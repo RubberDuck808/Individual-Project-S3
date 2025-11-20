@@ -1,0 +1,10 @@
+project_id = "dltyzhcmsapzfwmhswdl"
+
+[api]
+port = 54321
+
+[studio]
+enabled = true
+port = 54323
+
+[functions]

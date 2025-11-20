@@ -1,43 +1,30 @@
-networks:
-  tripwire-net:
-    external: true
+version: '3.9'
 
 services:
-  frontend:
-    build: ./frontend
-    ports:
-      - "5173:5173"
-    networks:
-      - tripwire-net
-
   backend:
     build: ./backend
+    container_name: backend
     ports:
       - "8080:8080"
-    depends_on:
-      - db
-    networks:
-      - tripwire-net
+    env_file:
+      - .env   # <-- loads backend environment from ROOT .env
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
 
-  db:
-    image: postgres:16
-    restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      SPRING_JPA_SHOW_SQL: ${SPRING_JPA_SHOW_SQL}
+      SPRING_FLYWAY_ENABLED: ${SPRING_FLYWAY_ENABLED}
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
     ports:
-      - "5432:5432"
-    networks:
-      - tripwire-net
-    volumes:
-      - db-data:/var/lib/postgresql/data  
-
-volumes:
-  db-data:
+      - "5173:80"
+    depends_on:
+      - backend
+    env_file:
+      - ./frontend/.env   # <-- loads frontend env from FRONTEND FOLDER
+    environment:
+      VITE_API_URL: http://backend:8080  # override for Docker environment

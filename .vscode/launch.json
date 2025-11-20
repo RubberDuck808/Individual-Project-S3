@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Run Backend (Dev)",
+      "request": "launch",
+      "mainClass": "nl.fontys.db3.backend.BackendApplication",
+      "cwd": "${workspaceFolder}/backend",
+      "vmArgs": "-Dspring.profiles.active=dev"
+    }
+  ]
+}

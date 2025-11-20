@@ -15,11 +15,14 @@ export default function LoginPage() {
     }
 
     try {
-        const response = await fetch("http://localhost:8080/api/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/users/login`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          }
+        );
 
         if (!response.ok) {
         const message = await response.text();
@@ -28,7 +31,7 @@ export default function LoginPage() {
 
         const user = await response.json();
         localStorage.setItem("user", JSON.stringify(user));
-        navigate("/"); // redirect to map or main page
+        navigate("/");
     } catch (error) {
         alert(error.message);
     }

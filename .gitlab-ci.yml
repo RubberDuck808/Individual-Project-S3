@@ -3,16 +3,16 @@ stages:
   - docker
 
 variables:
-  DOCKER_IMAGE: "$CI_REGISTRY_IMAGE/app:$CI_COMMIT_SHORT_SHA"
   DOCKER_DRIVER: overlay2
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
     - backend/.gradle/
-    - frontend/node_modules/
 
-# === Backend build ===
+# ================================
+# BACKEND BUILD (Gradle)
+# ================================
 backend-build:
   stage: build
   image: gradle:8.9-jdk21
@@ -21,13 +21,15 @@ backend-build:
     - ./gradlew clean build
   artifacts:
     paths:
-      - backend/build/libs/
+      - backend/build/libs/*.jar
     expire_in: 1 week
 
-# === Frontend build ===
+# ================================
+# FRONTEND BUILD (Vite)
+# ================================
 frontend-build:
   stage: build
-  image: node:18
+  image: node:22
   script:
     - cd frontend
     - npm ci
@@ -35,26 +37,50 @@ frontend-build:
   artifacts:
     paths:
       - frontend/dist/
-      - frontend/build/
     expire_in: 1 week
 
-# === Docker build & push ===
-docker-build:
+# ================================
+# BACKEND DOCKER IMAGE
+# ================================
+docker-backend:
   stage: docker
   image: docker:24
   services:
     - docker:dind
   variables:
-    DOCKER_TLS_CERTDIR: ""   
+    DOCKER_TLS_CERTDIR: ""
   before_script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin
   script:
-    - 'echo "Building Docker image: $DOCKER_IMAGE"'
-    - docker build -t "$DOCKER_IMAGE" .
-    - docker push "$DOCKER_IMAGE"
-  only:
-    - main
-    - current-backend
+    - docker build -t "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" -f backend/Dockerfile backend/
+    - docker push "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA"
+    # optional: also tag latest
+    - docker tag "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" "$CI_REGISTRY_IMAGE/backend:latest"
+    - docker push "$CI_REGISTRY_IMAGE/backend:latest"
   needs:
     - backend-build
+  only:
+    - main
+
+# ================================
+# FRONTEND DOCKER IMAGE
+# ================================
+docker-frontend:
+  stage: docker
+  image: docker:24
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" -f frontend/Dockerfile frontend/
+    - docker push "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA"
+    # optional: tag latest
+    - docker tag "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" "$CI_REGISTRY_IMAGE/frontend:latest"
+    - docker push "$CI_REGISTRY_IMAGE/frontend:latest"
+  needs:
     - frontend-build
+  only:
+    - main
