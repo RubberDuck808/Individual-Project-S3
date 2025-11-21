@@ -17,17 +17,25 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Enable CORS so your CorsConfigurationSource bean is applied
+            // Enable CORS (this pulls your CorsConfigurationSource bean)
             .cors(Customizer.withDefaults())
-            // Disable CSRF for APIs (adjust if you later use sessions/cookies)
+
+            // Disable CSRF (safe for token/JSON APIs)
             .csrf(AbstractHttpConfigurer::disable)
-            // Authorize requests
+
+            // Allow all requests for now (public backend)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/users/**").permitAll()
                 .requestMatchers("/api/votes/**").permitAll()
                 .requestMatchers("/api/hazards/**").permitAll()
                 .requestMatchers("/api/hazard-categories/**").permitAll()
-                .anyRequest().permitAll() // adjust to .authenticated() later if needed
+                .anyRequest().permitAll()
+            )
+
+            // Avoid issues with Cloud Run proxying HTTPS
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.sameOrigin())   
+                .httpStrictTransportSecurity(hsts -> hsts.disable()) 
             );
 
         return http.build();
