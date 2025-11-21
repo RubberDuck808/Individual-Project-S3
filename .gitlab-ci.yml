@@ -43,7 +43,7 @@ docker-backend:
   stage: docker
   image: docker:24
   variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
+    DOCKER_HOST: tcp://host.docker.internal:2375
     DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker info
@@ -65,7 +65,7 @@ docker-frontend:
   stage: docker
   image: docker:24
   variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
+    DOCKER_HOST: tcp://host.docker.internal:2375
     DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker info
