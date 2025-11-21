@@ -7,17 +7,6 @@ cache:
   paths:
     - backend/.gradle/
 
-
-debug-registry:
-  stage: build
-  image: alpine:latest
-  script:
-    - echo "CI_REGISTRY = $CI_REGISTRY"
-    - echo "CI_REGISTRY_IMAGE = $CI_REGISTRY_IMAGE"
-    - echo "CI_PROJECT_PATH = $CI_PROJECT_PATH"
-  only:
-    - main
-
 # ================================
 # BACKEND BUILD (Gradle)
 # ================================
@@ -58,12 +47,12 @@ docker-backend:
     DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker info
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin
+    - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
-    - docker build -t "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" -f backend/Dockerfile backend/
-    - docker push "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA"
-    - docker tag "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" "$CI_REGISTRY_IMAGE/backend:latest"
-    - docker push "$CI_REGISTRY_IMAGE/backend:latest"
+    - docker build -t "$DOCKERHUB_REPO_BACKEND:$CI_COMMIT_SHORT_SHA" -f backend/Dockerfile backend/
+    - docker push "$DOCKERHUB_REPO_BACKEND:$CI_COMMIT_SHORT_SHA"
+    - docker tag "$DOCKERHUB_REPO_BACKEND:$CI_COMMIT_SHORT_SHA" "$DOCKERHUB_REPO_BACKEND:latest"
+    - docker push "$DOCKERHUB_REPO_BACKEND:latest"
   needs:
     - backend-build
   only:
@@ -80,12 +69,12 @@ docker-frontend:
     DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker info
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin
+    - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
-    - docker build -t "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" -f frontend/Dockerfile frontend/
-    - docker push "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA"
-    - docker tag "$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA" "$CI_REGISTRY_IMAGE/frontend:latest"
-    - docker push "$CI_REGISTRY_IMAGE/frontend:latest"
+    - docker build -t "$DOCKERHUB_REPO_FRONTEND:$CI_COMMIT_SHORT_SHA" -f frontend/Dockerfile frontend/
+    - docker push "$DOCKERHUB_REPO_FRONTEND:$CI_COMMIT_SHORT_SHA"
+    - docker tag "$DOCKERHUB_REPO_FRONTEND:$CI_COMMIT_SHORT_SHA" "$DOCKERHUB_REPO_FRONTEND:latest"
+    - docker push "$DOCKERHUB_REPO_FRONTEND:latest"
   needs:
     - frontend-build
   only:
