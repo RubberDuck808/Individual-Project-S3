@@ -12,14 +12,10 @@ test-secret:
   script:
     - echo "Testing if GCP_SA_KEY is available..."
     - echo "${#GCP_SA_KEY} characters long"
-    - echo "Starts with: $(echo "$GCP_SA_KEY" | head -c 30)"
-    - echo "Ends with: $(echo "$GCP_SA_KEY" | tail -c 30)"
+    - 'echo "Starts with: $(echo "$GCP_SA_KEY" | head -c 30)"'
+    - 'echo "Ends with: $(echo "$GCP_SA_KEY" | tail -c 30)"'
   only:
     - main
-
-
-
-
 
 # ================================
 # BACKEND BUILD (Gradle)
