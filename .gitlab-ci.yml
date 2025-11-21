@@ -94,7 +94,7 @@ deploy-backend:
     - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
     - gcloud config set project $GCP_PROJECT
   script:
-  - gcloud run deploy tripwire-backend --image=docker.io/rubberduck808/tripwire-backend:latest --region=$GCP_REGION --platform=managed --allow-unauthenticated --port=8080
+  - gcloud run deploy tripwire-backend --image=docker.io/rubberduck808/tripwire-backend:latest --region=$GCP_REGION --platform=managed --allow-unauthenticated --port=8080 --no-use-image-mirror
   only:
     - main
 
@@ -110,6 +110,6 @@ deploy-frontend:
     - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
     - gcloud config set project $GCP_PROJECT
   script:
-  - gcloud run deploy tripwire-frontend --image=docker.io/rubberduck808/tripwire-frontend:latest --region=$GCP_REGION --platform=managed --allow-unauthenticated --port=80
+  - gcloud run deploy tripwire-frontend --image=docker.io/rubberduck808/tripwire-frontend:latest --region=$GCP_REGION --platform=managed --allow-unauthenticated --port=80 --no-use-image-mirror
   only:
     - main
