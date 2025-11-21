@@ -7,6 +7,17 @@ cache:
   paths:
     - backend/.gradle/
 
+
+debug-registry:
+  stage: build
+  image: alpine:latest
+  script:
+    - echo "CI_REGISTRY = $CI_REGISTRY"
+    - echo "CI_REGISTRY_IMAGE = $CI_REGISTRY_IMAGE"
+    - echo "CI_PROJECT_PATH = $CI_PROJECT_PATH"
+  only:
+    - main
+
 # ================================
 # BACKEND BUILD (Gradle)
 # ================================
