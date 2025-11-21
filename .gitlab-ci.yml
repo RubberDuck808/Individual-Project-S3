@@ -1,24 +1,22 @@
 stages:
   - build
   - docker
+  - deploy
+
+variables:
+  DOCKER_HOST: tcp://host.docker.internal:2375
+  DOCKER_TLS_CERTDIR: ""
+
+  GCP_REGION: europe-west4
+  GCP_PROJECT: tripwire-477820
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
     - backend/.gradle/
 
-test-secret:
-  stage: build
-  script:
-    - echo "Testing if GCP_SA_KEY is available..."
-    - echo "${#GCP_SA_KEY} characters long"
-    - 'echo "Starts with: $(echo "$GCP_SA_KEY" | head -c 30)"'
-    - 'echo "Ends with: $(echo "$GCP_SA_KEY" | tail -c 30)"'
-  only:
-    - main
-
 # ================================
-# BACKEND BUILD (Gradle)
+# Backend build
 # ================================
 backend-build:
   stage: build
@@ -32,7 +30,7 @@ backend-build:
     expire_in: 1 week
 
 # ================================
-# FRONTEND BUILD (Vite)
+# Frontend build
 # ================================
 frontend-build:
   stage: build
@@ -47,45 +45,81 @@ frontend-build:
     expire_in: 1 week
 
 # ================================
-# BACKEND DOCKER IMAGE
+# Docker backend build + push
 # ================================
 docker-backend:
   stage: docker
   image: docker:24
-  variables:
-    DOCKER_HOST: tcp://host.docker.internal:2375
-    DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
-    - docker build -t "$DOCKERHUB_REPO_BACKEND:$CI_COMMIT_SHORT_SHA" -f backend/Dockerfile backend/
-    - docker push "$DOCKERHUB_REPO_BACKEND:$CI_COMMIT_SHORT_SHA"
-    - docker tag "$DOCKERHUB_REPO_BACKEND:$CI_COMMIT_SHORT_SHA" "$DOCKERHUB_REPO_BACKEND:latest"
-    - docker push "$DOCKERHUB_REPO_BACKEND:latest"
+    - docker build -t rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA -f backend/Dockerfile backend/
+    - docker push rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA
+    - docker tag rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA rubberduck808/tripwire-backend:latest
+    - docker push rubberduck808/tripwire-backend:latest
   needs:
     - backend-build
   only:
     - main
 
 # ================================
-# FRONTEND DOCKER IMAGE
+# Docker frontend build + push
 # ================================
 docker-frontend:
   stage: docker
   image: docker:24
-  variables:
-    DOCKER_HOST: tcp://host.docker.internal:2375
-    DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
-    - docker build -t "$DOCKERHUB_REPO_FRONTEND:$CI_COMMIT_SHORT_SHA" -f frontend/Dockerfile frontend/
-    - docker push "$DOCKERHUB_REPO_FRONTEND:$CI_COMMIT_SHORT_SHA"
-    - docker tag "$DOCKERHUB_REPO_FRONTEND:$CI_COMMIT_SHORT_SHA" "$DOCKERHUB_REPO_FRONTEND:latest"
-    - docker push "$DOCKERHUB_REPO_FRONTEND:latest"
+    - docker build -t rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA -f frontend/Dockerfile frontend/
+    - docker push rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA
+    - docker tag rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA rubberduck808/tripwire-frontend:latest
+    - docker push rubberduck808/tripwire-frontend:latest
   needs:
     - frontend-build
+  only:
+    - main
+
+# ================================
+# Deploy BACKEND to Cloud Run
+# ================================
+deploy-backend:
+  stage: deploy
+  image: google/cloud-sdk:latest
+  needs:
+    - docker-backend
+  before_script:
+    - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
+    - gcloud config set project $GCP_PROJECT
+  script:
+    - gcloud run deploy tripwire-backend \
+        --image docker.io/rubberduck808/tripwire-backend:latest \
+        --region $GCP_REGION \
+        --platform managed \
+        --allow-unauthenticated \
+        --port 8080
+  only:
+    - main
+
+# ================================
+# Deploy FRONTEND to Cloud Run
+# ================================
+deploy-frontend:
+  stage: deploy
+  image: google/cloud-sdk:latest
+  needs:
+    - docker-frontend
+  before_script:
+    - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
+    - gcloud config set project $GCP_PROJECT
+  script:
+    - gcloud run deploy tripwire-frontend \
+        --image docker.io/rubberduck808/tripwire-frontend:latest \
+        --region $GCP_REGION \
+        --platform managed \
+        --allow-unauthenticated \
+        --port 80
   only:
     - main
