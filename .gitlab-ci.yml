@@ -64,7 +64,7 @@ sonarqube-backend:
       - "${SONAR_USER_HOME}/cache"
   script:
     - cd backend
-    - ./gradlew sonar
+    - ./gradlew sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
   needs:
     - backend-build
   rules:
