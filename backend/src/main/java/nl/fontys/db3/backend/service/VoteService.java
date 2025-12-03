@@ -5,6 +5,7 @@ import nl.fontys.db3.backend.entity.*;
 import nl.fontys.db3.backend.repository.VoteRepository;
 import nl.fontys.db3.backend.repository.UserRepository;
 import nl.fontys.db3.backend.repository.HazardReportRepository;
+import nl.fontys.db3.backend.mapper.VoteMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,36 +17,32 @@ public class VoteService {
     private final VoteRepository voteRepository;
     private final UserRepository userRepository;
     private final HazardReportRepository hazardReportRepository;
+    private final VoteMapper voteMapper;
 
-    public VoteService(VoteRepository voteRepository,
-                       UserRepository userRepository,
-                       HazardReportRepository hazardReportRepository) {
+    public VoteService(
+            VoteRepository voteRepository,
+            UserRepository userRepository,
+            HazardReportRepository hazardReportRepository,
+            VoteMapper voteMapper) {
         this.voteRepository = voteRepository;
         this.userRepository = userRepository;
         this.hazardReportRepository = hazardReportRepository;
+        this.voteMapper = voteMapper;
     }
 
-    public VoteDTO toDTO(Vote vote) {
-        return VoteDTO.builder()
-                .id(vote.getId())
-                .voteType(vote.getVoteType().name())
-                .userId(vote.getUser().getId())
-                .hazardId(vote.getHazardReport().getId())
-                .build();
-    }
-
-    public List<Vote> getAllVotes() {
-        return voteRepository.findAll();
-    }
-
+    // --------------------------
+    // Core voting logic
+    // --------------------------
     public Vote vote(Long userId, Long hazardId, VoteType type) {
-        // Check if user already voted
+
+        // Prevent duplicate votes
         if (voteRepository.existsByHazardReport_IdAndUser_Id(hazardId, userId)) {
             throw new IllegalArgumentException("User already voted on this hazard");
         }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
         HazardReport hazard = hazardReportRepository.findById(hazardId)
                 .orElseThrow(() -> new IllegalArgumentException("Hazard not found"));
 
@@ -59,6 +56,27 @@ public class VoteService {
         return voteRepository.save(vote);
     }
 
+    // --------------------------
+    // Wrapper returning DTO
+    // --------------------------
+    public VoteDTO voteAsDTO(Long userId, Long hazardId, VoteType type) {
+        Vote vote = vote(userId, hazardId, type);
+        return voteMapper.toDTO(vote);
+    }
+
+    // --------------------------
+    // Get all votes (DTO)
+    // --------------------------
+    public List<VoteDTO> getAllVotes() {
+        return voteRepository.findAll()
+                .stream()
+                .map(voteMapper::toDTO)
+                .toList();
+    }
+
+    // --------------------------
+    // Count votes
+    // --------------------------
     public long countVotes(Long hazardId, VoteType type) {
         return voteRepository.countByHazardReport_IdAndVoteType(hazardId, type);
     }

@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
@@ -15,8 +17,6 @@ public class HazardReport {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;
-    private String description;
     private Double latitude;
     private Double longitude;
 
@@ -24,6 +24,7 @@ public class HazardReport {
     private HazardCategory category;
 
     @ManyToOne
+    @JsonIgnore
     private User createdBy;
 
     @Enumerated(EnumType.STRING)
@@ -31,12 +32,15 @@ public class HazardReport {
 
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "hazardReport", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(
+            mappedBy = "hazardReport",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JsonIgnore
     @Builder.Default
-    @ToString.Exclude
     private List<Vote> votes = new ArrayList<>();
 
-    // --- Lifecycle Hooks ---
     @PrePersist
     public void onCreate() {
         if (createdAt == null) {
@@ -44,7 +48,6 @@ public class HazardReport {
         }
     }
 
-    // --- Rich model logic ---
     public LocalDateTime getLastInteractionTime() {
         return votes.isEmpty()
                 ? createdAt
@@ -58,23 +61,6 @@ public class HazardReport {
         return getLastInteractionTime()
                 .plusHours(24)
                 .isBefore(LocalDateTime.now());
-    }
-
-    public void addVote(User user, VoteType type) {
-        boolean alreadyVoted = votes.stream()
-                .anyMatch(v -> v.getUser().equals(user));
-        if (alreadyVoted) {
-            throw new IllegalStateException("User has already voted on this report.");
-        }
-
-        Vote vote = Vote.builder()
-                .user(user)
-                .hazardReport(this)
-                .voteType(type)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        votes.add(vote);
     }
 
     public long getUpvoteCount() {
@@ -92,4 +78,9 @@ public class HazardReport {
     public int getScore() {
         return (int) (getUpvoteCount() - getDownvoteCount());
     }
+
+    public void updateStatus(HazardStatus newStatus) {
+        this.status = newStatus;
+    }
+
 }

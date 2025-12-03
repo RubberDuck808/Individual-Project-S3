@@ -39,17 +39,32 @@ export default function LoginPage() {
 
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-      <div className="bg-white shadow-lg rounded-2xl p-8 w-80">
-        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
-          Driver Companion
+  <div className="flex h-screen">
+    {/* Left Section */}
+    <div className="hidden md:flex w-1/2 bg-black text-white items-center justify-center">
+      <img
+        src="/your-image.jpg"
+        alt="Showcase"
+        className="w-3/4 max-h-[80%] object-contain"
+      />
+    </div>
+
+    {/* Right Section */}
+    <div className="flex w-full md:w-1/2 items-center justify-center bg-[#11191f]">
+      
+      <div className="w-96">
+        <h1 className="text-3xl font-bold mb-8 text-gray-100">
+          Log into Tripwire
         </h1>
 
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
+
           <input
             type="email"
             placeholder="Email"
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 bg-[#1c262b] border border-gray-600 rounded-2xl 
+                       text-gray-200 placeholder-gray-400
+                       focus:outline-none focus:border-gray-300 transition"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -57,23 +72,34 @@ export default function LoginPage() {
           <input
             type="password"
             placeholder="Password"
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-3 bg-[#1c262b] border border-gray-600 rounded-2xl 
+                       text-gray-200 placeholder-gray-400
+                       focus:outline-none focus:border-gray-300 transition"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
           <button
             type="submit"
-            className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+            className="bg-blue-600 text-white py-3 rounded-2xl hover:bg-blue-700 transition font-semibold"
           >
             Log In
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-4">
-          Don’t have an account? <span className="text-blue-600 cursor-pointer">Sign up</span>
+        <p className="text-center text-sm text-gray-400 mt-6">
+          Don’t have an account?{" "}
+          <span
+            className="text-blue-400 cursor-pointer"
+            onClick={() => navigate("/signup")}
+          >
+            Sign up
+          </span>
         </p>
       </div>
+
     </div>
-  );
+  </div>
+);
+
 }

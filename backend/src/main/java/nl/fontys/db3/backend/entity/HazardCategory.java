@@ -7,10 +7,19 @@ import lombok.*;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
 public class HazardCategory {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name; // e.g. ROAD, VEHICLE, ENVIRONMENT, FIRE
+    @Column(unique = true, nullable = false)
+    private String name;
+
+    // For UI icons on MapBox (optional but very useful)
+    private String icon;
+
+    // If you want to disable categories instead of deleting them
+    @Builder.Default
+    private boolean active = true;
 }
 

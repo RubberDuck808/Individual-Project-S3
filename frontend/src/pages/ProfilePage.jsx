@@ -23,6 +23,8 @@ export default function ProfilePage() {
       return;
     }
 
+
+    
     fetch(`http://localhost:8080/api/users/${storedUser.id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch user info");

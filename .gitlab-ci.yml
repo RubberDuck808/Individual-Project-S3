@@ -102,7 +102,7 @@ docker-frontend:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
-    - docker build --build-arg VITE_API_URL=https://tripwire-backend-166064655547.europe-west4.run.app --build-arg VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" -t rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA -f frontend/Dockerfile frontend/
+    - docker build --build-arg VITE_API_URL="$VITE_API_URL" --build-arg VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" -t rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA -f frontend/Dockerfile frontend/
     - docker push rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA
     - docker tag rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA rubberduck808/tripwire-frontend:latest
     - docker push rubberduck808/tripwire-frontend:latest

@@ -2,14 +2,21 @@ import { useState, useRef } from "react";
 import Navbar from "../components/Navbar";
 import UserLocationMap from "../components/UserLocationMap";
 import HazardFormPanel from "../components/HazardFormPanel";
+import VotePanel from "../components/VotePanel";
+import HazardListPanel from "../components/HazardListPanel";
 import { useTheme } from "../context/ThemeContext";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 export default function MapPage() {
   const mapRef = useRef(null);
+
   const [coords, setCoords] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [routeInfo, setRouteInfo] = useState(null);
+
+  const [selectedHazardId, setSelectedHazardId] = useState(null);
+  const [showHazardList, setShowHazardList] = useState(false);
+
   const { darkMode } = useTheme();
 
   const openHazardForm = () => {
@@ -27,23 +34,28 @@ export default function MapPage() {
     mapRef.current?.goToAndRoute(lng, lat);
   };
 
+  const openVoteList = () => {
+    setShowHazardList(true);
+  };
+
   return (
     <div
       className={`h-full w-full flex flex-col transition-colors duration-300 ${
         darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
       }`}
     >
-      {/* Map-specific navbar */}
       <Navbar onSearchSelect={handleSearchSelect} userLocation={userLocation} />
 
       <div className="flex-1 relative">
+        {/* MAP */}
         <UserLocationMap
           ref={mapRef}
           onUserLocation={setUserLocation}
           onRoutePreview={setRouteInfo}
+          onHazardSelect={setSelectedHazardId}
         />
 
-        {/* Route preview panel */}
+        {/* ROUTE PREVIEW */}
         {routeInfo && (
           <div
             className={`fixed right-4 top-24 rounded-xl p-4 w-72 z-50 shadow-lg transition-colors duration-300 ${
@@ -56,23 +68,52 @@ export default function MapPage() {
 
             <button
               className="w-full mt-3 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-              onClick={() => console.log("Start navigation")}
             >
               Start Route
             </button>
           </div>
         )}
 
-        {/* Floating "Report" button */}
+        {/* HAZARD LIST PANEL FOR VOTING */}
+        {showHazardList && (
+          <HazardListPanel
+            onSelect={(id) => {
+              setSelectedHazardId(id);
+              setShowHazardList(false);
+            }}
+            onClose={() => setShowHazardList(false)}
+          />
+        )}
+
+        {/* VOTE PANEL */}
+        {selectedHazardId && (
+          <VotePanel
+            hazardId={selectedHazardId}
+            onClose={() => setSelectedHazardId(null)}
+          />
+        )}
+
+        {/* VOTE BUTTON */}
+        <button
+          onClick={openVoteList}
+          className="fixed bottom-32 right-7 bg-blue-600 text-white px-9 py-3 rounded-full shadow-lg hover:bg-blue-700 transition z-50"
+        >
+          Vote
+        </button>
+
+        {/* REPORT BUTTON */}
         <button
           onClick={openHazardForm}
-          className="fixed bottom-20 right-7 bg-red-600 text-white px-9 py-3 rounded-full shadow-lg hover:bg-red-700 transition"
+          className="fixed bottom-20 right-7 bg-red-600 text-white px-9 py-3 rounded-full shadow-lg hover:bg-red-700 transition z-40"
         >
           Report
         </button>
 
-        {/* Bottom hazard form sheet */}
-        {coords && <HazardFormPanel coords={coords} onClose={handleFormClose} />}
+
+        {/* HAZARD FORM */}
+        {coords && (
+          <HazardFormPanel coords={coords} onClose={handleFormClose} />
+        )}
       </div>
     </div>
   );

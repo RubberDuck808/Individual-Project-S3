@@ -1,21 +1,48 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
+import { getCategories, createHazard } from "../api/hazardApi";
 
 export default function HazardFormPanel({ coords, onClose }) {
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
   const { darkMode } = useTheme();
 
+  // Load categories from backend via hazardApi
   useEffect(() => {
-    fetch("http://localhost:8080/api/hazard-categories")
-      .then((res) => res.json())
-      .then((data) => setCategories(data))
+    getCategories()
+      .then(setCategories)
       .catch((err) => console.error("Failed to load categories:", err));
   }, []);
 
-  const handleSelect = (categoryId) => {
-    console.log("Selected category:", categoryId);
-    console.log("Coords:", coords);
-    onClose();
+  const handleSelect = async (categoryId) => {
+    if (!coords) {
+      alert("Missing coordinates.");
+      return;
+    }
+
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) {
+      alert("You must be logged in to report a hazard.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await createHazard({
+        latitude: coords.lat,
+        longitude: coords.lng,
+        categoryId,
+        userId: user.id,
+      });
+
+      alert("Hazard reported successfully!");
+      onClose();
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -25,11 +52,12 @@ export default function HazardFormPanel({ coords, onClose }) {
           darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"
         }`}
       >
-        {/* Close button */}
         <button
           onClick={onClose}
           className={`absolute top-4 left-4 text-2xl transition ${
-            darkMode ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-black"
+            darkMode
+              ? "text-gray-300 hover:text-white"
+              : "text-gray-600 hover:text-black"
           }`}
         >
           ✕
@@ -37,13 +65,20 @@ export default function HazardFormPanel({ coords, onClose }) {
 
         <h2 className="text-center text-2xl font-bold mb-6">Report Hazard</h2>
 
-        {/* Category buttons grid */}
+        {loading && (
+          <p className="text-center text-blue-400 font-semibold mb-4">
+            Submitting...
+          </p>
+        )}
+
         <div className="grid grid-cols-2 gap-y-8 gap-x-6 justify-items-center">
           {categories.map((c) => (
             <button
               key={c.id}
-              onClick={() => handleSelect(c.id)}
-              className={`flex flex-col items-center gap-2 transition-transform hover:scale-105`}
+              onClick={() => !loading && handleSelect(c.id)}
+              className={`flex flex-col items-center gap-2 transition-transform hover:scale-105 ${
+                loading ? "opacity-50 pointer-events-none" : ""
+              }`}
             >
               <div
                 className={`w-24 h-24 rounded-full flex items-center justify-center shadow-md transition-colors duration-200 ${
