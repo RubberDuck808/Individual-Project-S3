@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
 import { submitVote, getVoteCounts } from "../api/voteApi";
 
@@ -11,6 +12,7 @@ export default function VotePanel({ hazardId, onClose }) {
   }, [hazardId]);
 
   const loadVotes = async () => {
+    if (!hazardId) return;
     const data = await getVoteCounts(hazardId);
     setVotes(data);
   };
@@ -38,7 +40,7 @@ export default function VotePanel({ hazardId, onClose }) {
 
       <div className="flex items-center justify-between">
         <button
-          disabled={loading}
+          disabled={loading || !hazardId}
           onClick={() => handleVote("UPVOTE")}
           className="px-4 py-2 bg-green-600 text-white rounded-lg"
         >
@@ -46,13 +48,19 @@ export default function VotePanel({ hazardId, onClose }) {
         </button>
 
         <button
-          disabled={loading}
+          disabled={loading || !hazardId}
           onClick={() => handleVote("DOWNVOTE")}
           className="px-4 py-2 bg-red-600 text-white rounded-lg"
         >
-          Down{votes.downvotes}
+          Down {votes.downvotes}
         </button>
       </div>
     </div>
   );
 }
+
+// Prop validation
+VotePanel.propTypes = {
+  hazardId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  onClose: PropTypes.func.isRequired
+};

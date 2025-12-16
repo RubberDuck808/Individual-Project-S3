@@ -6,7 +6,6 @@ import nl.fontys.db3.backend.mapper.HazardMapper;
 import nl.fontys.db3.backend.service.hazard.HazardCommandService;
 import nl.fontys.db3.backend.service.hazard.HazardQueryService;
 import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid;
 
 
 import java.util.List;
@@ -37,8 +36,7 @@ public class HazardReportController {
 
     /** POST create new hazard */
     @PostMapping
-    public HazardReportDTO create(@Valid @RequestBody HazardCreateRequestDTO dto) {
+    public HazardReportDTO create(@RequestBody HazardCreateRequestDTO dto) {
         return hazardMapper.toDTO(commandService.createHazard(dto));
     }
-
 }

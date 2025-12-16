@@ -30,9 +30,7 @@ public class VoteService {
         this.voteMapper = voteMapper;
     }
 
-    // --------------------------
     // Core voting logic
-    // --------------------------
     public Vote vote(Long userId, Long hazardId, VoteType type) {
 
         // Prevent duplicate votes
@@ -56,17 +54,13 @@ public class VoteService {
         return voteRepository.save(vote);
     }
 
-    // --------------------------
     // Wrapper returning DTO
-    // --------------------------
     public VoteDTO voteAsDTO(Long userId, Long hazardId, VoteType type) {
         Vote vote = vote(userId, hazardId, type);
         return voteMapper.toDTO(vote);
     }
 
-    // --------------------------
-    // Get all votes (DTO)
-    // --------------------------
+    // Get all votes
     public List<VoteDTO> getAllVotes() {
         return voteRepository.findAll()
                 .stream()
@@ -74,9 +68,8 @@ public class VoteService {
                 .toList();
     }
 
-    // --------------------------
+
     // Count votes
-    // --------------------------
     public long countVotes(Long hazardId, VoteType type) {
         return voteRepository.countByHazardReport_IdAndVoteType(hazardId, type);
     }

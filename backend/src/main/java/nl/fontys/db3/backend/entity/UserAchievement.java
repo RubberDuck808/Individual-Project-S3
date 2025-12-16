@@ -19,6 +19,7 @@ public class UserAchievement {
     private Achievement achievement;
 
     private LocalDateTime unlockedAt;
-    private Integer progress; // optional
+
+    private Integer progress; 
 }
 

@@ -1,36 +1,34 @@
-// Load all open hazards
+import { authFetch } from "./auth";
+
+let cachedCategories = null;
+
+// Open hazards are hazards that the user can vote on
 export async function getAllHazards() {
-  const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hazards/open`);
-  if (!res.ok) throw new Error("Failed to load hazards");
-  return res.json();
+  return authFetch("/api/hazards/open");
 }
 
-// Load all hazard categories
+// Categories show when making a report
 export async function getCategories() {
-  const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hazard-categories`);
-  if (!res.ok) throw new Error("Failed to load categories");
-  return res.json();
+  return authFetch("/api/hazard-categories");
 }
 
-// Create a new hazard
-export async function createHazard({ latitude, longitude, categoryId, userId }) {
+export async function getCategoriesCached() {
+  if (cachedCategories) return cachedCategories;
 
+  cachedCategories = await authFetch("/api/hazard-categories");
+  return cachedCategories;
+}
+
+export async function createHazard({ latitude, longitude, categoryId, userId }) {
   const payload = {
     latitude,
     longitude,
     categoryId,
-    createdByUserId: userId,
+    createdBy: userId,
   };
 
-  const res = await fetch(`${import.meta.env.VITE_API_URL}/api/hazards`, {
+  return authFetch("/api/hazards", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-
-  if (!res.ok) {
-    throw new Error(await res.text());
-  }
-
-  return res.json();
 }

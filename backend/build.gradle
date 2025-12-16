@@ -2,7 +2,8 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.5'
     id 'io.spring.dependency-management' version '1.1.7'
-    id "org.sonarqube" version "7.0.1.6134"
+    id "org.sonarqube" version "4.4.0.3356"
+    id 'jacoco' 
 }
 
 group = 'nl.fontys.db3'
@@ -41,6 +42,10 @@ dependencies {
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -52,14 +57,34 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy tasks.jacocoTestReport // generate JaCoCo report after tests
 }
 
+// JaCoCo configuration
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn tasks.test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// SonarQube configuration
 sonar {
-  properties {
-    property "sonar.host.url", "http://host.docker.internal:9000"
-    property "sonar.projectKey", "I548789_individual-project-s3_1cb6fdb8-2fb5-4ef2-aa16-fced08d6a788"
-    property "sonar.projectName", "Individual-Project-S3"
-    property "sonar.organization", "default-organization"
-    property "sonar.qualitygate.wait", true
-  }
+    properties {
+        property "sonar.host.url", "http://localhost:9000"
+        property "sonar.projectKey", "I548789_individual-project-s3_0ed3868f-3af8-4e41-a583-5ab0e0896d70"
+        property "sonar.projectName", "Individual-Project-S3"
+        property "sonar.organization", "default-organization"
+        property "sonar.token", System.getenv("SONAR_TOKEN")
+        property "sonar.qualitygate.wait", true
+
+        // link JaCoCo XML report
+        property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
+        property "sonar.exclusions", "src/test/java/nl/fontys/db3/backend/BackendApplicationTests.java"
+    }
 }

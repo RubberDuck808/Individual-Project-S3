@@ -7,6 +7,10 @@ import nl.fontys.db3.backend.service.VoteService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/votes")
 public class VoteController {
@@ -17,33 +21,35 @@ public class VoteController {
         this.voteService = voteService;
     }
 
-    // Get ALL votes
+    /** GET all votes */
     @GetMapping
-    public ResponseEntity<?> getAllVotes() {
-        // voteService.getAllVotes() already returns List<VoteDTO>
-        return ResponseEntity.ok(voteService.getAllVotes());
+    public ResponseEntity<List<VoteDTO>> getAllVotes() {
+        List<VoteDTO> votes = voteService.getAllVotes();
+        return ResponseEntity.ok(votes);
     }
 
-    // Submit vote as JSON body
+    /** POST submit a vote */
     @PostMapping
-    public ResponseEntity<?> voteJson(@RequestBody VoteRequestDTO dto) {
+    public ResponseEntity<VoteDTO> voteJson(@RequestBody VoteRequestDTO dto) {
         try {
             VoteType type = VoteType.valueOf(dto.getVoteType().toUpperCase());
             VoteDTO savedVote = voteService.voteAsDTO(dto.getUserId(), dto.getHazardId(), type);
             return ResponseEntity.ok(savedVote);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            throw new IllegalArgumentException("Invalid vote type: " + dto.getVoteType(), e);
         }
     }
 
-    // Get vote counts (text response)
+    /** GET vote counts for a hazard (JSON response) */
     @GetMapping("/{hazardId}/count")
-    public ResponseEntity<?> getVotes(@PathVariable Long hazardId) {
+    public ResponseEntity<Map<String, Long>> getVotes(@PathVariable Long hazardId) {
         long upvotes = voteService.countVotes(hazardId, VoteType.UPVOTE);
         long downvotes = voteService.countVotes(hazardId, VoteType.DOWNVOTE);
 
-        return ResponseEntity.ok(
-            String.format("Upvotes: %d, Downvotes: %d", upvotes, downvotes)
-        );
+        Map<String, Long> counts = new HashMap<>();
+        counts.put("upvotes", upvotes);
+        counts.put("downvotes", downvotes);
+
+        return ResponseEntity.ok(counts);
     }
 }

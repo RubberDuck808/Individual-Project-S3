@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface VoteMapper {
 
-    @Mapping(target = "voteType", source = "voteType") // enum->String handled automatically
+    @Mapping(target = "voteType", source = "voteType")
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "hazardId", source = "hazardReport.id")
     VoteDTO toDTO(Vote vote);

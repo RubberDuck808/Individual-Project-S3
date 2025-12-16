@@ -20,9 +20,9 @@ public interface HazardReportRepository extends JpaRepository<HazardReport, Long
     // Hazards matching exact status
     List<HazardReport> findByStatus(HazardStatus status);
 
-    // Hazards matching multiple statuses (🚀 needed for ACTIVE: OPEN + VERIFIED)
+    // Hazards matching multiple statuses
     List<HazardReport> findByStatusIn(List<HazardStatus> statuses);
 
-    // Hazards created after a specific time (optional analytics)
+    // Hazards created after a specific time
     List<HazardReport> findByCreatedAtAfter(LocalDateTime since);
 }

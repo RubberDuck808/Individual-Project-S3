@@ -1,22 +1,29 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
-import { getCategories, createHazard } from "../api/hazardApi";
+import { getCategoriesCached, createHazard } from "../api/hazardApi";
+import { getIconUrl } from "../utils/getIconUrl";
+
 
 export default function HazardFormPanel({ coords, onClose }) {
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const { darkMode } = useTheme();
 
-  // Load categories from backend via hazardApi
+  const locating =
+    !coords || coords.loading || coords.lat == null || coords.lng == null;
+
+  // Load categories
   useEffect(() => {
-    getCategories()
+    getCategoriesCached()
       .then(setCategories)
-      .catch((err) => console.error("Failed to load categories:", err));
+      .catch((err) =>
+        console.error("Failed to load hazard categories:", err)
+      );
   }, []);
 
   const handleSelect = async (categoryId) => {
-    if (!coords) {
-      alert("Missing coordinates.");
+    if (locating) {
+      alert("Still determining your location. Please wait a moment.");
       return;
     }
 
@@ -26,7 +33,7 @@ export default function HazardFormPanel({ coords, onClose }) {
       return;
     }
 
-    setLoading(true);
+    setSubmitting(true);
 
     try {
       await createHazard({
@@ -41,9 +48,11 @@ export default function HazardFormPanel({ coords, onClose }) {
     } catch (error) {
       alert(error.message);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
+
+  const disabled = submitting || locating;
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end">
@@ -63,23 +72,30 @@ export default function HazardFormPanel({ coords, onClose }) {
           ✕
         </button>
 
-        <h2 className="text-center text-2xl font-bold mb-6">Report Hazard</h2>
+        <h2 className="text-center text-2xl font-bold mb-2">Report Hazard</h2>
 
-        {loading && (
+        {locating && (
+          <p className="text-center text-sm mb-2 text-gray-400">
+            Getting your location...
+          </p>
+        )}
+
+        {submitting && (
           <p className="text-center text-blue-400 font-semibold mb-4">
             Submitting...
           </p>
         )}
 
-        <div className="grid grid-cols-2 gap-y-8 gap-x-6 justify-items-center">
+        <div className="grid grid-cols-2 gap-y-8 gap-x-6 justify-items-center mt-4">
           {categories.map((c) => (
             <button
               key={c.id}
-              onClick={() => !loading && handleSelect(c.id)}
+              onClick={() => !disabled && handleSelect(c.id)}
               className={`flex flex-col items-center gap-2 transition-transform hover:scale-105 ${
-                loading ? "opacity-50 pointer-events-none" : ""
+                disabled ? "opacity-50 pointer-events-none" : ""
               }`}
             >
+              {/* ICON CIRCLE */}
               <div
                 className={`w-24 h-24 rounded-full flex items-center justify-center shadow-md transition-colors duration-200 ${
                   darkMode
@@ -87,8 +103,19 @@ export default function HazardFormPanel({ coords, onClose }) {
                     : "bg-gray-200 text-gray-900 border border-gray-300"
                 }`}
               >
-                <span className="font-bold text-lg">{c.name[0]}</span>
+                {c.icon ? (
+                  <img
+                    src={getIconUrl(c.icon)}
+                    alt={c.name}
+                    className="w-12 h-12 object-contain"
+                  />
+
+                ) : (
+                  <span className="font-bold text-lg">{c.name[0]}</span>
+                )}
               </div>
+
+              {/* LABEL */}
               <span
                 className={`text-sm font-semibold ${
                   darkMode ? "text-gray-200" : "text-gray-800"
@@ -98,6 +125,12 @@ export default function HazardFormPanel({ coords, onClose }) {
               </span>
             </button>
           ))}
+
+          {categories.length === 0 && (
+            <p className="col-span-2 text-center text-sm text-gray-400">
+              Loading hazard types...
+            </p>
+          )}
         </div>
       </div>
     </div>

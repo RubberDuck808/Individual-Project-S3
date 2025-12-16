@@ -15,7 +15,7 @@ public class HazardReportDTO {
     private Double longitude;
     private String category;
     private String status;
-    private Long createdBy;  // always user ID
+    private Long createdBy; 
     private long upvotes;
     private long downvotes;
 }

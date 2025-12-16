@@ -1,0 +1,6 @@
+projectKey=I548789_individual-project-s3_0ed3868f-3af8-4e41-a583-5ab0e0896d70
+serverUrl=http://localhost:9000
+serverVersion=25.11.0.114957
+dashboardUrl=http://localhost:9000/dashboard?id=I548789_individual-project-s3_0ed3868f-3af8-4e41-a583-5ab0e0896d70
+ceTaskId=b34394f0-80c8-4248-b2c3-aff7a4a83cd0
+ceTaskUrl=http://localhost:9000/api/ce/task?id=b34394f0-80c8-4248-b2c3-aff7a4a83cd0

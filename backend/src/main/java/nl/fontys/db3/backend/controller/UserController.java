@@ -1,78 +1,58 @@
 package nl.fontys.db3.backend.controller;
 
+import nl.fontys.db3.backend.dto.AuthRequest;
+import nl.fontys.db3.backend.dto.AuthResponse;
+import nl.fontys.db3.backend.dto.UserDTO;
 import nl.fontys.db3.backend.entity.User;
+import nl.fontys.db3.backend.security.JwtService;
 import nl.fontys.db3.backend.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import nl.fontys.db3.backend.dto.UserDTO;
-// import java.util.Optional;
 
-
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService,
+                          AuthenticationManager authenticationManager,
+                          JwtService jwtService) {
         this.userService = userService;
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
     }
 
-    @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        try {
-            userService.deleteUser(id);
-            return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @PostMapping
-    public ResponseEntity<?> createUser(@RequestBody User user) {
-        try {
-            User created = userService.createUser(user);
-            return ResponseEntity.ok(UserDTO.fromEntity(created));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    @PostMapping("/register")
+    public ResponseEntity<UserDTO> register(@RequestBody User user) {
+        User created = userService.createUser(user);
+        return ResponseEntity.ok(UserDTO.fromEntity(created));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
-        var userOpt = userService.findByUsernameOrEmail(
-            loginRequest.getUsername(), loginRequest.getEmail());
+    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
+        Authentication auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(), 
+                        request.getPassword()
+                )
+        );
 
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.status(401).body("User not found");
-        }
+        UserDetails userDetails = (UserDetails) auth.getPrincipal();
+        String token = jwtService.generateToken(userDetails.getUsername(), Map.of());
 
-        var user = userOpt.get();
-        if (!userService.checkPassword(loginRequest.getPassword(), user.getPassword())) {
-            return ResponseEntity.status(401).body("Invalid password");
-        }
+        User user = userService.findByUsernameOrEmail(null, request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return ResponseEntity.ok(UserDTO.fromEntity(user));
+        return ResponseEntity.ok(
+                new AuthResponse(token, UserDTO.fromEntity(user))
+        );
     }
-
-
-    
-
-    
-
-
 }

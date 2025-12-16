@@ -7,24 +7,23 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - .env   # <-- loads backend environment from ROOT .env
+      - .env   # loads backend env variables
     environment:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-
       SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
       SPRING_JPA_SHOW_SQL: ${SPRING_JPA_SHOW_SQL}
       SPRING_FLYWAY_ENABLED: ${SPRING_FLYWAY_ENABLED}
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN}  # <-- pass secret at build
+        VITE_API_URL: http://backend:8080       # API URL for Docker networking
     container_name: frontend
     ports:
       - "5173:80"
     depends_on:
       - backend
-    env_file:
-      - ./frontend/.env   # <-- loads frontend env from FRONTEND FOLDER
-    environment:
-      VITE_API_URL: http://backend:8080  # override for Docker environment
