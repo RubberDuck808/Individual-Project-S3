@@ -61,6 +61,12 @@ backend-test:
       alias: postgres
 
   variables:
+    # prevent PlaceholderResolutionException from app.jwt.secret=${JWT_SECRET}
+    JWT_SECRET: "ci-test-secret"
+
+    # optional: only if you have application-test.properties and want it used
+    SPRING_PROFILES_ACTIVE: "test"
+
     POSTGRES_DB: testdb
     POSTGRES_USER: test
     POSTGRES_PASSWORD: test
