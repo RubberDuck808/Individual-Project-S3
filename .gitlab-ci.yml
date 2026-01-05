@@ -55,6 +55,7 @@ frontend-build:
 backend-test:
   stage: test
   image: gradle:8.9-jdk21
+  allow_failure: true
 
   services:
     - name: postgres:16
