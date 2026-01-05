@@ -21,14 +21,14 @@ cache:
     - backend/.gradle/
 
 # ================================
-# Backend build
+# Backend build (NO TESTS HERE)
 # ================================
 backend-build:
   stage: build
   image: gradle:8.9-jdk21
   script:
     - cd backend
-    - ./gradlew clean build
+    - ./gradlew clean build -x test
   artifacts:
     paths:
       - backend/build/libs/*.jar
@@ -50,7 +50,7 @@ frontend-build:
     expire_in: 1 week
 
 # ================================
-# Backend tests + JaCoCo coverage
+# Backend tests + JaCoCo coverage (WITH POSTGRES)
 # ================================
 backend-test:
   stage: test
@@ -61,17 +61,14 @@ backend-test:
       alias: postgres
 
   variables:
-    # Postgres container credentials
     POSTGRES_DB: testdb
     POSTGRES_USER: test
     POSTGRES_PASSWORD: test
 
-    # Spring datasource for CI tests
     SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/testdb"
     SPRING_DATASOURCE_USERNAME: "test"
     SPRING_DATASOURCE_PASSWORD: "test"
 
-    # Commonly needed in CI
     SPRING_JPA_HIBERNATE_DDL_AUTO: "create-drop"
     SPRING_FLYWAY_ENABLED: "false"
 
@@ -79,9 +76,18 @@ backend-test:
     - cd backend
     - ./gradlew test jacocoTestReport
 
+  artifacts:
+    when: always
+    reports:
+      junit: backend/build/test-results/test/*.xml
+    paths:
+      - backend/build/reports/jacoco/
+
+  needs:
+    - backend-build
 
 # ================================
-# SONARQUBE BACKEND ANALYSIS
+# SONARQUBE BACKEND ANALYSIS (DOES NOT FAIL PIPELINE)
 # ================================
 sonarqube-backend:
   stage: sonar
@@ -97,14 +103,10 @@ sonarqube-backend:
       - "${SONAR_USER_HOME}/cache"
   script:
     - cd backend
-    - ./gradlew sonar
-      -Dsonar.host.url=$SONAR_HOST_URL
-      -Dsonar.token=$SONAR_TOKEN
-      -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+    - ./gradlew sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.token=$SONAR_TOKEN -Dsonar.qualitygate.wait=false -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
   needs:
     - backend-test
   rules:
-    # run sonar on merge requests (recommended)
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH'
 
