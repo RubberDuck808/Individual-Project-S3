@@ -5,8 +5,8 @@ import nl.fontys.db3.backend.dto.HazardReportDTO;
 import nl.fontys.db3.backend.mapper.HazardMapper;
 import nl.fontys.db3.backend.service.hazard.HazardCommandService;
 import nl.fontys.db3.backend.service.hazard.HazardQueryService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
 
 import java.util.List;
 
@@ -34,9 +34,16 @@ public class HazardReportController {
         return hazardMapper.toDTOList(queryService.getOpenHazards());
     }
 
-    /** POST create new hazard */
+    /** POST create new hazard (createdBy comes from JWT) */
     @PostMapping
-    public HazardReportDTO create(@RequestBody HazardCreateRequestDTO dto) {
-        return hazardMapper.toDTO(commandService.createHazard(dto));
+    public HazardReportDTO create(@RequestBody HazardCreateRequestDTO dto, Authentication authentication) {
+        String email = authentication.getName(); // e.g. oscar@test.com
+        return hazardMapper.toDTO(commandService.createHazard(dto, email));
+    }
+
+    /** GET hazards created by a given username */
+    @GetMapping("/by-user/{username}")
+    public List<HazardReportDTO> getHazardsByUser(@PathVariable String username) {
+        return hazardMapper.toDTOList(queryService.getHazardsByUsername(username));
     }
 }

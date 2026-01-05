@@ -1,5 +1,4 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/auth";
 
@@ -9,32 +8,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
+  const isValidEmail = (value) => {
+    if (value.length > 254) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (!email && !password) {
-      return setError("Please enter your email and password");
-    }
-
-    if (!email) {
-      return setError("Please enter your email");
-    }
-
-    if (!isValidEmail(email)) {
-      return setError("Please enter a valid email address");
-    }
-
-    if (!password) {
-      return setError("Please enter your password");
-    }
+    if (!email && !password) return setError("Please enter your email and password");
+    if (!email) return setError("Please enter your email");
+    if (!isValidEmail(email)) return setError("Please enter a valid email address");
+    if (!password) return setError("Please enter your password");
 
     try {
-      await login(email, password);
-      navigate("/");
-    } catch (error) {
+      await login(email.trim().toLowerCase(), password);
+      navigate("/map");
+    } catch {
       setError("Incorrect email or password");
     }
   };
@@ -58,8 +49,6 @@ export default function LoginPage() {
           </h1>
 
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
-
-            {/* Error Message */}
             {error && (
               <p className="text-red-500 bg-red-500/10 border border-red-500 rounded-xl py-2 text-center text-sm">
                 {error}

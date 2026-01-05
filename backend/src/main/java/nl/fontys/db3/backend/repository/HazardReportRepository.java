@@ -25,4 +25,7 @@ public interface HazardReportRepository extends JpaRepository<HazardReport, Long
 
     // Hazards created after a specific time
     List<HazardReport> findByCreatedAtAfter(LocalDateTime since);
+
+    List<HazardReport> findByCreatedByUsernameOrderByIdDesc(String username);
+
 }

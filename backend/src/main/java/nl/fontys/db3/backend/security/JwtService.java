@@ -15,7 +15,7 @@ public class JwtService {
     @Value("${app.jwt.secret}")
     private String secret;
 
-    @Value("${app.jwt.expiration-ms:86400000}") // 1 day
+    @Value("${app.jwt.expiration-ms:86400000}")
     private long expirationMs;
 
     private SecretKey getSigningKey() {
@@ -24,7 +24,7 @@ public class JwtService {
 
     public String extractUsername(String token) {
         return Jwts.parser()
-                .verifyWith(getSigningKey())     // now correct type
+                .verifyWith(getSigningKey()) 
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
@@ -40,25 +40,37 @@ public class JwtService {
                 .subject(username)
                 .issuedAt(now)
                 .expiration(expiry)
-                .signWith(getSigningKey())       // correct — expects SecretKey
+                .signWith(getSigningKey())
                 .compact();
     }
 
     public boolean isTokenValid(String token, String username) {
         try {
             String tokenUsername = extractUsername(token);
+            // System.out.println("[JwtService] Token username: " + tokenUsername);
+            // System.out.println("[JwtService] Provided username: " + username);
 
             Date expiration = Jwts.parser()
-                    .verifyWith(getSigningKey()) // correct type
+                    .verifyWith(getSigningKey())
                     .build()
                     .parseSignedClaims(token)
                     .getPayload()
                     .getExpiration();
+            
+            // System.out.println("[JwtService] Token expires: " + expiration);
+            // System.out.println("[JwtService] Current time: " + new Date());
+            
+            boolean usernameValid = tokenUsername.equals(username);
+            boolean notExpired = expiration.after(new Date());
+            
+            // System.out.println("[JwtService] Username valid: " + usernameValid);
+            // System.out.println("[JwtService] Not expired: " + notExpired);
 
-            return tokenUsername.equals(username)
-                    && expiration.after(new Date());
+            return usernameValid && notExpired;
 
         } catch (Exception e) {
+            // System.out.println("[JwtService] Token validation error: " + e.getMessage());
+            // e.printStackTrace();
             return false;
         }
     }

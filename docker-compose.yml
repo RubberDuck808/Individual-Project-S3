@@ -20,8 +20,8 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN}  # <-- pass secret at build
-        VITE_API_URL: http://backend:8080       # API URL for Docker networking
+        VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN} 
+        VITE_API_URL: http://localhost:8080
     container_name: frontend
     ports:
       - "5173:80"

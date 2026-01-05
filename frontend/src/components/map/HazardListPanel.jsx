@@ -1,6 +1,7 @@
+import React from "react";
 import { useEffect, useState } from "react";
-import { getAllHazards } from "../api/hazardApi";
-import { useTheme } from "../context/ThemeContext";
+import { getAllHazards } from "../../api/hazardApi";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function HazardListPanel({ onSelect, onClose }) {
   const [hazards, setHazards] = useState([]);

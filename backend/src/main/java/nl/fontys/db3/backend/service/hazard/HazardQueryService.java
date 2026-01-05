@@ -43,5 +43,23 @@ public class HazardQueryService {
                 .orElseThrow(() -> new IllegalArgumentException("Hazard not found"));
     }
 
+    public List<HazardReport> getHazardsByUsername(String username) {
+    if (username == null || username.isBlank()) {
+        throw new IllegalArgumentException("Username cannot be null/blank");
+    }
+
+    return hazardRepo.findByCreatedByUsernameOrderByIdDesc(username);
+}
+
+public List<HazardReport> getActiveHazardsByUsername(String username) {
+    if (username == null || username.isBlank()) {
+        throw new IllegalArgumentException("Username cannot be null/blank");
+    }
+
+    return hazardRepo.findByCreatedByUsernameOrderByIdDesc(username).stream()
+            .filter(h -> !h.isExpired())
+            .toList();
+}
+
 
 }

@@ -2,10 +2,13 @@ package nl.fontys.db3.backend.service.hazard;
 
 import nl.fontys.db3.backend.dto.HazardCreateRequestDTO;
 import nl.fontys.db3.backend.entity.*;
+import nl.fontys.db3.backend.mapper.HazardMapper;
 import nl.fontys.db3.backend.repository.HazardCategoryRepository;
 import nl.fontys.db3.backend.repository.HazardReportRepository;
 import nl.fontys.db3.backend.repository.UserRepository;
+import nl.fontys.db3.backend.service.StatisticsService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class HazardCommandService {
@@ -15,32 +18,38 @@ public class HazardCommandService {
     private final HazardReportRepository hazardRepo;
     private final HazardCategoryRepository categoryRepo;
     private final UserRepository userRepo;
+    private final StatisticsService statisticsService;
+    private final HazardWsPublisher wsPublisher;
+    private final HazardMapper hazardMapper;
 
     public HazardCommandService(
             HazardReportRepository hazardRepo,
             HazardCategoryRepository categoryRepo,
-            UserRepository userRepo
+            UserRepository userRepo,
+            StatisticsService statisticsService,
+            HazardWsPublisher wsPublisher,
+            HazardMapper hazardMapper
     ) {
         this.hazardRepo = hazardRepo;
         this.categoryRepo = categoryRepo;
         this.userRepo = userRepo;
+        this.statisticsService = statisticsService;
+        this.wsPublisher = wsPublisher;
+        this.hazardMapper = hazardMapper;
     }
 
     private void requireNonNullId(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("ID cannot be null");
-        }
+        if (id == null) throw new IllegalArgumentException("ID cannot be null");
     }
 
-    public HazardReport createHazard(HazardCreateRequestDTO dto) {
-
+    @Transactional
+    public HazardReport createHazard(HazardCreateRequestDTO dto, String creatorEmail) {
         requireNonNullId(dto.getCategoryId());
-        requireNonNullId(dto.getCreatedBy());
 
         HazardCategory category = categoryRepo.findById(dto.getCategoryId())
                 .orElseThrow(() -> new IllegalArgumentException("Category not found"));
 
-        User user = userRepo.findById(dto.getCreatedBy())
+        User user = userRepo.findByEmail(creatorEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         HazardReport hazard = HazardReport.builder()
@@ -51,11 +60,17 @@ public class HazardCommandService {
                 .status(HazardStatus.OPEN)
                 .build();
 
-        return hazardRepo.save(hazard);
+        HazardReport saved = hazardRepo.save(hazard);
+
+        statisticsService.incrementHazards(user.getId());
+
+        // Broadcast to clients
+        wsPublisher.upsert(hazardMapper.toDTO(saved));
+
+        return saved;
     }
 
-
-    /** Verify hazard */
+    @Transactional
     public HazardReport verifyHazard(Long id) {
         requireNonNullId(id);
 
@@ -63,15 +78,19 @@ public class HazardCommandService {
                 .orElseThrow(() -> new IllegalArgumentException(HAZARD_NOT_FOUND));
 
         if (hazard.getStatus() == HazardStatus.RESOLVED ||
-            hazard.getStatus() == HazardStatus.REJECTED) {
+                hazard.getStatus() == HazardStatus.REJECTED) {
             throw new IllegalStateException("Cannot verify a resolved/rejected hazard.");
         }
 
         hazard.updateStatus(HazardStatus.VERIFIED);
-        return hazardRepo.save(hazard);
+        HazardReport saved = hazardRepo.save(hazard);
+
+        wsPublisher.upsert(hazardMapper.toDTO(saved));
+
+        return saved;
     }
 
-    /** Resolve hazard */
+    @Transactional
     public HazardReport resolveHazard(Long id) {
         requireNonNullId(id);
 
@@ -83,10 +102,14 @@ public class HazardCommandService {
         }
 
         hazard.updateStatus(HazardStatus.RESOLVED);
-        return hazardRepo.save(hazard);
+        HazardReport saved = hazardRepo.save(hazard);
+
+        wsPublisher.upsert(hazardMapper.toDTO(saved));
+
+        return saved;
     }
 
-    /** Reject hazard */
+    @Transactional
     public HazardReport rejectHazard(Long id) {
         requireNonNullId(id);
 
@@ -98,6 +121,10 @@ public class HazardCommandService {
         }
 
         hazard.updateStatus(HazardStatus.REJECTED);
-        return hazardRepo.save(hazard);
+        HazardReport saved = hazardRepo.save(hazard);
+
+        wsPublisher.upsert(hazardMapper.toDTO(saved));
+
+        return saved;
     }
 }

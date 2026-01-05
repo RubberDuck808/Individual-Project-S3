@@ -1,6 +1,6 @@
 stages:
   - build
-  - sonar
+  - test
   - docker
   - deploy
 
@@ -49,6 +49,24 @@ frontend-build:
     expire_in: 1 week
 
 # ================================
+# Backend tests + JaCoCo coverage
+# ================================
+backend-test:
+  stage: test
+  image: gradle:8.9-jdk21
+  script:
+    - cd backend
+    - ./gradlew test jacocoTestReport
+  artifacts:
+    when: always
+    reports:
+      junit: backend/build/test-results/test/*.xml
+    paths:
+      - backend/build/reports/jacoco/
+  needs:
+    - backend-build
+
+# ================================
 # SONARQUBE BACKEND ANALYSIS
 # ================================
 sonarqube-backend:
@@ -64,14 +82,16 @@ sonarqube-backend:
       - "${SONAR_USER_HOME}/cache"
   script:
     - cd backend
-    - ./gradlew sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+    - ./gradlew sonar
+      -Dsonar.host.url=$SONAR_HOST_URL
+      -Dsonar.token=$SONAR_TOKEN
+      -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
   needs:
-    - backend-build
+    - backend-test
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"  
-    - if: $CI_COMMIT_BRANCH 
-
-
+    # run sonar on merge requests (recommended)
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
 
 # ================================
 # Docker backend build + push

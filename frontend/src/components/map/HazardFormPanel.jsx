@@ -1,7 +1,8 @@
+import React from "react";
 import { useEffect, useState } from "react";
-import { useTheme } from "../context/ThemeContext";
-import { getCategoriesCached, createHazard } from "../api/hazardApi";
-import { getIconUrl } from "../utils/getIconUrl";
+import { useTheme } from "../../context/ThemeContext";
+import { getCategoriesCached, createHazard } from "../../api/hazardApi";
+import { getIconUrl } from "../../utils/getIconUrl";
 
 
 export default function HazardFormPanel({ coords, onClose }) {
@@ -22,35 +23,36 @@ export default function HazardFormPanel({ coords, onClose }) {
   }, []);
 
   const handleSelect = async (categoryId) => {
-    if (locating) {
-      alert("Still determining your location. Please wait a moment.");
-      return;
-    }
+  if (locating) {
+    alert("Still determining your location. Please wait a moment.");
+    return;
+  }
 
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user) {
-      alert("You must be logged in to report a hazard.");
-      return;
-    }
+  // Optional: check token instead of user object
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("You must be logged in to report a hazard.");
+    return;
+  }
 
-    setSubmitting(true);
+  setSubmitting(true);
 
-    try {
-      await createHazard({
-        latitude: coords.lat,
-        longitude: coords.lng,
-        categoryId,
-        userId: user.id,
-      });
+  try {
+    await createHazard({
+      latitude: coords.lat,
+      longitude: coords.lng,
+      categoryId,
+    });
 
-      alert("Hazard reported successfully!");
-      onClose();
-    } catch (error) {
-      alert(error.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    alert("Hazard reported successfully!");
+    onClose();
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   const disabled = submitting || locating;
 

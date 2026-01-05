@@ -17,7 +17,7 @@ public class CorsConfig {
 
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",// Local dev
-                "https://tripwire-frontend-166064655547.europe-west4.run.app"                     // Cloud Run frontend
+                "https://tripwire-frontend-166064655547.europe-west4.run.app"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));

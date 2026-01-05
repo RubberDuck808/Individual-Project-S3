@@ -9,14 +9,9 @@ public class HazardCreateRequestDTO {
 
     @NotNull
     private Double latitude;
-
     @NotNull
     private Double longitude;
-
     @NotNull
     private Long categoryId;
-
-    @NotNull
-    private Long createdBy;
 }
 

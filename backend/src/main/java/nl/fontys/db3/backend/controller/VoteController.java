@@ -5,6 +5,7 @@ import nl.fontys.db3.backend.dto.VoteRequestDTO;
 import nl.fontys.db3.backend.entity.VoteType;
 import nl.fontys.db3.backend.service.VoteService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -21,26 +22,31 @@ public class VoteController {
         this.voteService = voteService;
     }
 
-    /** GET all votes */
+    /** All votes */
+
     @GetMapping
     public ResponseEntity<List<VoteDTO>> getAllVotes() {
         List<VoteDTO> votes = voteService.getAllVotes();
         return ResponseEntity.ok(votes);
     }
 
-    /** POST submit a vote */
+    /** Submit a vote */
     @PostMapping
-    public ResponseEntity<VoteDTO> voteJson(@RequestBody VoteRequestDTO dto) {
+    public ResponseEntity<VoteDTO> voteJson(@RequestBody VoteRequestDTO dto, Authentication auth) {
+        VoteType type;
         try {
-            VoteType type = VoteType.valueOf(dto.getVoteType().toUpperCase());
-            VoteDTO savedVote = voteService.voteAsDTO(dto.getUserId(), dto.getHazardId(), type);
-            return ResponseEntity.ok(savedVote);
-        } catch (IllegalArgumentException e) {
+            type = VoteType.valueOf(dto.getVoteType().toUpperCase());
+        } catch (Exception e) {
             throw new IllegalArgumentException("Invalid vote type: " + dto.getVoteType(), e);
         }
+
+        String email = auth.getName();
+        VoteDTO savedVote = voteService.voteAsDTO(email, dto.getHazardId(), type);
+        return ResponseEntity.ok(savedVote);
     }
 
-    /** GET vote counts for a hazard (JSON response) */
+
+    /** Vote counts for a hazard */
     @GetMapping("/{hazardId}/count")
     public ResponseEntity<Map<String, Long>> getVotes(@PathVariable Long hazardId) {
         long upvotes = voteService.countVotes(hazardId, VoteType.UPVOTE);
@@ -51,5 +57,18 @@ public class VoteController {
         counts.put("downvotes", downvotes);
 
         return ResponseEntity.ok(counts);
+    }
+
+   /** Total votes CAST by a user */
+    // @GetMapping("/user/{username}/cast")
+    // public ResponseEntity<Map<String, Long>> getTotalVotesCast(@PathVariable String username) {
+    //     long total = voteService.countTotalVotesCastByUser(username);
+    //     return ResponseEntity.ok(Map.of("totalVotesCast", total));
+    // }
+
+    @GetMapping("/{hazardId}/mine")
+    public ResponseEntity<Map<String, String>> myVote(@PathVariable Long hazardId, Authentication auth) {
+        String email = auth.getName();
+        return ResponseEntity.ok(voteService.getMyVote(email, hazardId));
     }
 }

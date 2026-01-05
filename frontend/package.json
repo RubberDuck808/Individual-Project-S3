@@ -13,13 +13,24 @@
     "test:coverage": "vitest run"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.4.2",
+    "@react-three/postprocessing": "^3.0.4",
+    "@stomp/stompjs": "^7.2.1",
+    "animejs": "^4.2.2",
+    "buffer": "^6.0.3",
+    "framer-motion": "^12.23.26",
+    "global": "^4.4.0",
     "lucide-react": "^0.553.0",
     "mapbox-gl": "^3.16.0",
-    "postprocessing": "^6.38.0",
+    "motion": "^12.23.26",
+    "postprocessing": "^6.38.1",
     "prop-types": "^15.8.1",
     "react": "^19.1.1",
+    "react-countup": "^6.5.3",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.5",
+    "sockjs-client": "^1.6.1",
     "three": "^0.181.2"
   },
   "devDependencies": {

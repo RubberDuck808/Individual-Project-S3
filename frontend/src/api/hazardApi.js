@@ -19,16 +19,20 @@ export async function getCategoriesCached() {
   return cachedCategories;
 }
 
-export async function createHazard({ latitude, longitude, categoryId, userId }) {
+export async function createHazard({ latitude, longitude, categoryId }) {
   const payload = {
     latitude,
     longitude,
     categoryId,
-    createdBy: userId,
   };
 
   return authFetch("/api/hazards", {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+
+export async function getHazardsByUsername(username) {
+  return authFetch(`/api/hazards/by-user/${encodeURIComponent(username)}`);
 }
