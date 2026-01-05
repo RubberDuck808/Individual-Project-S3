@@ -19,7 +19,6 @@ public class UserDTO {
     private String roleName;
     private String createdAt;
 
-    // Build a safe DTO directly from the entity
     public static UserDTO fromEntity(User user) {
         return UserDTO.builder()
                 .id(user.getId())

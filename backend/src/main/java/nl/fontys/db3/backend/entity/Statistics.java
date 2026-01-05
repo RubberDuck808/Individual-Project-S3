@@ -4,19 +4,36 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
+@Table(
+    name = "statistics",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"user_id"})
+)
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
 public class Statistics {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    // Exactly one Statistics row per user
+    @OneToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    private Integer totalTrips;
-    private Double totalDistanceKm;
-    private Integer totalHazardsReported;
-    private Integer totalVotes;
-}
+    @Column(nullable = false)
+    @Builder.Default
+    private int totalTrips = 0;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private double totalDistanceKm = 0.0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private int totalHazardsReported = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private int totalVotes = 0;
+}

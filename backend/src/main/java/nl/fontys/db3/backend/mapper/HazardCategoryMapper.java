@@ -14,4 +14,5 @@ public interface HazardCategoryMapper {
     HazardCategory toEntity(HazardCategoryDTO dto);
 
     List<HazardCategoryDTO> toDTOList(List<HazardCategory> list);
+    
 }

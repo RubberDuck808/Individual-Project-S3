@@ -6,7 +6,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
 
-@Table(name = "app_user")
+@Table(
+    name = "app_user",
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = "username"),
+        @UniqueConstraint(columnNames = "email")
+    }
+)
 @Entity
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
@@ -16,15 +22,19 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
     private String username;
 
+    @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
     private String password;
-    
+
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "role_id")
     private Role role;
 

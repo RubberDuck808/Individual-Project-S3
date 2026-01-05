@@ -6,7 +6,12 @@ export default {
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        gamja: ['"Gamja Flower"', "sans-serif"],
+        archivo: ['"Archivo Black"', "sans-serif"]
+      },
+    },
   },
   plugins: [],
-}
+};
