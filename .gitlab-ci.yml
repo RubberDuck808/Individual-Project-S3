@@ -55,17 +55,30 @@ frontend-build:
 backend-test:
   stage: test
   image: gradle:8.9-jdk21
+
+  services:
+    - name: postgres:16
+      alias: postgres
+
+  variables:
+    # Postgres container credentials
+    POSTGRES_DB: testdb
+    POSTGRES_USER: test
+    POSTGRES_PASSWORD: test
+
+    # Spring datasource for CI tests
+    SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/testdb"
+    SPRING_DATASOURCE_USERNAME: "test"
+    SPRING_DATASOURCE_PASSWORD: "test"
+
+    # Commonly needed in CI
+    SPRING_JPA_HIBERNATE_DDL_AUTO: "create-drop"
+    SPRING_FLYWAY_ENABLED: "false"
+
   script:
     - cd backend
     - ./gradlew test jacocoTestReport
-  artifacts:
-    when: always
-    reports:
-      junit: backend/build/test-results/test/*.xml
-    paths:
-      - backend/build/reports/jacoco/
-  needs:
-    - backend-build
+
 
 # ================================
 # SONARQUBE BACKEND ANALYSIS
