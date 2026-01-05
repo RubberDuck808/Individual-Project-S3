@@ -55,7 +55,7 @@ frontend-build:
 backend-test:
   stage: test
   image: gradle:8.9-jdk21
-  allow_failure: true
+  allow_failure: false
 
   services:
     - name: postgres:16
@@ -67,6 +67,8 @@ backend-test:
 
     # optional: only if you have application-test.properties and want it used
     SPRING_PROFILES_ACTIVE: "test"
+
+    MAPBOX_TOKEN: "ci-test-mapbox-token"
 
     POSTGRES_DB: testdb
     POSTGRES_USER: test
