@@ -1,0 +1,172 @@
+============================================================
+====================== BUILD COMMANDS =======================
+=============================================================
+
+pio run
+
+# Builds (compiles) the project.
+
+pio run -v
+
+# Builds the project with verbose output (shows compiler commands).
+
+pio run --target clean
+
+# Deletes all build artifacts so the next build is fully fresh.
+
+---
+
+============================================================
+==================== UPLOAD / FLASHING ======================
+=============================================================
+
+pio run --target upload
+
+# Compiles and uploads firmware to the ESP32 via USB.
+
+pio run -t uploadfs
+
+# Uploads SPIFFS/LittleFS filesystem (only for projects using onboard storage).
+
+pio run --target erase
+
+# Erases the flash region defined for firmware.
+
+---
+
+============================================================
+===================== SERIAL MONITOR ========================
+=============================================================
+
+pio device monitor
+
+# Opens the serial monitor to view Serial output.
+
+pio device monitor --baud 115200
+
+# Opens the serial monitor with a specific baud rate.
+
+Ctrl + C
+
+# Closes the serial monitor.
+
+---
+
+============================================================
+==================== DEVICE / PORT COMMANDS =================
+=============================================================
+
+pio device list
+
+# Shows all connected serial devices (useful for seeing COM ports).
+
+pio device list --serial
+
+# Lists only serial ports.
+
+pio device monitor --port COMx
+
+# Opens the serial monitor for a specific COM port.
+
+---
+
+============================================================
+==================== PROJECT SETUP COMMANDS =================
+=============================================================
+
+pio project init --board esp32dev
+
+# Creates a PlatformIO project configured for ESP32 DevKit.
+
+pio init --ide vscode
+
+# Regenerates PlatformIO’s VS Code configuration files.
+
+PlatformIO: Rebuild IntelliSense Index
+
+# Rebuilds IntelliSense (fixes Arduino.h not found warnings).
+
+---
+
+============================================================
+================ LIBRARIES & PACKAGE MANAGEMENT =============
+=============================================================
+
+pio pkg install
+
+# Installs library dependencies listed in platformio.ini.
+
+pio pkg uninstall <library>
+
+# Removes a specific library dependency.
+
+pio pkg update
+
+# Updates all libraries and toolchains to their newest versions.
+
+pio pkg list
+
+# Shows installed libraries and toolchains.
+
+---
+
+============================================================
+=================== PLATFORM / BOARD INFO ===================
+=============================================================
+
+pio boards
+
+# Lists all supported boards.
+
+pio boards espressif32
+
+# Lists all ESP32 boards supported by PlatformIO.
+
+pio platform list
+
+# Shows installed and available PlatformIO platforms.
+
+pio platform update
+
+# Updates the ESP32 platform core.
+
+---
+
+============================================================
+================== TESTING & CODE ANALYSIS ==================
+=============================================================
+
+pio check
+
+# Runs static code analysis (linting for C++).
+
+pio test
+
+# Runs unit tests if your project includes them.
+
+---
+
+============================================================
+========================= DEBUGGING =========================
+=============================================================
+
+pio debug
+
+# Starts a debugging session (requires JTAG debugger for ESP32).
+
+---
+
+============================================================
+===================== CLEANING SYSTEM FILES =================
+=============================================================
+
+pio run --target clean
+
+# Removes build files.
+
+pio system prune
+
+# Removes unused cached packages (frees disk space).
+
+---
+

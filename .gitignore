@@ -37,3 +37,11 @@ backend/.env
 
 .DS_Store
 Thumbs.db
+
+
+hardware/src/secrets.h
+
+hardware/.pio/
+hardware/.pio/*
+
+hardware/.vscode/
