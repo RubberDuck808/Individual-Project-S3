@@ -8,4 +8,7 @@ import lombok.Data;
 public class HazardCategoryDTO {
     private Long id;
     private String name;
+    private String icon;
+    private boolean active;
 }
+

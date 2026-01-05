@@ -1,11 +1,24 @@
+import React, { useMemo } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { Map, User, Car } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
+import { getStoredUser } from "../api/auth";
 
 export default function MainLayout() {
   const location = useLocation();
   const { darkMode } = useTheme();
-  const hideNav = location.pathname === "/settings";
+
+  const hideNav =
+    location.pathname === "/" || location.pathname === "/settings";
+
+  // Build /profile/:username from localStorage user
+  const profilePath = useMemo(() => {
+    const me = getStoredUser();
+    // if user isn't in storage for some reason, fall back to /profile/me
+    // (but ProtectedRoute should normally guarantee this exists)
+    const username = me?.username ? String(me.username).toLowerCase() : "me";
+    return `/profile/${username}`;
+  }, []);
 
   return (
     <div
@@ -28,14 +41,13 @@ export default function MainLayout() {
           }`}
         >
           {[
-            { to: "/", icon: Map },
-            { to: "/profile", icon: User },
+            { to: profilePath, icon: User },
+            { to: "/map", icon: Map },
             { to: "/car", icon: Car },
           ].map(({ to, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
-              end={to === "/"}
               className={({ isActive }) =>
                 `flex items-center justify-center p-2 transition-all duration-200 rounded-xl ${
                   isActive

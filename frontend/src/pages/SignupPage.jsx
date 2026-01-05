@@ -1,52 +1,46 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { register } from "../api/auth";
 
 export default function SignupPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const isValidEmail = (value) => {
+    if (value.length > 254) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    setError("");
 
-    if (!username || !email || !password || !confirmPassword) {
-      alert("Please fill in all fields.");
-      return;
+    if (!username || !email || !password || !confirmPassword || !name) {
+      return setError("Please fill in all fields.");
+    }
+
+    if (!isValidEmail(email)) {
+      return setError("Please enter a valid email address.");
     }
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
-      return;
+      return setError("Passwords do not match.");
     }
 
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/users`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username,
-            email,
-            password,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "Registration failed");
-      }
-
+      await register(username.trim(), email.trim().toLowerCase(), password, name);
       alert("Account created successfully! You can now log in.");
       navigate("/login");
-    } catch (error) {
-      alert(error.message);
+    } catch (err) {
+      setError(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -60,6 +54,12 @@ export default function SignupPage() {
         </h1>
 
         <form onSubmit={handleSignup} className="flex flex-col gap-4">
+          {error && (
+            <p className="text-red-600 bg-red-100 border border-red-200 rounded-lg px-3 py-2 text-sm">
+              {error}
+            </p>
+          )}
+
           <input
             type="text"
             placeholder="Username"
@@ -74,6 +74,14 @@ export default function SignupPage() {
             className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <input
+            type="text"
+            placeholder="Full name"
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
 
           <input

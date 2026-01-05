@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
+import React from "react";
 
 export default function ProtectedRoute() {
   const user = JSON.parse(localStorage.getItem("user"));

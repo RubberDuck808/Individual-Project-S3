@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VoteRequestDTO {
-    private Long userId;
     private Long hazardId;
     private String voteType; // "UPVOTE" or "DOWNVOTE"
 }

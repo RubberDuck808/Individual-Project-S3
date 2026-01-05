@@ -1,40 +1,49 @@
 package nl.fontys.db3.backend.controller;
 
-import nl.fontys.db3.backend.entity.HazardReport;
-import nl.fontys.db3.backend.entity.User;
-import nl.fontys.db3.backend.entity.VoteType;
-import nl.fontys.db3.backend.service.HazardReportService;
+import nl.fontys.db3.backend.dto.HazardCreateRequestDTO;
+import nl.fontys.db3.backend.dto.HazardReportDTO;
+import nl.fontys.db3.backend.mapper.HazardMapper;
+import nl.fontys.db3.backend.service.hazard.HazardCommandService;
+import nl.fontys.db3.backend.service.hazard.HazardQueryService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/hazards")
 public class HazardReportController {
-    private final HazardReportService hazardService;
 
-    public HazardReportController(HazardReportService hazardService) {
-        this.hazardService = hazardService;
-    }
+    private final HazardQueryService queryService;
+    private final HazardCommandService commandService;
+    private final HazardMapper hazardMapper;
 
-    @GetMapping("/open")
-    public List<HazardReport> getOpenHazards() {
-        return hazardService.getAllOpenHazards();
-    }
-
-    @PostMapping
-    public HazardReport create(@RequestBody HazardReport hazard) {
-        return hazardService.createHazard(hazard);
-    }
-
-    @PostMapping("/{id}/vote")
-    public HazardReport vote(
-            @PathVariable Long id,
-            @RequestParam Long userId,
-            @RequestParam VoteType type
+    public HazardReportController(
+            HazardQueryService queryService,
+            HazardCommandService commandService,
+            HazardMapper hazardMapper
     ) {
-        User dummyUser = new User();
-        dummyUser.setId(userId);
-        return hazardService.addVote(id, dummyUser, type);
+        this.queryService = queryService;
+        this.commandService = commandService;
+        this.hazardMapper = hazardMapper;
+    }
+
+    /** GET all open hazards */
+    @GetMapping("/open")
+    public List<HazardReportDTO> getOpenHazards() {
+        return hazardMapper.toDTOList(queryService.getOpenHazards());
+    }
+
+    /** POST create new hazard (createdBy comes from JWT) */
+    @PostMapping
+    public HazardReportDTO create(@RequestBody HazardCreateRequestDTO dto, Authentication authentication) {
+        String email = authentication.getName(); // e.g. oscar@test.com
+        return hazardMapper.toDTO(commandService.createHazard(dto, email));
+    }
+
+    /** GET hazards created by a given username */
+    @GetMapping("/by-user/{username}")
+    public List<HazardReportDTO> getHazardsByUser(@PathVariable String username) {
+        return hazardMapper.toDTOList(queryService.getHazardsByUsername(username));
     }
 }
-

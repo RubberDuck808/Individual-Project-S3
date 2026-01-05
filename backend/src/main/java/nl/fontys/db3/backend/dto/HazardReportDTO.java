@@ -11,14 +11,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class HazardReportDTO {
     private Long id;
-    private String title;
-    private String description;
     private Double latitude;
     private Double longitude;
-    private String category;     // e.g. "Accident", "Speed camera"
-    private String status;       // e.g. "OPEN", "CLOSED"
-    private String createdBy;    // username of reporter
+    private String category;
+    private String status;
+    private Long createdBy; 
     private long upvotes;
     private long downvotes;
-    private int score;           // computed: upvotes - downvotes
 }
+
