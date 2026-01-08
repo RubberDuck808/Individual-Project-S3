@@ -1,14 +1,18 @@
+
 import React, { useEffect, useMemo, useState } from "react";
 import { fetchCurrentUser, fetchUserByUsername } from "../api/userApi";
 import { useTheme } from "../context/ThemeContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { Users, RadioTower } from "lucide-react";
 
+
+import { Settings, ArrowLeft, Edit3 } from "lucide-react";
 import ProfileTabs from "../components/profile/tabs/ProfileTabs";
 import FriendsTab from "../components/profile/tabs/FriendsTab";
 import StatsGrid from "../components/profile/stats/StatsGrid";
 import { useUserStats } from "../components/profile/stats/useUserStats";
 import ProfileHeader from "../components/profile/ProfileHeader";
+import UserAvatar from "../components/profile/avatars/UserAvatar";
 
 export default function ProfilePage() {
   const { darkMode } = useTheme();
@@ -97,56 +101,82 @@ export default function ProfilePage() {
 
   const bgUrl = profileUser?.backgroundUrl;
 
-  return (
-    <div className={`min-h-screen ${darkMode ? "text-white" : "text-gray-900"}`}>
-      {/* FULL PAGE BACKGROUND */}
-      <div className="relative min-h-screen">
-        {bgUrl ? (
-          <div className="absolute inset-0">
-            <img
-              src={bgUrl}
-              alt="profile background"
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ) : (
-          <div
-            className={`absolute inset-0 ${
-              darkMode ? "bg-gray-950" : "bg-gray-50"
-            }`}
-          />
-        )}
+  // ... logic remains same, update the return statement
+return (
+  <div className="min-h-screen bg-[#FFFDF5]">
+    {/* Background Image / Solid Wall */}
+    {/* Background Image / Solid Wall */}
+<div className="fixed inset-0 z-0">
+  {bgUrl ? (
+    <img 
+      src={bgUrl} 
+      className="w-full h-full object-cover" // Removed opacity and blur
+    />
+  ) : (
+    <div className="w-full h-full bg-[#FFFDF5]" />
+  )}
+  {/* OPTIONAL: Add a very light dark tint ONLY if your white text becomes unreadable */}
+  {/* <div className="absolute inset-0 bg-black/10" /> */}
+</div>
 
-        {/* CONTENT */}
-        <div className="relative z-10">
-          <div className="max-w-6xl mx-auto px-4 py-12">
-            {/* ONLY 10px side gap so background barely shows */}
-            <div className="px-[10px]">
-              <div className="rounded-3xl shadow-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-10">
-                <ProfileHeader profileUser={profileUser} isMe={isMe} />
-
-                <StatsGrid stats={stats} />
-
-                <div className="mt-10">
-                  <ProfileTabs
-                    tabs={tabs}
-                    activeKey={activeTab}
-                    onChange={setActiveTab}
-                  />
-
-                  {activeTab === "friends" && (
-                    <FriendsTab
-                      user={me}
-                      profileUser={profileUser}
-                      isMe={isMe}
-                    />
-                  )}
-                </div>
+    <div className="relative z-10 max-w-5xl mx-auto px-4 py-12 pb-32">
+      {/* THE MAIN CARD */}
+      <div className="bg-white border-[4px] border-black rounded-[3rem] p-8 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="flex items-center gap-6">
+            <div className="p-1 border-[4px] border-black rounded-[2rem] bg-white shadow-[6px_6px_0px_0px_#00D1FF]">
+               <UserAvatar user={profileUser} size={84} className="rounded-[1.5rem]" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-[1000] italic uppercase tracking-tighter leading-none">
+                {profileUser.name || profileUser.username}
+              </h1>
+              <div className="mt-2 inline-block px-3 py-1 bg-black text-[#FFD600] text-sm font-black rounded-lg">
+                @{profileUser.username}
               </div>
             </div>
+          </div>
+
+          {isMe && (
+            <button
+              onClick={() => navigate("/settings")}
+              className="px-6 py-4 rounded-2xl border-[3px] border-black bg-[#FFD600] font-[1000] uppercase text-xs tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-2"
+            >
+              <Settings size={18} strokeWidth={3} />
+              Account Settings
+            </button>
+          )}
+        </div>
+
+        {/* The Grid */}
+        <div className="mt-12">
+          <StatsGrid stats={stats} />
+        </div>
+
+        {/* Tab Selection */}
+        <div className="mt-12 space-y-8">
+          <div className="flex justify-center md:justify-start">
+            <ProfileTabs tabs={tabs} activeKey={activeTab} onChange={setActiveTab} />
+          </div>
+
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {activeTab === "friends" && (
+              <FriendsTab user={me} profileUser={profileUser} isMe={isMe} />
+            )}
+            
+            {activeTab === "summary" && (
+               <div className="p-8 border-[3px] border-black rounded-[2rem] bg-slate-50 border-dashed">
+                  <p className="text-center font-black text-slate-400 uppercase tracking-widest text-sm">
+                    Recent Activity Feed Coming Soon
+                  </p>
+               </div>
+            )}
           </div>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }

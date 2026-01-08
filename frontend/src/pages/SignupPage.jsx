@@ -22,104 +22,149 @@ export default function SignupPage() {
     setError("");
 
     if (!username || !email || !password || !confirmPassword || !name) {
-      return setError("Please fill in all fields.");
+      return setError("Fill in all the blanks, Scout!");
     }
 
     if (!isValidEmail(email)) {
-      return setError("Please enter a valid email address.");
+      return setError("That email looks a bit wobbly.");
     }
 
     if (password !== confirmPassword) {
-      return setError("Passwords do not match.");
+      return setError("Passwords aren't matching up!");
     }
 
     setLoading(true);
 
     try {
       await register(username.trim(), email.trim().toLowerCase(), password, name);
-      alert("Account created successfully! You can now log in.");
+      // Using a custom "Success" style would be better than a native alert!
       navigate("/login");
     } catch (err) {
-      setError(err.message || "Registration failed");
+      setError(err.message || "The engine stalled. Try again?");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-      <div className="bg-white shadow-lg rounded-2xl p-8 w-80">
-        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
-          Create an Account
-        </h1>
+    <div className="min-h-screen bg-[#FFFDF5] flex flex-col items-center justify-center p-6 selection:bg-[#FFD600]">
+      {/* Playful Ambient Blobs */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-5%] left-[-10%] w-[500px] h-[500px] bg-[#FF6AC1]/10 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-5%] right-[-10%] w-[600px] h-[600px] bg-[#00D1FF]/10 blur-[150px] rounded-full animate-pulse" />
+      </div>
 
-        <form onSubmit={handleSignup} className="flex flex-col gap-4">
-          {error && (
-            <p className="text-red-600 bg-red-100 border border-red-200 rounded-lg px-3 py-2 text-sm">
-              {error}
+      <div className="relative z-10 w-full max-w-lg">
+        {/* Brand Logo */}
+        <div 
+          className="flex justify-center mb-8 cursor-pointer group"
+          onClick={() => navigate("/")}
+        >
+          <div className="w-14 h-14 bg-[#0066FF] border-4 border-black rounded-2xl flex items-center justify-center rotate-[-8deg] group-hover:rotate-0 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <span className="text-white font-[1000] text-3xl">T</span>
+          </div>
+        </div>
+
+        {/* Signup Card */}
+        <div className="bg-white border-[4px] border-black rounded-[3rem] p-8 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+          <div className="text-center mb-10">
+            <h1 className="text-4xl md:text-5xl font-[1000] text-slate-900 uppercase italic tracking-tighter leading-none">
+              Join the <br /> <span className="text-[#FF6AC1]">Crew.</span>
+            </h1>
+            <p className="mt-4 text-slate-500 font-bold text-sm uppercase tracking-widest">
+              Start your journey with Tripwire
             </p>
-          )}
+          </div>
 
-          <input
-            type="text"
-            placeholder="Username"
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
+          <form onSubmit={handleSignup} className="flex flex-col gap-6">
+            {error && (
+              <div className="bg-[#FF6AC1] text-white border-4 border-black rounded-2xl py-3 px-4 font-black text-center text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-bounce">
+                {error}
+              </div>
+            )}
 
-          <input
-            type="email"
-            placeholder="Email"
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Codename</label>
+                <input
+                  type="text"
+                  placeholder="SpeedyJoe"
+                  className="w-full px-6 py-4 bg-slate-50 border-4 border-black rounded-2xl font-bold focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#00D1FF] transition-all"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Real Name</label>
+                <input
+                  type="text"
+                  placeholder="Joe Smith"
+                  className="w-full px-6 py-4 bg-slate-50 border-4 border-black rounded-2xl font-bold focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#FFD600] transition-all"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+            </div>
 
-          <input
-            type="text"
-            placeholder="Full name"
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+            <div className="space-y-2">
+              <label className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Email</label>
+              <input
+                type="email"
+                placeholder="hello@tripwire.com"
+                className="w-full px-6 py-4 bg-slate-50 border-4 border-black rounded-2xl font-bold focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#FF6AC1] transition-all"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Password</label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  className="w-full px-6 py-4 bg-slate-50 border-4 border-black rounded-2xl font-bold focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#0066FF] transition-all"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Confirm</label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  className="w-full px-6 py-4 bg-slate-50 border-4 border-black rounded-2xl font-bold focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#0066FF] transition-all"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+            </div>
 
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
+            <button
+              type="submit"
+              disabled={loading}
+              className={`mt-4 bg-[#00D1FF] text-black py-5 rounded-[2rem] border-4 border-black 
+                        font-[1000] uppercase tracking-widest shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] 
+                        hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] 
+                        active:shadow-none active:translate-x-[6px] active:translate-y-[6px] transition-all
+                        ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
+            >
+              {loading ? "Ignition Starting..." : "Create Account →"}
+            </button>
+          </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={`bg-green-600 text-white py-2 rounded-lg transition ${
-              loading ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"
-            }`}
-          >
-            {loading ? "Signing up..." : "Sign Up"}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-gray-500 mt-4">
-          Already have an account?{" "}
-          <span
-            className="text-blue-600 cursor-pointer"
-            onClick={() => navigate("/login")}
-          >
-            Log in
-          </span>
-        </p>
+          <div className="mt-12 pt-8 border-t-4 border-dashed border-slate-100 flex flex-col items-center gap-4">
+             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+              Part of the crew?
+            </p>
+            <button
+              onClick={() => navigate("/login")}
+              className="px-10 py-3 bg-[#FFD600] border-4 border-black rounded-full font-black text-xs uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -2,55 +2,30 @@ import React from "react";
 
 export default function HomeNavbar() {
   return (
-    <header className="fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-white/70 border-b border-black/5">
-      <div className="max-w-7xl mx-auto px-6 h-20 grid grid-cols-3 items-center">
+    <header className="fixed top-8 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl z-50">
+      <div className="bg-white border-[4px] border-black rounded-[3rem] px-8 h-20 flex items-center justify-between shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
         
-        {/* LEFT: Logo */}
-        <div className="text-2xl font-bold tracking-tight justify-self-start">
-          Trip
-          <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-            wire
-          </span>
-        </div>
+        <a href="/" className="flex items-center gap-3 group">
+          <div className="w-12 h-12 bg-[#0066FF] border-4 border-black rounded-2xl flex items-center justify-center rotate-[-8deg] group-hover:rotate-0 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+             <span className="text-white font-[1000] text-2xl">T</span>
+          </div>
+          <span className="font-[1000] text-3xl tracking-tighter uppercase italic group-hover:text-[#0066FF] transition-colors">tripwire</span>
+        </a>
 
-        {/* CENTER: Navigation */}
-        <nav className="hidden md:flex items-center gap-8 text-sm justify-self-center">
-          <a
-            href="#nav-hazards"
-            className="text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Navigation
-          </a>
-          <a
-            href="#social"
-            className="text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Social
-          </a>
-          <a
-            href="#telemetry"
-            className="text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Telemetry
-          </a>
+        <nav className="hidden lg:flex gap-10">
+          {['Navigation', 'Social', 'Telemetry'].map(item => (
+            <a key={item} href={`#${item.toLowerCase()}`} className="font-black text-sm uppercase tracking-widest text-slate-900 hover:text-[#FF6AC1] transition-colors">
+              {item}
+            </a>
+          ))}
         </nav>
 
-        {/* RIGHT: Auth */}
-        <div className="flex items-center gap-3 justify-self-end">
-          <a
-            href="/login"
-            className="px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors"
-          >
-            Login
-          </a>
-          <a
-            href="/signup"
-            className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 transition-all font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/35"
-          >
-            Sign Up
+        <div className="flex items-center gap-6">
+          <a href="/login" className="hidden sm:block font-black uppercase tracking-widest text-sm hover:underline decoration-4 decoration-[#FFD600]">Login</a>
+          <a href="/signup" className="px-8 py-3 bg-[#00D1FF] border-4 border-black text-black rounded-full font-[1000] uppercase tracking-widest text-xs shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all">
+            Join Now
           </a>
         </div>
-
       </div>
     </header>
   );

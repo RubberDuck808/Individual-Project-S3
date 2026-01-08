@@ -1,46 +1,42 @@
-import React, { useEffect } from "react";
-import Footer from "../components/home/Footer";
-
+import React from "react";
 import HomeNavbar from "../components/home/HomeNavbar";
 import HomeHero from "../components/home/HomeHero";
-
-import NavHazardSection from "../components/home/NavHazardSection";
+import NavigationSection from "../components/home/NavigationSection";
 import SocialSection from "../components/home/SocialSection";
 import TelemetrySection from "../components/home/TelemetrySection";
+import Footer from "../components/home/Footer";
 
 export default function HomePage() {
-  useEffect(() => {
-    const orbs = document.querySelectorAll(".gradient-orb");
-    let t = 0;
-    const id = window.setInterval(() => {
-      t += 1;
-      const s = 1 + Math.sin(t / 12) * 0.05;
-      orbs.forEach((orb) => {
-        orb.style.transform = `scale(${s})`;
-        orb.style.opacity = `${0.18 + Math.sin(t / 10) * 0.03}`;
-      });
-    }, 60);
-
-    return () => window.clearInterval(id);
-  }, []);
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 text-gray-900 overflow-hidden relative">
-      {/* Subtle ambient orbs */}
-      <div className="gradient-orb fixed top-24 left-10 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="gradient-orb fixed bottom-24 right-10 w-96 h-96 bg-purple-400/15 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-[#FFFDF5] text-[#1D1D1F] selection:bg-[#FFD600] overflow-x-hidden">
+      {/* Playful Ambient Blobs */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div 
+          className="absolute top-[-10%] left-[-5%] w-[600px] h-[600px] bg-[#FF6AC1]/10 blur-[120px] rounded-full animate-pulse" 
+          style={{ animationDuration: '10s' }} 
+        />
+        <div 
+          className="absolute bottom-[10%] right-[-5%] w-[700px] h-[700px] bg-[#00D1FF]/10 blur-[150px] rounded-full animate-pulse" 
+          style={{ animationDuration: '15s' }} 
+        />
+      </div>
 
-      <HomeNavbar />
+      <div className="relative z-10">
+        <HomeNavbar />
+        
+        <main className="pt-24">
+          <HomeHero />
+          
+          {/* Main Content Sections */}
+          <div className="space-y-12">
+            <NavigationSection />
+            <SocialSection />
+            <TelemetrySection />
+          </div>
 
-      <main className="pt-20">
-        <HomeHero />
-
-        <NavHazardSection />
-        <SocialSection />
-        <TelemetrySection />
-
-        <Footer />
-      </main>
+          <Footer />
+        </main>
+      </div>
     </div>
   );
 }
