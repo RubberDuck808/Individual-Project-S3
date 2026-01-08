@@ -16,6 +16,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
+import nl.fontys.db3.backend.dto.ChangeAvatarRequest;
+import nl.fontys.db3.backend.dto.ChangeBackgroundRequest;
+
+
 
 import java.util.Map;
 
@@ -125,4 +130,34 @@ public class UserController {
         User user = userService.getByUsername(username);
         return ResponseEntity.ok(userMapper.toPublicUserDTO(user));
     }
+
+    @PutMapping("/me/avatar")
+public ResponseEntity<UserDTO> changeMyAvatar(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @Valid @RequestBody ChangeAvatarRequest req
+) {
+    if (userDetails == null) {
+        return ResponseEntity.status(401).build();
+    }
+
+    User updated = userService.changeMyAvatar(userDetails.getUsername(), req.avatarName());
+    return ResponseEntity.ok(userMapper.toUserDTO(updated));
+}
+
+@PutMapping("/me/background")
+public ResponseEntity<UserDTO> changeMyBackground(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @Valid @RequestBody ChangeBackgroundRequest req
+) {
+    if (userDetails == null) {
+        return ResponseEntity.status(401).build();
+    }
+
+    User updated = userService.changeMyBackground(userDetails.getUsername(), req.backgroundName());
+    return ResponseEntity.ok(userMapper.toUserDTO(updated));
+}
+
+
+
+
 }

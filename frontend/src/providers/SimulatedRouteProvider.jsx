@@ -2,21 +2,7 @@ import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import LocationContext from "../context/LocationContext";
 import React from "react";
-
-// Haversine distance (meters)
-function distanceMeters(lat1, lng1, lat2, lng2) {
-  const R = 6371000;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
-
-  return 2 * R * Math.asin(Math.sqrt(a));
-}
+import { haversineMeters } from "../utils/geo";
 
 // Calculate bearing (radians)
 function calculateBearing(lat1, lng1, lat2, lng2) {
@@ -48,7 +34,12 @@ export default function SimulatedRouteProvider({ children }) {
   useEffect(() => {
     const interval = setInterval(() => {
       setLocation((loc) => {
-        const remaining = distanceMeters(loc.lat, loc.lng, end.lat, end.lng);
+        const remaining = haversineMeters(
+          loc.lat,
+          loc.lng,
+          end.lat,
+          end.lng
+        );
 
         // Stop when arrived
         if (remaining < 10) return end;

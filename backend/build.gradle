@@ -57,6 +57,9 @@ dependencies {
     testImplementation 'org.mockito:mockito-core'
     testImplementation 'org.mockito:mockito-junit-jupiter'
     testImplementation 'org.springframework.security:spring-security-test'
+
+    implementation "com.google.cloud:google-cloud-storage:2.38.0"
+
 }
 
 tasks.named('test') {

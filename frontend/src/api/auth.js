@@ -1,6 +1,4 @@
-/**
- * Read error message from backend (text or json).
- */
+// Error
 async function readError(res) {
   const contentType = res.headers.get("content-type") || "";
   try {
@@ -15,11 +13,7 @@ async function readError(res) {
   }
 }
 
-/**
- * Register (NO token required)
- * Backend: POST /api/users/register
- * Returns: UserDTO
- */
+// Register
 export async function register(username, email, password, name) {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/register`, {
     method: "POST",
@@ -34,11 +28,8 @@ export async function register(username, email, password, name) {
   return res.json();
 }
 
-/**
- * Login (NO token required)
- * Backend: POST /api/users/login
- * Returns: { token, user }
- */
+
+// Login
 export async function login(email, password) {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/login`, {
     method: "POST",
@@ -59,9 +50,7 @@ export async function login(email, password) {
   return data;
 }
 
-/**
- * Authenticated fetch helper
- */
+// Authentication fetch helper
 export async function authFetch(path, options = {}) {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("Not authenticated");
@@ -79,7 +68,6 @@ export async function authFetch(path, options = {}) {
     throw new Error((await readError(res)) || "Request failed");
   }
 
-  // Some endpoints may return no content
   if (res.status === 204) return null;
 
   const contentType = res.headers.get("content-type") || "";
@@ -87,9 +75,7 @@ export async function authFetch(path, options = {}) {
   return res.text();
 }
 
-/**
- * Backend: GET /api/users/me
- */
+// Get current user
 export async function fetchCurrentUser() {
   const user = await authFetch("/api/users/me");
 
@@ -98,9 +84,7 @@ export async function fetchCurrentUser() {
   return user;
 }
 
-/**
- * Local user helpers
- */
+// Logged user helper
 export function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
@@ -118,4 +102,15 @@ export function getStoredUser() {
 
 export function isLoggedIn() {
   return !!localStorage.getItem("token");
+}
+
+export function getAuthHeader() {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("Not authenticated");
+  return { Authorization: `Bearer ${token}` };
+}
+
+export function getStoredUserId() {
+  const u = getStoredUser();
+  return u?.id ?? u?.userId ?? null;
 }

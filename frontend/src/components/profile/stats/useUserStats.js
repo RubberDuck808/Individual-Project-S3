@@ -1,4 +1,3 @@
-// src/components/profile/stats/useUserStats.js
 import { useEffect, useMemo, useState } from "react";
 import { Route, AlertTriangle, ThumbsUp, Navigation } from "lucide-react";
 import { getUserStats } from "../../../api/statisticsApi";

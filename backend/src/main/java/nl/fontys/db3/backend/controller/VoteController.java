@@ -59,13 +59,6 @@ public class VoteController {
         return ResponseEntity.ok(counts);
     }
 
-   /** Total votes CAST by a user */
-    // @GetMapping("/user/{username}/cast")
-    // public ResponseEntity<Map<String, Long>> getTotalVotesCast(@PathVariable String username) {
-    //     long total = voteService.countTotalVotesCastByUser(username);
-    //     return ResponseEntity.ok(Map.of("totalVotesCast", total));
-    // }
-
     @GetMapping("/{hazardId}/mine")
     public ResponseEntity<Map<String, String>> myVote(@PathVariable Long hazardId, Authentication auth) {
         String email = auth.getName();
