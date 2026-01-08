@@ -3,13 +3,15 @@ import PropTypes from "prop-types";
 import { submitVote, getVoteCounts } from "../../../api/voteApi";
 import { haversineMeters } from "../../../utils/geo";
 
+// Utility for joining classes
 function cx(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
+// Updated TimerRing to match the chunky style
 function TimerRing({ progress = 0 }) {
   const size = 34;
-  const stroke = 3;
+  const stroke = 4; // Chunkier stroke
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const dash = c * (1 - Math.min(1, Math.max(0, progress)));
@@ -21,7 +23,7 @@ function TimerRing({ progress = 0 }) {
         cy={size / 2}
         r={r}
         strokeWidth={stroke}
-        className="fill-none stroke-black/10 dark:stroke-white/15"
+        className="fill-none stroke-black/10"
       />
       <circle
         cx={size / 2}
@@ -31,7 +33,7 @@ function TimerRing({ progress = 0 }) {
         strokeDasharray={c}
         strokeDashoffset={dash}
         strokeLinecap="round"
-        className="fill-none stroke-[#2F88FF] transition-[stroke-dashoffset] duration-200"
+        className="fill-none stroke-black transition-[stroke-dashoffset] duration-200"
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
       />
     </svg>
@@ -78,33 +80,26 @@ export default function VotePanel({
       setSecondsLeft(left);
       if (left <= 0) {
         clearInterval(interval);
-        setToast({ type: "info", msg: "Voting window expired." });
-        setTimeout(() => closePanel(), 500);
+        setToast({ type: "info", msg: "Window expired." });
+        setTimeout(() => closePanel(), 800);
       }
     }, 250);
-
     return () => clearInterval(interval);
   }, [expiresAt, closePanel]);
 
-  const withinAllowedBoundary =
-    distanceMeters == null ? false : distanceMeters <= allowedDistanceMeters;
-
+  const withinAllowedBoundary = distanceMeters == null ? false : distanceMeters <= allowedDistanceMeters;
   const canVote = secondsLeft > 0 && withinAllowedBoundary && !!hazardId && !loading;
-
-  const progress = useMemo(() => {
-    const p = secondsLeft / Math.max(1, totalSeconds);
-    return Math.min(1, Math.max(0, p));
-  }, [secondsLeft, totalSeconds]);
+  const progress = useMemo(() => secondsLeft / Math.max(1, totalSeconds), [secondsLeft, totalSeconds]);
 
   const loadVotes = useCallback(async () => {
     if (!hazardId) return;
-    const data = await getVoteCounts(hazardId);
-    setVotes(data);
+    try {
+      const data = await getVoteCounts(hazardId);
+      setVotes(data);
+    } catch (err) { console.error(err); }
   }, [hazardId]);
 
-  useEffect(() => {
-    if (hazardId) loadVotes();
-  }, [hazardId, loadVotes]);
+  useEffect(() => { if (hazardId) loadVotes(); }, [hazardId, loadVotes]);
 
   const showToast = (t) => {
     setToast(t);
@@ -114,147 +109,117 @@ export default function VotePanel({
 
   const handleVote = async (type) => {
     const token = localStorage.getItem("token");
-    if (!token) return showToast({ type: "error", msg: "Log in to vote." });
-    if (secondsLeft <= 0) return showToast({ type: "error", msg: "Voting window expired." });
-    if (!withinAllowedBoundary)
-      return showToast({
-        type: "error",
-        msg: `Too far to vote (must be ≤ ${allowedDistanceMeters}m).`,
-      });
+    if (!token) return showToast({ type: "error", msg: "Log in first!" });
+    if (!canVote) return;
 
     setLoading(true);
     try {
       await submitVote(hazardId, type);
       await loadVotes();
-      showToast({ type: "success", msg: "Vote submitted." });
-      setTimeout(() => closePanel(), 450);
+      showToast({ type: "success", msg: "Vote Cast!" });
+      setTimeout(() => closePanel(), 800);
     } catch (err) {
-      showToast({ type: "error", msg: err?.message || "Vote failed." });
+      showToast({ type: "error", msg: "Vote failed." });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed bottom-40 right-7 z-50 w-[290px]">
-      <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-white/80 p-4 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/70">
-        {/* subtle gradient glow */}
-        <div className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full bg-[#2F88FF]/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-emerald-500/15 blur-3xl" />
-
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <div className="inline-flex items-center gap-2 rounded-full bg-black/5 px-2.5 py-1 text-xs font-semibold text-black/70 dark:bg-white/10 dark:text-white/80">
-                <TimerRing progress={progress} />
-                <span className="tabular-nums">{secondsLeft}s</span>
-              </div>
-              <span className="text-xs text-black/50 dark:text-white/50">
-                {withinAllowedBoundary ? "Within range" : "Out of range"}
-              </span>
+    <div className="fixed bottom-36 right-4 z-[100] w-[310px] animate-in slide-in-from-right-10">
+      <div className="relative overflow-hidden rounded-[2.5rem] border-[4px] border-black bg-[#FFFDF5] p-6 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
+        
+        {/* Top Header */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-col gap-2">
+            <div className="inline-flex items-center gap-2 rounded-xl bg-white border-[3px] border-black px-3 py-1 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+              <TimerRing progress={progress} />
+              <span className="font-[1000] tabular-nums text-sm">{secondsLeft}s</span>
             </div>
-
-            <h3 className="mt-2 text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
-              Confirm report?
+            <h3 className="text-2xl font-[1000] italic uppercase tracking-tighter text-black leading-none mt-1">
+              Still there?
             </h3>
-
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-              Upvote if it’s real, downvote if it’s gone.
-            </p>
           </div>
 
           <button
             onClick={closePanel}
-            className="rounded-full p-2 text-gray-500 transition hover:bg-black/5 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
-            aria-label="Close"
+            className="w-10 h-10 border-[3px] border-black rounded-xl flex items-center justify-center font-black hover:bg-black hover:text-white transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 bg-white"
           >
             ✕
           </button>
         </div>
 
-        {/* Distance + progress bar */}
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-gray-500 dark:text-gray-400">
-              {distanceMeters == null ? "Distance unknown" : "Distance"}
-            </span>
-            <span className="font-semibold tabular-nums text-gray-900 dark:text-white">
-              {distanceMeters == null ? "—" : `${Math.round(distanceMeters)} m`}
-            </span>
+        {/* Distance Status Card */}
+        <div className="mt-6 space-y-3">
+          <div className={cx(
+            "p-3 rounded-2xl border-[3px] border-black font-black text-xs uppercase text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]",
+            withinAllowedBoundary ? "bg-[#FFD600] text-black" : "bg-slate-100 text-slate-400"
+          )}>
+            {withinAllowedBoundary 
+              ? `📍 ${Math.round(distanceMeters)}m Away (In Range)` 
+              : `🛑 Too Far (${Math.round(distanceMeters)}m)`}
           </div>
 
-          <div className="h-2 w-full overflow-hidden rounded-full bg-black/5 dark:bg-white/10">
+          {/* Chunky Progress Bar */}
+          <div className="h-4 w-full bg-white border-[3px] border-black rounded-full p-0.5 overflow-hidden">
             <div
-              className="h-full rounded-full bg-[#2F88FF] transition-[width] duration-200"
+              className="h-full rounded-full bg-[#00D1FF] transition-[width] duration-200 border-r-2 border-black"
               style={{ width: `${Math.round(progress * 100)}%` }}
             />
           </div>
-
-          {!withinAllowedBoundary && (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-700 dark:text-red-300">
-              Too far to vote. Move within <b>{allowedDistanceMeters}m</b>.
-            </div>
-          )}
         </div>
 
-        {/* Toast */}
+        {/* Toast / Message Area */}
         {toast && (
-          <div
-            className={cx(
-              "mt-3 rounded-xl px-3 py-2 text-sm",
-              toast.type === "success" &&
-                "border border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
-              toast.type === "error" &&
-                "border border-red-500/20 bg-red-500/10 text-red-800 dark:text-red-200",
-              toast.type === "info" &&
-                "border border-[#2F88FF]/20 bg-[#2F88FF]/10 text-[#2F88FF] dark:text-[#7fb6ff]"
-            )}
-          >
+          <div className={cx(
+            "mt-4 p-3 rounded-xl border-[3px] border-black font-black text-xs text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-bounce",
+            toast.type === "success" ? "bg-emerald-400 text-black" : "bg-[#FF6AC1] text-white"
+          )}>
             {toast.msg}
           </div>
         )}
 
-        {/* Actions */}
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        {/* Action Buttons */}
+        <div className="mt-6 grid grid-cols-2 gap-4">
           <button
             disabled={!canVote}
             onClick={() => handleVote("UPVOTE")}
             className={cx(
-              "group relative flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition",
+              "flex flex-col items-center justify-center gap-1 rounded-2xl border-[4px] border-black py-3 px-2 font-[1000] uppercase transition-all",
               canVote
-                ? "bg-emerald-600 text-white hover:bg-emerald-600/90 active:scale-[0.99]"
-                : "bg-gray-200 text-gray-500 dark:bg-white/10 dark:text-white/40"
+                ? "bg-[#00D1FF] text-black shadow-[4px_4px_0px_0px_#0044AA] hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#0044AA] active:translate-y-1 active:shadow-none"
+                : "bg-slate-100 text-slate-300 opacity-60"
             )}
           >
-            <span className="text-base">▲</span>
-            <span>Up</span>
-            <span className="ml-auto rounded-full bg-white/15 px-2 py-0.5 text-xs tabular-nums">
+            <span className="text-xl">▲</span>
+            <span className="text-[10px] tracking-widest">Keep</span>
+            <div className="mt-1 px-2 bg-white border-2 border-black rounded-lg text-[10px]">
               {votes.upvotes}
-            </span>
+            </div>
           </button>
 
           <button
             disabled={!canVote}
             onClick={() => handleVote("DOWNVOTE")}
             className={cx(
-              "group relative flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition",
+              "flex flex-col items-center justify-center gap-1 rounded-2xl border-[4px] border-black py-3 px-2 font-[1000] uppercase transition-all",
               canVote
-                ? "bg-rose-600 text-white hover:bg-rose-600/90 active:scale-[0.99]"
-                : "bg-gray-200 text-gray-500 dark:bg-white/10 dark:text-white/40"
+                ? "bg-[#FF6AC1] text-white shadow-[4px_4px_0px_0px_#A32E6F] hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_#A32E6F] active:translate-y-1 active:shadow-none"
+                : "bg-slate-100 text-slate-300 opacity-60"
             )}
           >
-            <span className="text-base">▼</span>
-            <span>Down</span>
-            <span className="ml-auto rounded-full bg-white/15 px-2 py-0.5 text-xs tabular-nums">
+            <span className="text-xl">▼</span>
+            <span className="text-[10px] tracking-widest">Gone</span>
+            <div className="mt-1 px-2 bg-white border-2 border-black rounded-lg text-[10px] text-black">
               {votes.downvotes}
-            </span>
+            </div>
           </button>
         </div>
 
-        {/* Footer hint */}
-        <div className="mt-3 text-center text-[11px] text-gray-500 dark:text-gray-400">
-          Votes close automatically when time runs out.
+        <div className="mt-4 text-center">
+          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+            Community Verification Mode
+          </span>
         </div>
       </div>
     </div>
@@ -270,9 +235,4 @@ VotePanel.propTypes = {
   allowedDistanceMeters: PropTypes.number,
   expiresAt: PropTypes.number.isRequired,
   onClose: PropTypes.func.isRequired,
-};
-
-function TimerRingPropTypes() {}
-TimerRingPropTypes.propTypes = {
-  progress: PropTypes.number,
 };

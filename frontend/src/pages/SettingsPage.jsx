@@ -9,8 +9,8 @@ import SectionShell from "../components/settings/sections/SectionShell";
 
 import ProfileSettingsSection from "../components/settings/sections/ProfileSettingsSection";
 import AccountSettingsSection from "../components/settings/sections/AccountSettingsSection";
-import AccessibilitySettingsSection from "../components/settings/sections/AccessibilitySettingsSection";
-import NotificationsSettingsSection from "../components/settings/sections/NotificationsSettingsSection";
+// import AccessibilitySettingsSection from "../components/settings/sections/AccessibilitySettingsSection";
+// import NotificationsSettingsSection from "../components/settings/sections/NotificationsSettingsSection";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -29,8 +29,8 @@ export default function SettingsPage() {
     () => [
       { key: "profile", label: "Profile", icon: UserRound },
       { key: "account", label: "Account", icon: UserCog },
-      { key: "accessibility", label: "Accessibility", icon: Accessibility },
-      { key: "notifications", label: "Notifications", icon: Bell },
+      // { key: "accessibility", label: "Accessibility", icon: Accessibility },
+      // { key: "notifications", label: "Notifications", icon: Bell },
     ],
     []
   );
@@ -48,35 +48,33 @@ export default function SettingsPage() {
     navigate("/");
   };
 
-  return (
-    <div
-      className={`min-h-screen px-6 pt-2 pb-6 ${
-        darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
-      }`}
-    >
-      <button
-        onClick={handleBack}
-        className={`flex items-center gap-1 mb-2 ${
-          darkMode ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-gray-900"
-        }`}
-        type="button"
-      >
-        <ArrowLeft /> Back
-      </button>
+  // SettingsPage.jsx return update:
+return (
+    <div className="min-h-screen bg-[#FFFDF5] text-black pb-20">
+      <div className="max-w-6xl mx-auto px-6 pt-10">
+        
+        {/* Neo-Brutalist Back Button */}
+        <button
+          onClick={handleBack}
+          className="mb-8 flex items-center gap-2 px-4 py-2 bg-white border-[3px] border-black rounded-xl font-black uppercase text-xs shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none transition-all"
+        >
+          <ArrowLeft size={16} strokeWidth={3} /> Return
+        </button>
 
-      <div className="w-full max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4">Settings</h1>
+        <h1 className="text-5xl font-[1000] uppercase italic tracking-tighter mb-10">
+          System <span className="text-[#FF6AC1]">Settings</span>
+        </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-[360px,minmax(0,1fr)] gap-8 items-start">
-          <SettingsSidebar
+        <div className="grid grid-cols-1 md:grid-cols-[320px,1fr] gap-10">
+          {/* FIXED: Passing the actual variables here instead of ... */}
+          <SettingsSidebar 
             items={items}
             activeKey={activeKey}
             onChange={setActiveKey}
             onLogout={handleLogout}
           />
 
-          {/* RIGHT COLUMN */}
-          <div className="w-full min-w-0">
+          <div className="min-w-0">
             <SectionShell>
               {activeKey === "profile" && (
                 <ProfileSettingsSection me={me} setMe={setMe} />
@@ -92,16 +90,16 @@ export default function SettingsPage() {
                 />
               )}
 
-              {activeKey === "accessibility" && (
+              {/* {activeKey === "accessibility" && (
                 <AccessibilitySettingsSection darkMode={darkMode} setDarkMode={setDarkMode} />
-              )}
+              )} */}
 
-              {activeKey === "notifications" && (
+              {/* {activeKey === "notifications" && (
                 <NotificationsSettingsSection
                   enabled={notificationsEnabled}
                   setEnabled={setNotificationsEnabled}
                 />
-              )}
+              )} */}
             </SectionShell>
           </div>
         </div>

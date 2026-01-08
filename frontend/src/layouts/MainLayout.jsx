@@ -1,15 +1,17 @@
 import React, { useMemo } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { Map, User, Car } from "lucide-react";
-import { useTheme } from "../context/ThemeContext";
 import { getStoredUser } from "../api/auth";
+
+function cx(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
 
 export default function MainLayout() {
   const location = useLocation();
-  const { darkMode } = useTheme();
 
-  const hideNav =
-    location.pathname === "/" || location.pathname === "/settings";
+  // Navigation is hidden on specific pages
+  const hideNav = location.pathname === "/" || location.pathname === "/settings";
 
   const profilePath = useMemo(() => {
     const me = getStoredUser();
@@ -18,47 +20,58 @@ export default function MainLayout() {
   }, []);
 
   return (
-    <div
-      className={`flex flex-col h-screen transition-colors duration-300 ${
-        darkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
-      }`}
-    >
-      {/* Allow vertical scrolling for long pages */}
-      <main className="flex-1 overflow-y-auto">
+    <div className="flex flex-col h-screen bg-[#FFFDF5] text-black font-bold overflow-hidden">
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto relative">
         <Outlet />
       </main>
 
-      {/* Bottom navigation (icons only) */}
+      {/* Neo-Brutalist Bottom Nav Dock */}
       {!hideNav && (
-        <nav
-          className={`h-16 backdrop-blur-md flex justify-around items-center border-t transition-colors duration-300 ${
-            darkMode
-              ? "bg-gray-800/80 border-gray-700 text-gray-300"
-              : "bg-white/80 border-gray-200 text-gray-600"
-          }`}
-        >
-          {[
-            { to: profilePath, icon: User },
-            { to: "/map", icon: Map },
-            { to: "/car", icon: Car },
-          ].map(({ to, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex items-center justify-center p-2 transition-all duration-200 rounded-xl ${
-                  isActive
-                    ? darkMode
-                      ? "text-blue-400 scale-110 bg-blue-900/30"
-                      : "text-blue-600 scale-110 bg-blue-50"
-                    : "hover:scale-105"
-                }`
-              }
-            >
-              <Icon size={26} strokeWidth={2.2} />
-            </NavLink>
-          ))}
-        </nav>
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[200]">
+          <nav
+            className={cx(
+              "h-20 bg-white border-[4px] border-black rounded-[2.5rem] flex justify-around items-center px-4",
+              "shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+            )}
+          >
+            {[
+              { to: profilePath, icon: User, label: "User", color: "#FF6AC1" },
+              { to: "/map", icon: Map, label: "Map", color: "#00D1FF" },
+              { to: "/car", icon: Car, label: "Drive", color: "#FFD600" },
+            ].map(({ to, icon: Icon, color }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  cx(
+                    "relative flex flex-col items-center justify-center w-14 h-14 transition-all duration-200 rounded-2xl border-[3px]",
+                    isActive
+                      ? "bg-black text-white border-black translate-y-1 shadow-none"
+                      : "bg-white text-black border-transparent hover:border-black hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none"
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <Icon 
+                      size={24} 
+                      strokeWidth={isActive ? 3 : 2} 
+                      color={isActive ? color : "currentColor"} 
+                    />
+                    {/* Active Indicator Dot */}
+                    {isActive && (
+                      <div 
+                        className="absolute -bottom-1.5 w-1.5 h-1.5 rounded-full border border-black" 
+                        style={{ backgroundColor: color }}
+                      />
+                    )}
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
       )}
     </div>
   );

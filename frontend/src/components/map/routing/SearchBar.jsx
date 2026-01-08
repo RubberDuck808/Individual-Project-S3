@@ -1,10 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 
+function cx(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
 export default function SearchBar({
   onSelect,
   onCleared,
   userLocation,
-  darkMode,
+  darkMode, // Theme logic kept for props, but styling follows the Neo-Brutalist theme
   clearSignal = 0,
   closeDropdownSignal = 0,
   suppressDropdown = false,
@@ -40,7 +44,7 @@ export default function SearchBar({
     return () => document.removeEventListener("mousedown", onDocMouseDown);
   }, []);
 
-  // Mapbox autocomplete
+  // Mapbox autocomplete logic
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
@@ -64,7 +68,6 @@ export default function SearchBar({
 
         const res = await fetch(url);
         const data = await res.json();
-
         const feats = data.features || [];
         setResults(feats);
 
@@ -104,70 +107,79 @@ export default function SearchBar({
   };
 
   return (
-    <div ref={wrapperRef} className="relative w-[320px] pointer-events-auto">
+    <div ref={wrapperRef} className="relative w-[320px] pointer-events-auto group">
       <div className="relative">
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            if (!suppressDropdown) setShowDropdown(true);
-          }}
-          onFocus={() => {
-            if (!suppressDropdown && results.length > 0 && query.trim()) {
-              setShowDropdown(true);
-            }
-          }}
-          onBlur={() => {
-            setTimeout(() => setShowDropdown(false), 120);
-          }}
-          placeholder="Search location..."
-          className={`w-full pr-10 px-4 py-2.5 rounded-full text-sm shadow-lg outline-none border transition-all duration-300 ${
-            darkMode
-              ? "bg-gray-800 text-gray-100 placeholder-gray-400 border-gray-700 focus:ring-2 focus:ring-blue-500"
-              : "bg-white/90 text-gray-900 placeholder-gray-500 border-gray-200 focus:ring-2 focus:ring-blue-500"
-          }`}
-        />
+        {/* Main Search Input Container */}
+        <div className="relative transform transition-transform group-focus-within:-translate-y-1">
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              if (!suppressDropdown) setShowDropdown(true);
+            }}
+            onFocus={() => {
+              if (!suppressDropdown && results.length > 0 && query.trim()) {
+                setShowDropdown(true);
+              }
+            }}
+            placeholder="Search destination..."
+            className={cx(
+              "w-full pr-12 px-6 py-4 rounded-3xl text-sm font-bold border-[4px] border-black outline-none transition-all",
+              "bg-[#FFFDF5] text-black placeholder-slate-400",
+              "shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] focus:shadow-[8px_8px_0px_0px_#00D1FF]"
+            )}
+          />
 
-        {query.trim() && (
-          <button
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={clearInput}
-            className={`absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 transition ${
-              darkMode
-                ? "text-gray-300 hover:bg-white/10 hover:text-white"
-                : "text-gray-500 hover:bg-black/5 hover:text-gray-900"
-            }`}
-            aria-label="Clear search"
-            title="Clear"
-          >
-            ✕
-          </button>
-        )}
+          {/* Search/Clear Icon */}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+            {query.trim() ? (
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={clearInput}
+                className="w-8 h-8 rounded-xl border-2 border-black bg-[#FF6AC1] text-white flex items-center justify-center font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-0.5 active:translate-y-0.5"
+              >
+                ✕
+              </button>
+            ) : (
+              <div className="w-8 h-8 rounded-xl border-2 border-black bg-[#FFD600] flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                🔍
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
+      {/* Results Dropdown */}
       {!suppressDropdown && showDropdown && results.length > 0 && (
         <div
-          className={`absolute top-full mt-2 left-0 w-full rounded-xl shadow-xl overflow-hidden z-50 border transition-colors duration-300 ${
-            darkMode
-              ? "bg-gray-800 border-gray-700"
-              : "bg-white/95 border-gray-200"
-          }`}
+          className={cx(
+            "absolute top-full mt-4 left-0 w-full rounded-[2rem] border-[4px] border-black overflow-hidden z-[110]",
+            "bg-white shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] animate-in slide-in-from-top-2 duration-200"
+          )}
         >
-          {results.map((place) => (
+          {results.map((place, idx) => (
             <div
               key={place.id}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => handleSelect(place)}
-              className={`px-4 py-2.5 cursor-pointer transition ${
-                darkMode
-                  ? "hover:bg-gray-700 text-gray-100"
-                  : "hover:bg-gray-100 text-gray-900"
-              }`}
+              className={cx(
+                "px-6 py-4 cursor-pointer transition-colors border-black flex items-center gap-3",
+                idx !== results.length - 1 && "border-b-[3px]",
+                "hover:bg-[#00D1FF] group/item"
+              )}
             >
-              <div className="font-medium text-sm">{getLabel(place)}</div>
+              <span className="text-lg opacity-40 group-hover/item:opacity-100 transition-opacity">📍</span>
+              <div className="flex flex-col min-w-0">
+                <div className="font-[1000] text-xs uppercase tracking-tight text-black truncate">
+                  {getLabel(place)}
+                </div>
+                <div className="text-[10px] font-black uppercase text-black/40 truncate">
+                  {place.place_name?.split(",").slice(1).join(",").trim() || "Location"}
+                </div>
+              </div>
             </div>
           ))}
         </div>

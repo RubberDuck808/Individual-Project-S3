@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function ProfileBackground({ user, children }) {
   const url = user?.backgroundUrl;
 
@@ -12,7 +10,6 @@ export default function ProfileBackground({ user, children }) {
             alt="profile background"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-black/20" />
         </div>
       )}
       <div className="relative pt-48 md:pt-64">

@@ -1,20 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { fetchAvatars, changeMyAvatar } from "../../../api/avatarApi";
 
-function AvatarTile({ avatar, selected, onClick }) {
+function cx(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
+function SelectionTile({ url, name, selected, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full rounded-2xl border p-2 flex flex-col items-center gap-2 hover:opacity-90 transition ${
-        selected ? "border-blue-600" : "border-gray-200 dark:border-gray-800"
-      }`}
+      className={cx(
+        "w-full rounded-[1.5rem] border-[3px] border-black p-1.5 transition-all",
+        selected
+          ? "bg-black translate-y-1 shadow-none"
+          : "bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-1 active:shadow-none"
+      )}
       type="button"
     >
-      <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
-        {avatar.url ? (
-          <img src={avatar.url} alt={avatar.name} className="w-full h-full object-cover" />
+      <div className="w-full aspect-square rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center border-2 border-black/5">
+        {url ? (
+          <img src={url} alt={name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-600" />
+          <div className="w-full h-full bg-[#00D1FF]" />
         )}
       </div>
     </button>
@@ -24,19 +31,16 @@ function AvatarTile({ avatar, selected, onClick }) {
 export default function AvatarPicker({ currentAvatarName, onUpdated }) {
   const [avatars, setAvatars] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [selected, setSelected] = useState(currentAvatarName || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // keep selected in sync if parent updates
   useEffect(() => {
     setSelected(currentAvatarName || "");
   }, [currentAvatarName]);
 
   useEffect(() => {
     let cancelled = false;
-
     (async () => {
       setLoading(true);
       setError("");
@@ -49,18 +53,13 @@ export default function AvatarPicker({ currentAvatarName, onUpdated }) {
         if (!cancelled) setLoading(false);
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   const handleSave = async () => {
     if (!selected) return;
-
     setSaving(true);
     setError("");
-
     try {
       const updatedUser = await changeMyAvatar(selected);
       localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -72,36 +71,44 @@ export default function AvatarPicker({ currentAvatarName, onUpdated }) {
     }
   };
 
-  if (loading) return <div className="opacity-70">Loading avatars…</div>;
+  if (loading) return <div className="font-black animate-pulse uppercase tracking-widest text-slate-400">Loading characters...</div>;
+
+  const hasChanged = selected !== currentAvatarName;
 
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Profile picture</h2>
+        <h2 className="text-xl font-[1000] uppercase tracking-tighter italic">Select Identity</h2>
 
         <button
           onClick={handleSave}
-          disabled={saving || !selected || selected === currentAvatarName}
-          className={`px-4 py-2 rounded-xl font-bold ${
-            saving || !selected || selected === currentAvatarName
-              ? "opacity-60 cursor-not-allowed"
-              : "hover:opacity-95"
-          } bg-blue-600 text-white`}
+          disabled={saving || !selected || !hasChanged}
+          className={cx(
+            "px-6 py-2 rounded-xl font-[1000] uppercase text-xs tracking-widest border-[3px] border-black transition-all",
+            saving || !selected || !hasChanged
+              ? "bg-slate-100 text-slate-400 border-slate-300 cursor-not-allowed"
+              : "bg-[#FFD600] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none"
+          )}
           type="button"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? "Syncing..." : "Save Selection"}
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && (
+        <div className="p-3 bg-red-100 border-2 border-red-500 rounded-xl text-red-600 text-xs font-black uppercase">
+          {error}
+        </div>
+      )}
 
-      <div className="w-full grid grid-cols-3 sm:grid-cols-4 gap-3">
+      <div className="w-full grid grid-cols-3 sm:grid-cols-4 gap-4">
         {avatars
           .filter((a) => a.active)
           .map((a) => (
-            <AvatarTile
+            <SelectionTile
               key={a.name}
-              avatar={a}
+              url={a.url}
+              name={a.name}
               selected={selected === a.name}
               onClick={() => setSelected(a.name)}
             />

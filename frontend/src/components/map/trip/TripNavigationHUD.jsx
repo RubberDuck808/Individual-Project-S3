@@ -1,6 +1,8 @@
 import React, { useMemo } from "react";
-import { haversineMeters } from "../../../utils/geo";
 import { Check } from 'lucide-react';
+import { haversineMeters } from "../../../utils/geo";
+
+// --- Helper Functions ---
 
 function roundToNearest50(m) {
   if (m == null) return null;
@@ -29,6 +31,8 @@ function iconForManeuver(maneuver) {
   return "➜";
 }
 
+// --- Component ---
+
 export default function TripNavigationHUD({
   steps,
   activeStepIndex,
@@ -40,10 +44,11 @@ export default function TripNavigationHUD({
   if (!steps?.length) return null;
 
   const step = steps[activeStepIndex] ?? steps[0];
-  const instruction = step?.maneuver?.instruction ?? "Continue";
+  const instruction = step?.maneuver?.instruction ?? "Keep Moving";
   const icon = iconForManeuver(step?.maneuver);
   const maneuverLngLat = step?.maneuver?.location;
 
+  // Calculate distance logic
   const distanceToManeuver = useMemo(() => {
     if (userLocation?.lat == null || userLocation?.lng == null) return null;
     if (!Array.isArray(maneuverLngLat) || maneuverLngLat.length < 2) return null;
@@ -63,61 +68,43 @@ export default function TripNavigationHUD({
   const distText = formatMeters(distanceToManeuver);
 
   return (
-    <div
-      className="
-        fixed right-4 top-16 z-50
-        w-[88vw]
-        sm:w-[460px]
-        md:w-[520px]
-        lg:w-[560px]
-        max-w-[88vw]
-      "
-    >
-      <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-white/85 p-4 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/70">
-        {/* glow */}
-        <div className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full bg-[#2F88FF]/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-emerald-500/15 blur-3xl" />
+    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] w-[92vw] max-w-lg">
+      <div className="bg-black border-[5px] border-black rounded-[2.5rem] shadow-[12px_12px_0px_0px_#FFD600] overflow-hidden">
+        
+        {/* Top Accent Bar */}
+        <div className="h-2 w-full bg-[#00D1FF]" />
 
-        {/* Cancel trip */}
-        <button
-          onClick={onCancel}
-          disabled={submitting}
-          className="absolute right-2 top-2 rounded-full p-2 text-gray-500 transition hover:bg-black/5 hover:text-gray-900 disabled:opacity-60 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
-          aria-label="Cancel trip"
-          title="Cancel trip"
-        >
-          ✕
-        </button>
+        <div className="p-6 bg-[#111] flex items-center gap-6">
+          {/* Big Direction Icon */}
+          <div className="shrink-0 w-20 h-20 bg-[#FFD600] border-4 border-black rounded-[2rem] flex items-center justify-center text-4xl shadow-[6px_6px_0px_0px_rgba(255,255,255,0.1)]">
+            {icon}
+          </div>
 
-        {/* Finish trip */}
-        <button
-          onClick={onEnd}
-          disabled={submitting}
-          className="absolute right-2 top-12 rounded-full p-2 text-gray-600 transition hover:bg-black/5 hover:text-gray-900 disabled:opacity-60 dark:text-gray-200 dark:hover:bg-white/10 dark:hover:text-white"
-          aria-label="Finish trip"
-          title="Finish trip"
-        >
-          <span className="text-lg"><Check /></span>
-        </button>
-
-        <div className="pr-14">
-          <div className="flex items-start gap-3">
-            {/* Maneuver icon */}
-            <div className="mt-0.5 shrink-0 rounded-xl bg-blue-600 text-white w-12 h-12 flex items-center justify-center">
-              <span className="text-2xl leading-none">{icon}</span>
+          <div className="flex-1 min-w-0">
+            <div className="text-4xl font-[1000] text-[#00D1FF] italic tracking-tighter uppercase leading-none">
+              {distText ? `IN ${distText}` : "NOW"}
             </div>
-
-            <div className="min-w-0 flex-1">
-              {/* BIG distance */}
-              <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                {distText ? `IN ${distText}` : " "}
-              </div>
-
-              {/* Main instruction */}
-              <div className="mt-1 text-base sm:text-lg font-semibold leading-snug break-words">
-                {instruction}
-              </div>
+            <div className="mt-2 text-lg font-bold text-white leading-tight uppercase tracking-tight line-clamp-2">
+              {instruction}
             </div>
+          </div>
+
+          {/* Side Controls */}
+          <div className="flex flex-col gap-2">
+            <button 
+              onClick={onEnd}
+              disabled={submitting}
+              className="w-10 h-10 bg-emerald-400 border-[3px] border-black rounded-xl flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all disabled:opacity-50"
+            >
+              <Check size={20} />
+            </button>
+            <button 
+              onClick={onCancel}
+              disabled={submitting}
+              className="w-10 h-10 bg-white border-[3px] border-black rounded-xl flex items-center justify-center font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 transition-all disabled:opacity-50"
+            >
+              ✕
+            </button>
           </div>
         </div>
       </div>

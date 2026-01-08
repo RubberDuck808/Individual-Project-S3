@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { updateCurrentUser } from "../../../api/userApi";
 
+// Helper for joining classes
+const cx = (...classes) => classes.filter(Boolean).join(" ");
+
 export default function AccountSettingsSection({ me, setMe, onUsernameChanged }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -49,54 +52,98 @@ export default function AccountSettingsSection({ me, setMe, onUsernameChanged })
     }
   };
 
+  // Reusable Input Style for Neo-Brutalism
+  const inputClass = "w-full p-4 rounded-2xl border-[3px] border-black bg-slate-50 font-bold focus:bg-white focus:outline-none transition-all focus:-translate-y-0.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]";
+  const labelClass = "text-[10px] font-black uppercase ml-2 mb-1 text-slate-500 tracking-widest";
+
   return (
-    <div className="w-full space-y-4">
-      <h2 className="text-lg font-semibold mb-2">Account details</h2>
+    <div className="w-full space-y-6">
+      <h2 className="text-xl font-[1000] uppercase italic tracking-tighter mb-2">Account Credentials</h2>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
-      {success && <p className="text-sm text-green-400">{success}</p>}
+      {error && (
+        <div className="p-3 bg-red-100 border-2 border-red-500 rounded-xl text-red-600 text-xs font-black uppercase">
+          {error}
+        </div>
+      )}
+      
+      {success && (
+        <div className="p-3 bg-green-100 border-2 border-green-500 rounded-xl text-green-600 text-xs font-black uppercase">
+          {success}
+        </div>
+      )}
 
-      <input
-        placeholder="Name"
-        value={form.name}
-        onChange={onChange("name")}
-        className="w-full p-2 rounded-lg border bg-transparent"
-      />
-      <input
-        placeholder="Username"
-        value={form.username}
-        onChange={onChange("username")}
-        className="w-full p-2 rounded-lg border bg-transparent"
-      />
-      <input
-        placeholder="Email"
-        value={form.email}
-        onChange={onChange("email")}
-        className="w-full p-2 rounded-lg border bg-transparent"
-      />
-      <input
-        type="password"
-        placeholder="Current password"
-        value={form.currentPassword}
-        onChange={onChange("currentPassword")}
-        className="w-full p-2 rounded-lg border bg-transparent"
-      />
-      <input
-        type="password"
-        placeholder="New password"
-        value={form.newPassword}
-        onChange={onChange("newPassword")}
-        className="w-full p-2 rounded-lg border bg-transparent"
-      />
+      <div className="space-y-4">
+        {/* Name Field */}
+        <div className="flex flex-col">
+          <label className={labelClass}>Display Name</label>
+          <input
+            placeholder="e.g. John Doe"
+            value={form.name}
+            onChange={onChange("name")}
+            className={inputClass}
+          />
+        </div>
+
+        {/* Username Field */}
+        <div className="flex flex-col">
+          <label className={labelClass}>Username Handle</label>
+          <input
+            placeholder="username"
+            value={form.username}
+            onChange={onChange("username")}
+            className={inputClass}
+          />
+        </div>
+
+        {/* Email Field */}
+        <div className="flex flex-col">
+          <label className={labelClass}>Email Address</label>
+          <input
+            placeholder="email@example.com"
+            value={form.email}
+            onChange={onChange("email")}
+            className={inputClass}
+          />
+        </div>
+
+        <hr className="border-t-[3px] border-black/5 my-2" />
+
+        {/* Current Password Field */}
+        <div className="flex flex-col">
+          <label className={labelClass}>Current Password</label>
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={form.currentPassword}
+            onChange={onChange("currentPassword")}
+            className={inputClass}
+          />
+        </div>
+
+        {/* New Password Field */}
+        <div className="flex flex-col">
+          <label className={labelClass}>New Password (Optional)</label>
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={form.newPassword}
+            onChange={onChange("newPassword")}
+            className={inputClass}
+          />
+        </div>
+      </div>
 
       <button
         onClick={handleSave}
         disabled={saving}
-        className={`w-full py-2 rounded-lg font-semibold transition ${
-          saving ? "opacity-60 cursor-not-allowed" : "hover:opacity-95"
-        } bg-blue-600 text-white`}
+        className={cx(
+          "w-full py-4 rounded-2xl font-[1000] uppercase tracking-widest text-sm border-[3px] border-black transition-all",
+          saving 
+            ? "bg-slate-200 text-slate-400 cursor-not-allowed border-slate-300" 
+            : "bg-[#00D1FF] text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none"
+        )}
       >
-        {saving ? "Saving..." : "Save changes"}
+        {saving ? "Syncing..." : "Commit Changes"}
       </button>
     </div>
   );

@@ -1,20 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { fetchBackgrounds, changeMyBackground } from "../../../api/backgroundApi";
 
-function BackgroundTile({ bg, selected, onClick }) {
+function cx(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
+function SelectionTile({ url, name, selected, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full rounded-2xl border p-2 flex flex-col items-center gap-2 hover:opacity-90 transition ${
-        selected ? "border-blue-600" : "border-gray-200 dark:border-gray-800"
-      }`}
+      className={cx(
+        "w-full rounded-[1.5rem] border-[3px] border-black p-1.5 transition-all overflow-hidden",
+        selected
+          ? "bg-black translate-y-1 shadow-none"
+          : "bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-1 active:shadow-none"
+      )}
       type="button"
     >
-      <div className="w-full aspect-video rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800">
-        {bg.url ? (
-          <img src={bg.url} alt={bg.name} className="w-full h-full object-cover" />
+      <div className="w-full aspect-video rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center border-2 border-black/5">
+        {url ? (
+          <img src={url} alt={name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-600" />
+          <div className="w-full h-full bg-[#FF6AC1]" />
         )}
       </div>
     </button>
@@ -24,7 +31,6 @@ function BackgroundTile({ bg, selected, onClick }) {
 export default function BackgroundPicker({ currentBackgroundName, onUpdated }) {
   const [backgrounds, setBackgrounds] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [selected, setSelected] = useState(currentBackgroundName || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -35,7 +41,6 @@ export default function BackgroundPicker({ currentBackgroundName, onUpdated }) {
 
   useEffect(() => {
     let cancelled = false;
-
     (async () => {
       setLoading(true);
       setError("");
@@ -48,18 +53,13 @@ export default function BackgroundPicker({ currentBackgroundName, onUpdated }) {
         if (!cancelled) setLoading(false);
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   const handleSave = async () => {
     if (!selected) return;
-
     setSaving(true);
     setError("");
-
     try {
       const updatedUser = await changeMyBackground(selected);
       localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -71,36 +71,48 @@ export default function BackgroundPicker({ currentBackgroundName, onUpdated }) {
     }
   };
 
-  if (loading) return <div className="opacity-70">Loading backgrounds…</div>;
+  if (loading) return (
+    <div className="font-black animate-pulse uppercase tracking-widest text-slate-400">
+      Fetching Scenes...
+    </div>
+  );
+
+  const hasChanged = selected !== currentBackgroundName;
 
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Profile background</h2>
+        <h2 className="text-xl font-[1000] uppercase tracking-tighter italic">Scene Selection</h2>
 
         <button
           onClick={handleSave}
-          disabled={saving || !selected || selected === currentBackgroundName}
-          className={`px-4 py-2 rounded-xl font-bold ${
-            saving || !selected || selected === currentBackgroundName
-              ? "opacity-60 cursor-not-allowed"
-              : "hover:opacity-95"
-          } bg-blue-600 text-white`}
+          disabled={saving || !selected || !hasChanged}
+          className={cx(
+            "px-6 py-2 rounded-xl font-[1000] uppercase text-xs tracking-widest border-[3px] border-black transition-all",
+            saving || !selected || !hasChanged
+              ? "bg-slate-100 text-slate-400 border-slate-300 cursor-not-allowed"
+              : "bg-[#FF6AC1] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-none"
+          )}
           type="button"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? "Updating..." : "Apply Scene"}
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && (
+        <div className="p-3 bg-red-100 border-2 border-red-500 rounded-xl text-red-600 text-xs font-black uppercase">
+          {error}
+        </div>
+      )}
 
-      <div className="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {backgrounds
           .filter((b) => b.active)
           .map((b) => (
-            <BackgroundTile
+            <SelectionTile
               key={b.name}
-              bg={b}
+              url={b.url}
+              name={b.name}
               selected={selected === b.name}
               onClick={() => setSelected(b.name)}
             />
