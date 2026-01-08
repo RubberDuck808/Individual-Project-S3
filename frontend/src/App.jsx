@@ -15,7 +15,7 @@ import RealLocationProvider from "./providers/RealLocationProvider";
 import SimulatedRouteProvider from "./providers/SimulatedRouteProvider";
 
 export default function App() {
-  const USE_SPOOF = true;
+  const USE_SPOOF = false;
   const Provider = USE_SPOOF ? SimulatedRouteProvider : RealLocationProvider;
 
   return (

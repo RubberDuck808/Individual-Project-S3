@@ -1,27 +1,39 @@
 package nl.fontys.db3.backend.repository;
 
-
-import nl.fontys.db3.backend.IntegrationTestBase;
+import nl.fontys.db3.backend.entity.Role;
 import nl.fontys.db3.backend.entity.User;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
+
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class UserRepositoryIT extends IntegrationTestBase {
 
-    
-    @Autowired
-    UserRepository userRepository;
+@AutoConfigureTestDatabase(replace = Replace.NONE)
+@ActiveProfiles("test")
+@DataJpaTest
+class UserRepositoryIT {
+
+    @Autowired UserRepository userRepository;
+    @Autowired RoleRepository roleRepository;
 
     @Test
     void saveAndFindByEmail_works() {
-        User u = new User();
-        u.setEmail("user@test.com");
-        u.setUsername("user");
-        u.setName("User");
-        u.setPassword("encoded");
+        // USER exists at lowest level, ensure it exists for test DB:
+        Role userRole = roleRepository.findByName("USER")
+                .orElseGet(() -> roleRepository.save(Role.builder().name("USER").build()));
+
+        User u = User.builder()
+                .email("user@test.com")
+                .username("user")
+                .name("User")
+                .password("encoded")
+                .role(userRole)
+                .build();
 
         userRepository.save(u);
 

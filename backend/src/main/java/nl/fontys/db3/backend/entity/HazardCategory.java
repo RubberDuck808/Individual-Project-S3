@@ -15,9 +15,8 @@ public class HazardCategory {
     @Column(unique = true, nullable = false)
     private String name;
 
-    private String icon;
+    private String iconPath;
 
     @Builder.Default
     private boolean active = true;
 }
-

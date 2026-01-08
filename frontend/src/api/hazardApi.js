@@ -2,12 +2,12 @@ import { authFetch } from "./auth";
 
 let cachedCategories = null;
 
-// Open hazards are hazards that the user can vote on
+// Open hazards
 export async function getAllHazards() {
   return authFetch("/api/hazards/open");
 }
 
-// Categories show when making a report
+// Categories
 export async function getCategories() {
   return authFetch("/api/hazard-categories");
 }
@@ -31,7 +31,6 @@ export async function createHazard({ latitude, longitude, categoryId }) {
     body: JSON.stringify(payload),
   });
 }
-
 
 export async function getHazardsByUsername(username) {
   return authFetch(`/api/hazards/by-user/${encodeURIComponent(username)}`);

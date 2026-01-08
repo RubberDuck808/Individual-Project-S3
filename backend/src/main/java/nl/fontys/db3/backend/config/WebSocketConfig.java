@@ -11,8 +11,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
-                .withSockJS();
+            .setAllowedOrigins(
+                "http://localhost:5173",
+                "https://tripwire-frontend-166064655547.europe-west4.run.app"
+            )
+            .withSockJS();
+
     }
 
     @Override

@@ -7,6 +7,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import nl.fontys.db3.backend.entity.Role;
+import nl.fontys.db3.backend.service.AvatarService;
+import nl.fontys.db3.backend.entity.Avatar;
+import nl.fontys.db3.backend.entity.Background;
+import nl.fontys.db3.backend.service.BackgroundService;
+
+
 
 
 import java.time.LocalDateTime;
@@ -19,12 +25,25 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    private final AvatarService avatarService;
+    private final BackgroundService backgroundService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
+
+
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            RoleRepository roleRepository,
+            AvatarService avatarService,
+            BackgroundService backgroundService
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
+        this.avatarService = avatarService;
+        this.backgroundService = backgroundService;
     }
+
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -177,4 +196,37 @@ public class UserService {
 
         return userRepository.save(user);
     }
+
+    @Transactional
+public User changeMyAvatar(String currentEmailFromJwt, String avatarName) {
+    if (currentEmailFromJwt == null || currentEmailFromJwt.isBlank()) {
+        throw new IllegalArgumentException("Not authenticated");
+    }
+
+    User user = userRepository.findByEmail(currentEmailFromJwt.trim().toLowerCase())
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    Avatar avatar = avatarService.getActiveAvatarByNameOrThrow(avatarName);
+
+    user.setAvatar(avatar);
+    return userRepository.save(user);
+}
+
+
+@Transactional
+public User changeMyBackground(String currentEmailFromJwt, String backgroundName) {
+    if (currentEmailFromJwt == null || currentEmailFromJwt.isBlank()) {
+        throw new IllegalArgumentException("Not authenticated");
+    }
+
+    User user = userRepository.findByEmail(currentEmailFromJwt.trim().toLowerCase())
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    Background background = backgroundService.getActiveBackgroundByNameOrThrow(backgroundName);
+
+    user.setBackground(background);
+    return userRepository.save(user);
+}
+
+
 }

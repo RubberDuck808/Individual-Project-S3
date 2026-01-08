@@ -34,6 +34,15 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @ManyToOne
+    @JoinColumn(name = "avatar_id")
+    private Avatar avatar;
+
+    @ManyToOne
+    @JoinColumn(name = "background_id")
+    private Background background;
+
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "role_id")
     private Role role;

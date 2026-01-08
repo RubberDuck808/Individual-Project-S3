@@ -6,7 +6,8 @@ stages:
   - deploy
 
 variables:
-  DOCKER_HOST: tcp://host.docker.internal:2375
+  # Keep these globals for Docker jobs if you want,
+  # but CI tests will override DOCKER_HOST to use dind.
   DOCKER_TLS_CERTDIR: ""
 
   GCP_REGION: europe-west4
@@ -50,23 +51,21 @@ frontend-build:
     expire_in: 1 week
 
 # ================================
-# Backend tests + JaCoCo coverage (WITH POSTGRES)
+# Backend tests + JaCoCo (TESTCONTAINERS)
 # ================================
 backend-test:
   stage: test
   image: gradle:8.9-jdk21
-  allow_failure: true
+  allow_failure: false
 
   services:
     - name: postgres:16
       alias: postgres
 
   variables:
-    # prevent PlaceholderResolutionException from app.jwt.secret=${JWT_SECRET}
-    JWT_SECRET: "ci-test-secret"
-
-    # optional: only if you have application-test.properties and want it used
     SPRING_PROFILES_ACTIVE: "test"
+    JWT_SECRET: "ci-test-secret"
+    MAPBOX_TOKEN: "ci-test-mapbox-token"
 
     POSTGRES_DB: testdb
     POSTGRES_USER: test
@@ -89,6 +88,7 @@ backend-test:
       junit: backend/build/test-results/test/*.xml
     paths:
       - backend/build/reports/jacoco/
+      - backend/build/reports/tests/test/
 
   needs:
     - backend-build
@@ -123,6 +123,12 @@ sonarqube-backend:
 docker-backend:
   stage: docker
   image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
@@ -142,6 +148,12 @@ docker-backend:
 docker-frontend:
   stage: docker
   image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
@@ -167,7 +179,13 @@ deploy-backend:
     - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
     - gcloud config set project $GCP_PROJECT
   script:
-    - gcloud run deploy tripwire-backend --image=docker.io/rubberduck808/tripwire-backend:latest --region=$GCP_REGION --platform=managed --allow-unauthenticated --port=8080
+    - gcloud run deploy tripwire-backend \
+        --image=docker.io/rubberduck808/tripwire-backend:latest \
+        --region=$GCP_REGION \
+        --platform=managed \
+        --allow-unauthenticated \
+        --port=8080 \
+        --set-env-vars "JWT_SECRET=$JWT_SECRET,MAPBOX_TOKEN=$MAPBOX_TOKEN"
   only:
     - main
 
@@ -183,6 +201,11 @@ deploy-frontend:
     - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
     - gcloud config set project $GCP_PROJECT
   script:
-    - gcloud run deploy tripwire-frontend --image=docker.io/rubberduck808/tripwire-frontend:latest --region=$GCP_REGION --platform=managed --allow-unauthenticated --port=80
+    - gcloud run deploy tripwire-frontend \
+        --image=docker.io/rubberduck808/tripwire-frontend:latest \
+        --region=$GCP_REGION \
+        --platform=managed \
+        --allow-unauthenticated \
+        --port=80
   only:
     - main

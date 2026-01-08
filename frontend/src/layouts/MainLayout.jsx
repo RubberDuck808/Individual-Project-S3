@@ -11,11 +11,8 @@ export default function MainLayout() {
   const hideNav =
     location.pathname === "/" || location.pathname === "/settings";
 
-  // Build /profile/:username from localStorage user
   const profilePath = useMemo(() => {
     const me = getStoredUser();
-    // if user isn't in storage for some reason, fall back to /profile/me
-    // (but ProtectedRoute should normally guarantee this exists)
     const username = me?.username ? String(me.username).toLowerCase() : "me";
     return `/profile/${username}`;
   }, []);

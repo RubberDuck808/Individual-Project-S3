@@ -5,3 +5,7 @@
 #define WIFI_PASS "6WVMVcJL1L9tcHcM"
 
 #endif
+
+// Iphone Hotspot
+// #define WIFI_SSID "OscarIphone"
+// #define WIFI_PASS "Rashid2005"
