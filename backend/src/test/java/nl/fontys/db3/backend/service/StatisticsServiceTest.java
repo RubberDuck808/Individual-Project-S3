@@ -8,11 +8,16 @@ import nl.fontys.db3.backend.repository.UserRepository;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.Optional;
 
@@ -21,6 +26,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class StatisticsServiceTest {
 
     @Mock private StatisticsRepository statsRepo;
@@ -29,7 +35,6 @@ class StatisticsServiceTest {
     @InjectMocks
     private StatisticsService service;
 
-    /* ===================== ensureStatsRow ===================== */
 
     @Test
     void ensureStatsRow_whenExists_returnsExisting() {
@@ -70,11 +75,12 @@ class StatisticsServiceTest {
         verify(statsRepo).save(any(Statistics.class));
     }
 
-    /* ===================== getStatsByUsername ===================== */
 
-    @Test
-    void getStatsByUsername_blank_throws() {
-        assertThrows(IllegalArgumentException.class, () -> service.getStatsByUsername("  "));
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"   ", "\t", "\n"})
+    void getStatsByUsername_nullOrBlank_throws(String username) {
+        assertThrows(IllegalArgumentException.class, () -> service.getStatsByUsername(username));
         verifyNoInteractions(userRepo, statsRepo);
     }
 
@@ -122,15 +128,7 @@ class StatisticsServiceTest {
 
         when(statsRepo.findByUser_Id(5L)).thenReturn(Optional.empty());
 
-        // when ensureStatsRow saves new row, return a stats object with defaults
-        Statistics created = Statistics.builder()
-                .user(user)
-                .totalTrips(0)
-                .totalDistanceKm(0.0)
-                .totalHazardsReported(0)
-                .totalVotes(0)
-                .build();
-        when(statsRepo.save(any(Statistics.class))).thenReturn(created);
+        when(statsRepo.save(any(Statistics.class))).thenAnswer(inv -> inv.getArgument(0));
 
         UserStatsDTO dto = service.getStatsByUsername("bob");
 
@@ -143,41 +141,67 @@ class StatisticsServiceTest {
         verify(statsRepo).save(any(Statistics.class));
     }
 
-    /* ===================== incrementVotes / Hazards ===================== */
 
     @Test
     void incrementVotes_success_whenRowExists() {
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(true);
         when(statsRepo.incVotes(7L)).thenReturn(1);
 
         service.incrementVotes(7L);
 
         verify(statsRepo).incVotes(7L);
+        verify(statsRepo, never()).save(any());
     }
 
     @Test
-    void incrementVotes_missingRow_throws() {
-        when(statsRepo.incVotes(7L)).thenReturn(0);
+    void incrementVotes_missingRow_autoCreatesAndIncrements() {
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(7L);
+        
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(false);
+        when(userRepo.findById(7L)).thenReturn(Optional.of(user));
+        
+        when(statsRepo.save(any(Statistics.class))).thenAnswer(inv -> inv.getArgument(0));
+        doReturn(1).when(statsRepo).incVotes(7L);
 
-        assertThrows(IllegalStateException.class, () -> service.incrementVotes(7L));
+        service.incrementVotes(7L);
+
+        verify(statsRepo).existsByUser_Id(7L);
+        verify(userRepo).findById(7L);
+        verify(statsRepo).save(any(Statistics.class));
+        verify(statsRepo).incVotes(7L);
     }
 
     @Test
     void incrementHazards_success_whenRowExists() {
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(true);
         when(statsRepo.incHazards(7L)).thenReturn(1);
 
         service.incrementHazards(7L);
 
         verify(statsRepo).incHazards(7L);
+        verify(statsRepo, never()).save(any());
     }
 
     @Test
-    void incrementHazards_missingRow_throws() {
-        when(statsRepo.incHazards(7L)).thenReturn(0);
+    void incrementHazards_missingRow_autoCreatesAndIncrements() {
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(7L);
+        
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(false);
+        when(userRepo.findById(7L)).thenReturn(Optional.of(user));
+        
+        when(statsRepo.save(any(Statistics.class))).thenAnswer(inv -> inv.getArgument(0));
+        doReturn(1).when(statsRepo).incHazards(7L);
 
-        assertThrows(IllegalStateException.class, () -> service.incrementHazards(7L));
+        service.incrementHazards(7L);
+
+        verify(statsRepo).existsByUser_Id(7L);
+        verify(userRepo).findById(7L);
+        verify(statsRepo).save(any(Statistics.class));
+        verify(statsRepo).incHazards(7L);
     }
 
-    /* ===================== incrementTripsAndDistance ===================== */
 
     @Test
     void incrementTripsAndDistance_negativeKm_throws() {
@@ -187,17 +211,149 @@ class StatisticsServiceTest {
 
     @Test
     void incrementTripsAndDistance_success_whenRowExists() {
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(true);
         when(statsRepo.incTripsAndAddDistance(7L, 12.5)).thenReturn(1);
 
         service.incrementTripsAndDistance(7L, 12.5);
 
         verify(statsRepo).incTripsAndAddDistance(7L, 12.5);
+        verify(statsRepo, never()).save(any());
     }
 
     @Test
-    void incrementTripsAndDistance_missingRow_throws() {
+    void incrementTripsAndDistance_missingRow_autoCreatesAndIncrements() {
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(7L);
+        
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(false);
+        when(userRepo.findById(7L)).thenReturn(Optional.of(user));
+        
+        when(statsRepo.save(any(Statistics.class))).thenAnswer(inv -> inv.getArgument(0));
+        doReturn(1).when(statsRepo).incTripsAndAddDistance(7L, 12.5);
+
+        service.incrementTripsAndDistance(7L, 12.5);
+
+        verify(statsRepo).existsByUser_Id(7L);
+        verify(userRepo).findById(7L);
+        verify(statsRepo).save(any(Statistics.class));
+        verify(statsRepo).flush(); // Verify flush is called after creating row
+        verify(statsRepo).incTripsAndAddDistance(7L, 12.5);
+    }
+
+    @Test
+    void incrementVotes_userNotFound_throws() {
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(false);
+        when(userRepo.findById(7L)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> service.incrementVotes(7L));
+
+        verify(statsRepo).existsByUser_Id(7L);
+        verify(userRepo).findById(7L);
+        verify(statsRepo, never()).save(any());
+        verify(statsRepo, never()).incVotes(anyLong());
+    }
+
+    @Test
+    void incrementVotes_updateReturnsZero_throws() {
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(true);
+        when(statsRepo.incVotes(7L)).thenReturn(0);
+
+        assertThrows(IllegalStateException.class, () -> service.incrementVotes(7L));
+
+        verify(statsRepo).incVotes(7L);
+    }
+
+    @Test
+    void incrementVotes_missingRow_flushCalled() {
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(7L);
+        
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(false);
+        when(userRepo.findById(7L)).thenReturn(Optional.of(user));
+        
+        when(statsRepo.save(any(Statistics.class))).thenAnswer(inv -> inv.getArgument(0));
+        doReturn(1).when(statsRepo).incVotes(7L);
+
+        service.incrementVotes(7L);
+
+        verify(statsRepo).flush(); // Verify flush is called after creating row
+    }
+
+    @Test
+    void incrementHazards_userNotFound_throws() {
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(false);
+        when(userRepo.findById(7L)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> service.incrementHazards(7L));
+
+        verify(statsRepo).existsByUser_Id(7L);
+        verify(userRepo).findById(7L);
+        verify(statsRepo, never()).save(any());
+        verify(statsRepo, never()).incHazards(anyLong());
+    }
+
+    @Test
+    void incrementHazards_updateReturnsZero_throws() {
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(true);
+        when(statsRepo.incHazards(7L)).thenReturn(0);
+
+        assertThrows(IllegalStateException.class, () -> service.incrementHazards(7L));
+
+        verify(statsRepo).incHazards(7L);
+    }
+
+    @Test
+    void incrementHazards_missingRow_flushCalled() {
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(7L);
+        
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(false);
+        when(userRepo.findById(7L)).thenReturn(Optional.of(user));
+        
+        when(statsRepo.save(any(Statistics.class))).thenAnswer(inv -> inv.getArgument(0));
+        doReturn(1).when(statsRepo).incHazards(7L);
+
+        service.incrementHazards(7L);
+
+        verify(statsRepo).flush(); // Verify flush is called after creating row
+    }
+
+    @Test
+    void incrementTripsAndDistance_userNotFound_throws() {
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(false);
+        when(userRepo.findById(7L)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> service.incrementTripsAndDistance(7L, 10.0));
+
+        verify(statsRepo).existsByUser_Id(7L);
+        verify(userRepo).findById(7L);
+        verify(statsRepo, never()).save(any());
+        verify(statsRepo, never()).incTripsAndAddDistance(anyLong(), anyDouble());
+    }
+
+    @Test
+    void incrementTripsAndDistance_updateReturnsZero_throws() {
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(true);
         when(statsRepo.incTripsAndAddDistance(7L, 12.5)).thenReturn(0);
 
         assertThrows(IllegalStateException.class, () -> service.incrementTripsAndDistance(7L, 12.5));
+
+        verify(statsRepo).incTripsAndAddDistance(7L, 12.5);
+    }
+
+    @Test
+    void incrementTripsAndDistance_zeroKm_success() {
+        when(statsRepo.existsByUser_Id(7L)).thenReturn(true);
+        when(statsRepo.incTripsAndAddDistance(7L, 0.0)).thenReturn(1);
+
+        service.incrementTripsAndDistance(7L, 0.0);
+
+        verify(statsRepo).incTripsAndAddDistance(7L, 0.0);
+    }
+
+    @Test
+    void getStatsByUsername_emptyString_throws() {
+        assertThrows(IllegalArgumentException.class, () -> service.getStatsByUsername(""));
+        verifyNoInteractions(userRepo, statsRepo);
     }
 }

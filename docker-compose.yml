@@ -1,20 +1,23 @@
 version: '3.9'
 
 services:
+  # Note: If using Supabase locally, run 'supabase start' first
+  # This will start Supabase services including PostgreSQL on port 54322
+  # Then set SPRING_DATASOURCE_URL to: jdbc:postgresql://host.docker.internal:54322/postgres
+  # Or use your hosted Supabase connection string in .env file
+
   backend:
     build: ./backend
     container_name: backend
     ports:
       - "8080:8080"
     env_file:
-      - .env   # loads backend env variables
-    environment:
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
-      SPRING_JPA_SHOW_SQL: ${SPRING_JPA_SHOW_SQL}
-      SPRING_FLYWAY_ENABLED: ${SPRING_FLYWAY_ENABLED}
+      - .env   # loads backend env variables from .env file
+    # Environment variables are loaded from .env file
+    # Your .env file contains Supabase connection details:
+    # SPRING_DATASOURCE_URL=jdbc:postgresql://aws-1-eu-west-3.pooler.supabase.com:5432/postgres?sslmode=require
+    # SPRING_DATASOURCE_USERNAME=postgres.dltyzhcmsapzfwmhswdl
+    # SPRING_DATASOURCE_PASSWORD=your_password
 
   frontend:
     build:

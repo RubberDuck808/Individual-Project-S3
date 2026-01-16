@@ -2,7 +2,7 @@
     "java.configuration.updateBuildConfiguration": "automatic",
     "java.compile.nullAnalysis.mode": "automatic",
     "sonarlint.connectedMode.project": {
-        "connectionId": "localhost",
-        "projectKey": "I548789_individual-project-s3_0ed3868f-3af8-4e41-a583-5ab0e0896d70"
+        "connectionId": "Frontend",
+        "projectKey": "I548789_individual-project-s3_0ed3868f-3af8-4e41-a583-5ab0e0896d70:frontend"
     }
 }

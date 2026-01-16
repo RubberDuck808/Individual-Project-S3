@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { RadioTower, Trophy, Users } from "lucide-react";
 
 export default function SummaryTab({ stats, recentActivity, achievements, liveConvoys, convoyInvites }) {
@@ -25,3 +26,11 @@ export default function SummaryTab({ stats, recentActivity, achievements, liveCo
     </div>
   );
 }
+
+SummaryTab.propTypes = {
+  stats: PropTypes.object,
+  recentActivity: PropTypes.array,
+  achievements: PropTypes.array,
+  liveConvoys: PropTypes.array,
+  convoyInvites: PropTypes.array,
+};

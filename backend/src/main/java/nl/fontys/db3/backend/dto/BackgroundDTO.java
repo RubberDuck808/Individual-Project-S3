@@ -4,6 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record BackgroundDTO(
+        Long id,
         String name,
         String imagePath,
         String url,

@@ -1,3 +1,6 @@
+import React from "react";
+import PropTypes from "prop-types";
+
 export default function ProfileBackground({ user, children }) {
   const url = user?.backgroundUrl;
 
@@ -18,3 +21,10 @@ export default function ProfileBackground({ user, children }) {
     </div>
   );
 }
+
+ProfileBackground.propTypes = {
+  user: PropTypes.shape({
+    backgroundUrl: PropTypes.string,
+  }),
+  children: PropTypes.node.isRequired,
+};

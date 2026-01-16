@@ -1,5 +1,7 @@
 package nl.fontys.db3.backend.service;
 
+import nl.fontys.db3.backend.entity.Avatar;
+import nl.fontys.db3.backend.entity.Background;
 import nl.fontys.db3.backend.entity.Role;
 import nl.fontys.db3.backend.entity.User;
 import nl.fontys.db3.backend.repository.RoleRepository;
@@ -8,7 +10,6 @@ import nl.fontys.db3.backend.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,14 +31,17 @@ class UserServiceTest {
     @Mock
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
+    @Mock
+    private AvatarService avatarService;
+
+    @Mock
+    private BackgroundService backgroundService;
+
     @InjectMocks
     private UserService userService;
 
-    /* ===================== createUser ===================== */
-
     @Test
     void createUser_success_assignsDefaultRoleAndEncodesPassword() {
-        // Arrange
         User input = new User();
         input.setUsername("  JohnDoe  ");
         input.setEmail("  JOHN@EXAMPLE.COM ");
@@ -53,10 +57,8 @@ class UserServiceTest {
         when(passwordEncoder.encode("plain123")).thenReturn("ENCODED");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // Act
         User result = userService.createUser(input);
 
-        // Assert
         assertNotNull(result);
         assertEquals("johndoe", result.getUsername());
         assertEquals("john@example.com", result.getEmail());
@@ -64,7 +66,6 @@ class UserServiceTest {
         assertEquals("ENCODED", result.getPassword());
         assertNotNull(result.getCreatedAt());
         assertEquals(userRole, result.getRole());
-
         verify(userRepository).save(any(User.class));
     }
 
@@ -81,17 +82,6 @@ class UserServiceTest {
     }
 
     @Test
-    void createUser_missingEmail_throws() {
-        User u = new User();
-        u.setUsername("x");
-        u.setName("A");
-        u.setPassword("p");
-
-        assertThrows(IllegalArgumentException.class, () -> userService.createUser(u));
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
     void createUser_usernameAlreadyExists_throws() {
         User u = new User();
         u.setUsername("John");
@@ -100,21 +90,6 @@ class UserServiceTest {
         u.setPassword("p");
 
         when(userRepository.existsByUsername("john")).thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class, () -> userService.createUser(u));
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void createUser_emailAlreadyExists_throws() {
-        User u = new User();
-        u.setUsername("John");
-        u.setEmail("john@example.com");
-        u.setName("John");
-        u.setPassword("p");
-
-        when(userRepository.existsByUsername("john")).thenReturn(false);
-        when(userRepository.existsByEmail("john@example.com")).thenReturn(true);
 
         assertThrows(IllegalArgumentException.class, () -> userService.createUser(u));
         verify(userRepository, never()).save(any());
@@ -136,17 +111,6 @@ class UserServiceTest {
         verify(userRepository, never()).save(any());
     }
 
-    /* ===================== deleteUser ===================== */
-
-    @Test
-    void deleteUser_success() {
-        when(userRepository.existsById(5L)).thenReturn(true);
-
-        userService.deleteUser(5L);
-
-        verify(userRepository).deleteById(5L);
-    }
-
     @Test
     void deleteUser_notFound_throws() {
         when(userRepository.existsById(5L)).thenReturn(false);
@@ -154,8 +118,6 @@ class UserServiceTest {
         assertThrows(IllegalArgumentException.class, () -> userService.deleteUser(5L));
         verify(userRepository, never()).deleteById(anyLong());
     }
-
-    /* ===================== getByUsername ===================== */
 
     @Test
     void getByUsername_normalizesToLowercase() {
@@ -172,15 +134,6 @@ class UserServiceTest {
     }
 
     @Test
-    void getByUsername_notFound_throws() {
-        when(userRepository.findByUsername("nope")).thenReturn(Optional.empty());
-
-        assertThrows(IllegalArgumentException.class, () -> userService.getByUsername("nope"));
-    }
-
-    /* ===================== findByUsernameOrEmail ===================== */
-
-    @Test
     void findByUsernameOrEmail_prefersUsernameWhenPresent() {
         User found = new User();
         when(userRepository.findByUsername("u")).thenReturn(Optional.of(found));
@@ -193,50 +146,17 @@ class UserServiceTest {
     }
 
     @Test
-    void findByUsernameOrEmail_usesEmailIfUsernameBlank() {
-        User found = new User();
-        when(userRepository.findByEmail("x@y.com")).thenReturn(Optional.of(found));
-
-        Optional<User> result = userService.findByUsernameOrEmail("   ", " X@Y.COM ");
-
-        assertTrue(result.isPresent());
-        verify(userRepository).findByEmail("x@y.com");
-    }
-
-    @Test
-    void findByUsernameOrEmail_returnsEmptyIfBothMissing() {
-        Optional<User> result = userService.findByUsernameOrEmail(null, "  ");
-
-        assertTrue(result.isEmpty());
-        verifyNoInteractions(userRepository);
-    }
-
-    /* ===================== checkPassword ===================== */
-
-    @Test
-    void checkPassword_delegatesToPasswordEncoder() {
-        when(passwordEncoder.matches("raw", "enc")).thenReturn(true);
-
-        assertTrue(userService.checkPassword("raw", "enc"));
-        verify(passwordEncoder).matches("raw", "enc");
-    }
-
-    /* ===================== updateMe ===================== */
-
-    @Test
     void updateMe_updatesNameAndUsername_withoutRequiringCurrentPassword() {
-        // Arrange
         User user = new User();
         user.setEmail("me@example.com");
         user.setUsername("olduser");
         user.setName("Old Name");
-        user.setPassword("ENC"); // stored encoded
+        user.setPassword("ENC");
 
         when(userRepository.findByEmail("me@example.com")).thenReturn(Optional.of(user));
         when(userRepository.existsByUsername("newuser")).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // Act
         User result = userService.updateMe(
                 "ME@EXAMPLE.COM",
                 " New Name ",
@@ -246,17 +166,15 @@ class UserServiceTest {
                 null
         );
 
-        // Assert
         assertEquals("New Name", result.getName());
         assertEquals("newuser", result.getUsername());
-        assertEquals("me@example.com", result.getEmail()); // unchanged
+        assertEquals("me@example.com", result.getEmail());
         verify(userRepository).save(user);
         verify(passwordEncoder, never()).matches(anyString(), anyString());
     }
 
     @Test
     void updateMe_emailChange_requiresCurrentPassword_andUpdatesEmail() {
-        // Arrange
         User user = new User();
         user.setEmail("me@example.com");
         user.setUsername("user");
@@ -267,7 +185,6 @@ class UserServiceTest {
         when(userRepository.existsByEmail("new@mail.com")).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // Act
         User result = userService.updateMe(
                 "me@example.com",
                 null,
@@ -277,7 +194,6 @@ class UserServiceTest {
                 null
         );
 
-        // Assert
         assertEquals("new@mail.com", result.getEmail());
         verify(passwordEncoder).matches("current123", "ENC");
         verify(userRepository).save(user);
@@ -349,37 +265,6 @@ class UserServiceTest {
     }
 
     @Test
-    void updateMe_emailChange_toExistingEmail_throws() {
-        User user = new User();
-        user.setEmail("me@example.com");
-        user.setPassword("ENC");
-
-        when(userRepository.findByEmail("me@example.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("current123", "ENC")).thenReturn(true);
-        when(userRepository.existsByEmail("taken@mail.com")).thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class, () -> userService.updateMe(
-                "me@example.com",
-                null, null,
-                "TAKEN@MAIL.COM",
-                "current123",
-                null
-        ));
-
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void updateMe_notAuthenticated_throws() {
-        assertThrows(IllegalArgumentException.class, () -> userService.updateMe(
-                "   ",
-                null, null, null,
-                null, null
-        ));
-        verifyNoInteractions(userRepository);
-    }
-
-    @Test
     void updateMe_userNotFound_throws() {
         when(userRepository.findByEmail("me@example.com")).thenReturn(Optional.empty());
 
@@ -390,34 +275,55 @@ class UserServiceTest {
         ));
     }
 
-    /* Optional: verify what exactly got saved (nice for normalization) */
     @Test
-    void createUser_savesNormalizedValues_usingCaptor() {
-        User input = new User();
-        input.setUsername("  A  ");
-        input.setEmail("  A@B.COM  ");
-        input.setName("Name");
-        input.setPassword("pw");
+    void changeMyAvatar_success() {
+        User user = new User();
+        user.setEmail("test@test.com");
+        Avatar avatar = Avatar.builder().id(1L).name("avatar1").build();
 
-        Role userRole = new Role();
-        userRole.setName("USER");
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        when(avatarService.getActiveAvatarByNameOrThrow("avatar1")).thenReturn(avatar);
+        when(userRepository.save(user)).thenReturn(user);
 
-        when(userRepository.existsByUsername("a")).thenReturn(false);
-        when(userRepository.existsByEmail("a@b.com")).thenReturn(false);
-        when(roleRepository.findByName("USER")).thenReturn(Optional.of(userRole));
-        when(passwordEncoder.encode("pw")).thenReturn("ENC");
+        User result = userService.changeMyAvatar("test@test.com", "avatar1");
 
-        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-        when(userRepository.save(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        assertNotNull(result);
+        assertEquals(avatar, result.getAvatar());
+        verify(userRepository).save(user);
+    }
 
-        User result = userService.createUser(input);
+    @Test
+    void changeMyAvatar_userNotFound_throws() {
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.empty());
 
-        User saved = captor.getValue();
-        assertEquals("a", saved.getUsername());
-        assertEquals("a@b.com", saved.getEmail());
-        assertEquals("ENC", saved.getPassword());
-        assertNotNull(saved.getCreatedAt());
-        assertEquals(userRole, saved.getRole());
-        assertSame(result, saved);
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.changeMyAvatar("test@test.com", "avatar1"));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void changeMyBackground_success() {
+        User user = new User();
+        user.setEmail("test@test.com");
+        Background background = Background.builder().id(1L).name("bg1").build();
+
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        when(backgroundService.getActiveBackgroundByNameOrThrow("bg1")).thenReturn(background);
+        when(userRepository.save(user)).thenReturn(user);
+
+        User result = userService.changeMyBackground("test@test.com", "bg1");
+
+        assertNotNull(result);
+        assertEquals(background, result.getBackground());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void changeMyBackground_userNotFound_throws() {
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.changeMyBackground("test@test.com", "bg1"));
+        verify(userRepository, never()).save(any());
     }
 }

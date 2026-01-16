@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import UserAvatar from "./avatars/UserAvatar";
@@ -37,3 +38,12 @@ export default function ProfileHeader({ profileUser, isMe }) {
     </div>
   );
 }
+
+ProfileHeader.propTypes = {
+  profileUser: PropTypes.shape({
+    name: PropTypes.string,
+    username: PropTypes.string.isRequired,
+    email: PropTypes.string,
+  }).isRequired,
+  isMe: PropTypes.bool.isRequired,
+};

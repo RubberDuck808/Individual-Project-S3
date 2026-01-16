@@ -1,7 +1,7 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import { updateCurrentUser } from "../../../api/userApi";
 
-// Helper for joining classes
 const cx = (...classes) => classes.filter(Boolean).join(" ");
 
 export default function AccountSettingsSection({ me, setMe, onUsernameChanged }) {
@@ -75,8 +75,9 @@ export default function AccountSettingsSection({ me, setMe, onUsernameChanged })
       <div className="space-y-4">
         {/* Name Field */}
         <div className="flex flex-col">
-          <label className={labelClass}>Display Name</label>
+          <label htmlFor="display-name" className={labelClass}>Display Name</label>
           <input
+            id="display-name"
             placeholder="e.g. John Doe"
             value={form.name}
             onChange={onChange("name")}
@@ -86,8 +87,9 @@ export default function AccountSettingsSection({ me, setMe, onUsernameChanged })
 
         {/* Username Field */}
         <div className="flex flex-col">
-          <label className={labelClass}>Username Handle</label>
+          <label htmlFor="username-handle" className={labelClass}>Username Handle</label>
           <input
+            id="username-handle"
             placeholder="username"
             value={form.username}
             onChange={onChange("username")}
@@ -97,8 +99,9 @@ export default function AccountSettingsSection({ me, setMe, onUsernameChanged })
 
         {/* Email Field */}
         <div className="flex flex-col">
-          <label className={labelClass}>Email Address</label>
+          <label htmlFor="email-address" className={labelClass}>Email Address</label>
           <input
+            id="email-address"
             placeholder="email@example.com"
             value={form.email}
             onChange={onChange("email")}
@@ -110,8 +113,9 @@ export default function AccountSettingsSection({ me, setMe, onUsernameChanged })
 
         {/* Current Password Field */}
         <div className="flex flex-col">
-          <label className={labelClass}>Current Password</label>
+          <label htmlFor="current-password" className={labelClass}>Current Password</label>
           <input
+            id="current-password"
             type="password"
             placeholder="••••••••"
             value={form.currentPassword}
@@ -122,8 +126,9 @@ export default function AccountSettingsSection({ me, setMe, onUsernameChanged })
 
         {/* New Password Field */}
         <div className="flex flex-col">
-          <label className={labelClass}>New Password (Optional)</label>
+          <label htmlFor="new-password" className={labelClass}>New Password (Optional)</label>
           <input
+            id="new-password"
             type="password"
             placeholder="••••••••"
             value={form.newPassword}
@@ -148,3 +153,13 @@ export default function AccountSettingsSection({ me, setMe, onUsernameChanged })
     </div>
   );
 }
+
+AccountSettingsSection.propTypes = {
+  me: PropTypes.shape({
+    name: PropTypes.string,
+    username: PropTypes.string,
+    email: PropTypes.string,
+  }),
+  setMe: PropTypes.func.isRequired,
+  onUsernameChanged: PropTypes.func,
+};

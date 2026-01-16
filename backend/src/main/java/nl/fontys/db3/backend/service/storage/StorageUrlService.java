@@ -19,7 +19,7 @@ public class StorageUrlService {
 
         // split to ensure proper encoding of each segment
         return UriComponentsBuilder
-                .fromHttpUrl(props.getPublicBaseUrl())
+                .fromUriString(props.getPublicBaseUrl())
                 .pathSegment(objectPath.split("/"))
                 .build()
                 .toUriString();
@@ -31,7 +31,7 @@ public class StorageUrlService {
 
         String prefix = props.getHazardIconsPrefix();
         return UriComponentsBuilder
-                .fromHttpUrl(props.getPublicBaseUrl())
+                .fromUriString(props.getPublicBaseUrl())
                 .pathSegment(prefix.split("/"))
                 .pathSegment(fileName)
                 .build()
@@ -44,7 +44,7 @@ public class StorageUrlService {
 
         String prefix = props.getPresetAvatarsPrefix();
         return UriComponentsBuilder
-                .fromHttpUrl(props.getPublicBaseUrl())
+                .fromUriString(props.getPublicBaseUrl())
                 .pathSegment(prefix.split("/"))
                 .pathSegment(fileName)
                 .build()
@@ -56,7 +56,7 @@ public class StorageUrlService {
 
         String prefix = props.getPresetBackgroundsPrefix();
         return UriComponentsBuilder
-                .fromHttpUrl(props.getPublicBaseUrl())
+                .fromUriString(props.getPublicBaseUrl())
                 .pathSegment(prefix.split("/"))
                 .pathSegment(fileName)
                 .build()

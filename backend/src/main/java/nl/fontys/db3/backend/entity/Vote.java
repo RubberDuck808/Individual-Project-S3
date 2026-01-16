@@ -20,7 +20,7 @@ public class Vote {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    private VoteType voteType; // UPVOTE, DOWNVOTE
+    private VoteType voteType;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false)

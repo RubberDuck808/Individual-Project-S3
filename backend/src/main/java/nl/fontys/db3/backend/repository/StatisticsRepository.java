@@ -17,15 +17,15 @@ public interface StatisticsRepository extends JpaRepository<Statistics, Long> {
     boolean existsByUser_Id(Long userId);
 
     // Atomic increments (safe under concurrency)
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("update Statistics s set s.totalVotes = s.totalVotes + 1 where s.user.id = :userId")
     int incVotes(@Param("userId") Long userId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("update Statistics s set s.totalHazardsReported = s.totalHazardsReported + 1 where s.user.id = :userId")
     int incHazards(@Param("userId") Long userId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
         @Query("""
         update Statistics s
         set s.totalTrips = s.totalTrips + 1,

@@ -14,11 +14,12 @@ export default function NavigationSection() {
         <div className="lg:col-span-5">
           <div className="inline-flex items-center gap-2 rounded-2xl bg-emerald-400 border-[3px] border-black px-4 py-2 text-xs font-[1000] uppercase tracking-widest text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-8">
             <span className="h-2 w-2 rounded-full bg-black animate-pulse" />
-            Live Navigation
+            <span>Live Navigation</span>
           </div>
 
           <h2 className="text-5xl md:text-6xl font-[1000] leading-[0.95] text-slate-900 uppercase italic">
-            Routes that <br /><span className="text-[#0066FF] drop-shadow-[2px_2px_0px_#000]">talk back.</span>
+            Routes that <br />
+            <span className="text-[#0066FF] drop-shadow-[2px_2px_0px_#000]">talk back.</span>
           </h2>
 
           <p className="mt-8 text-xl text-slate-600 font-bold leading-relaxed">
@@ -41,7 +42,7 @@ export default function NavigationSection() {
             <div className="p-6 bg-black text-white flex items-center justify-between">
               <div className="font-black uppercase tracking-tighter italic flex items-center gap-2">
                 <span className="w-3 h-3 bg-red-500 rounded-full animate-ping" />
-                Live Drive
+                <span>Live Drive</span>
               </div>
               <div className="text-[10px] font-black bg-[#FF6AC1] px-4 py-1 rounded-full uppercase border-2 border-white">Downtown → Home</div>
             </div>

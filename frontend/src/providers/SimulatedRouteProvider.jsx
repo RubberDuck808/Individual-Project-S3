@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import LocationContext from "../context/LocationContext";
-import React from "react";
 import { haversineMeters } from "../utils/geo";
 
 // Calculate bearing (radians)

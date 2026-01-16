@@ -1,5 +1,6 @@
 package nl.fontys.db3.backend.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import nl.fontys.db3.backend.dto.AuthRequest;
 import nl.fontys.db3.backend.dto.AuthResponse;
 import nl.fontys.db3.backend.dto.PublicUserDTO;
@@ -20,10 +21,9 @@ import jakarta.validation.Valid;
 import nl.fontys.db3.backend.dto.ChangeAvatarRequest;
 import nl.fontys.db3.backend.dto.ChangeBackgroundRequest;
 
-
-
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -45,62 +45,85 @@ public class UserController {
         this.userMapper = userMapper;
     }
 
-    /* Register */
-
     @PostMapping("/register")
     public ResponseEntity<UserDTO> register(@RequestBody RegisterRequest req) {
-        User created = userService.createUser(
-                User.builder()
-                        .username(req.username())
-                        .email(req.email())
-                        .password(req.password())
-                        .name(req.name())
-                        .build()
-        );
-        return ResponseEntity.ok(userMapper.toUserDTO(created));
+        log.info("User registration attempt - username: {}, email: {}", req.username(), req.email());
+        try {
+            User created = userService.createUser(
+                    User.builder()
+                            .username(req.username())
+                            .email(req.email())
+                            .password(req.password())
+                            .name(req.name())
+                            .build()
+            );
+            log.info("User registered successfully - userId: {}, username: {}, email: {}", 
+                    created.getId(), created.getUsername(), created.getEmail());
+            return ResponseEntity.ok(userMapper.toUserDTO(created));
+        } catch (IllegalArgumentException e) {
+            log.warn("User registration failed - username: {}, email: {}, reason: {}", 
+                    req.username(), req.email(), e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error during user registration - username: {}, email: {}", 
+                    req.username(), req.email(), e);
+            throw e;
+        }
     }
 
     public record RegisterRequest(String username, String email, String password, String name) {}
 
-    /* Login */
-
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+        log.debug("Login attempt - email: {}", request.getEmail());
+        try {
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
 
-        UserDetails userDetails = (UserDetails) auth.getPrincipal();
-        String token = jwtService.generateToken(userDetails.getUsername(), Map.of());
-        User user = userService.findByUsernameOrEmail(null, request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            UserDetails userDetails = (UserDetails) auth.getPrincipal();
+            String token = jwtService.generateToken(userDetails.getUsername(), Map.of());
+            User user = userService.findByUsernameOrEmail(null, request.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return ResponseEntity.ok(
-                new AuthResponse(token, userMapper.toUserDTO(user))
-        );
+            log.info("User logged in successfully - userId: {}, username: {}, email: {}", 
+                    user.getId(), user.getUsername(), user.getEmail());
+            return ResponseEntity.ok(
+                    new AuthResponse(token, userMapper.toUserDTO(user))
+            );
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            log.warn("Login failed - email: {}, reason: {}", request.getEmail(), e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error during login - email: {}", request.getEmail(), e);
+            throw e;
+        }
     }
-
-    /* Current User */
 
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getCurrentUser(
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         if (userDetails == null) {
+            log.warn("Get current user failed - no authentication");
             return ResponseEntity.status(401).build();
         }
 
-        User user = userService
-                .findByUsernameOrEmail(null, userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        log.debug("Get current user request - username: {}", userDetails.getUsername());
+        try {
+            User user = userService
+                    .findByUsernameOrEmail(null, userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return ResponseEntity.ok(userMapper.toUserDTO(user));
+            return ResponseEntity.ok(userMapper.toUserDTO(user));
+        } catch (Exception e) {
+            log.error("Error getting current user - username: {}", userDetails.getUsername(), e);
+            throw e;
+        }
     }
-
-    /* Update User */
 
     @PutMapping("/me")
     public ResponseEntity<UserDTO> updateMe(
@@ -108,54 +131,99 @@ public class UserController {
             @RequestBody UpdateUser req
     ) {
         if (userDetails == null) {
+            log.warn("Update user failed - no authentication");
             return ResponseEntity.status(401).build();
         }
 
-        User updated = userService.updateMe(
-                userDetails.getUsername(),
-                req.getName(),
-                req.getUsername(),
-                req.getEmail(),
-                req.getCurrentPassword(),
-                req.getNewPassword()
-        );
+        log.info("User update request - username: {}, fields: name={}, username={}, email={}, passwordChange={}", 
+                userDetails.getUsername(), req.getName() != null, req.getUsername() != null, 
+                req.getEmail() != null, req.getNewPassword() != null);
+        try {
+            User updated = userService.updateMe(
+                    userDetails.getUsername(),
+                    req.getName(),
+                    req.getUsername(),
+                    req.getEmail(),
+                    req.getCurrentPassword(),
+                    req.getNewPassword()
+            );
 
-        return ResponseEntity.ok(userMapper.toUserDTO(updated));
+            log.info("User updated successfully - userId: {}, username: {}", 
+                    updated.getId(), updated.getUsername());
+            return ResponseEntity.ok(userMapper.toUserDTO(updated));
+        } catch (IllegalArgumentException e) {
+            log.warn("User update failed - username: {}, reason: {}", 
+                    userDetails.getUsername(), e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error during user update - username: {}", 
+                    userDetails.getUsername(), e);
+            throw e;
+        }
     }
-
-    /* Public Profile */
 
     @GetMapping("/{username}")
     public ResponseEntity<PublicUserDTO> getByUsername(@PathVariable String username) {
-        User user = userService.getByUsername(username);
-        return ResponseEntity.ok(userMapper.toPublicUserDTO(user));
+        log.debug("Get user by username request - username: {}", username);
+        try {
+            User user = userService.getByUsername(username);
+            return ResponseEntity.ok(userMapper.toPublicUserDTO(user));
+        } catch (IllegalArgumentException e) {
+            log.warn("Get user by username failed - username: {}, reason: {}", username, e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error getting user by username - username: {}", username, e);
+            throw e;
+        }
     }
 
     @PutMapping("/me/avatar")
-public ResponseEntity<UserDTO> changeMyAvatar(
-        @AuthenticationPrincipal UserDetails userDetails,
-        @Valid @RequestBody ChangeAvatarRequest req
-) {
-    if (userDetails == null) {
-        return ResponseEntity.status(401).build();
+    public ResponseEntity<UserDTO> changeMyAvatar(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody ChangeAvatarRequest req
+    ) {
+        if (userDetails == null) {
+            log.warn("Change avatar failed - no authentication");
+            return ResponseEntity.status(401).build();
+        }
+
+        log.info("Avatar change request - username: {}, avatarName: {}", 
+                userDetails.getUsername(), req.avatarName());
+        try {
+            User updated = userService.changeMyAvatar(userDetails.getUsername(), req.avatarName());
+            log.info("Avatar changed successfully - userId: {}, avatarName: {}", 
+                    updated.getId(), req.avatarName());
+            return ResponseEntity.ok(userMapper.toUserDTO(updated));
+        } catch (Exception e) {
+            log.error("Error changing avatar - username: {}, avatarName: {}", 
+                    userDetails.getUsername(), req.avatarName(), e);
+            throw e;
+        }
     }
 
-    User updated = userService.changeMyAvatar(userDetails.getUsername(), req.avatarName());
-    return ResponseEntity.ok(userMapper.toUserDTO(updated));
-}
+    @PutMapping("/me/background")
+    public ResponseEntity<UserDTO> changeMyBackground(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody ChangeBackgroundRequest req
+    ) {
+        if (userDetails == null) {
+            log.warn("Change background failed - no authentication");
+            return ResponseEntity.status(401).build();
+        }
 
-@PutMapping("/me/background")
-public ResponseEntity<UserDTO> changeMyBackground(
-        @AuthenticationPrincipal UserDetails userDetails,
-        @Valid @RequestBody ChangeBackgroundRequest req
-) {
-    if (userDetails == null) {
-        return ResponseEntity.status(401).build();
+        log.info("Background change request - username: {}, backgroundName: {}", 
+                userDetails.getUsername(), req.backgroundName());
+        try {
+            User updated = userService.changeMyBackground(userDetails.getUsername(), req.backgroundName());
+            log.info("Background changed successfully - userId: {}, backgroundName: {}", 
+                    updated.getId(), req.backgroundName());
+            return ResponseEntity.ok(userMapper.toUserDTO(updated));
+        } catch (Exception e) {
+            log.error("Error changing background - username: {}, backgroundName: {}", 
+                    userDetails.getUsername(), req.backgroundName(), e);
+            throw e;
+        }
     }
-
-    User updated = userService.changeMyBackground(userDetails.getUsername(), req.backgroundName());
-    return ResponseEntity.ok(userMapper.toUserDTO(updated));
-}
 
 
 

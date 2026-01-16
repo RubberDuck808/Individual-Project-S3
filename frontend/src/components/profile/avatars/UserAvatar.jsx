@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 export default function UserAvatar({ user, size = 64, className = "" }) {
   const avatarUrl = user?.avatarUrl;
@@ -25,3 +26,13 @@ export default function UserAvatar({ user, size = 64, className = "" }) {
     </div>
   );
 }
+
+UserAvatar.propTypes = {
+  user: PropTypes.shape({
+    avatarUrl: PropTypes.string,
+    name: PropTypes.string,
+    username: PropTypes.string,
+  }),
+  size: PropTypes.number,
+  className: PropTypes.string,
+};

@@ -2,6 +2,11 @@
 #include <WiFi.h>
 #include "secrets.h"
 
+#ifdef WIFI_USERNAME
+  // For WPA2-Enterprise support
+  #include <esp_wpa2.h>
+#endif
+
 static const char* wlStatusToStr(wl_status_t s) {
   switch (s) {
     case WL_NO_SHIELD:        return "WL_NO_SHIELD";
@@ -52,6 +57,11 @@ void initWiFi() {
   Serial.print("Target SSID: ");
   Serial.println(WIFI_SSID);
 
+  #ifdef WIFI_USERNAME
+    Serial.print("Using enterprise WiFi with username: ");
+    Serial.println(WIFI_USERNAME);
+  #endif
+
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);          // helps stability on some networks
   WiFi.disconnect(true, true);   // clear old creds + state
@@ -61,7 +71,21 @@ void initWiFi() {
   scanNetworks();
 
   Serial.println("Connecting...");
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  
+  #ifdef WIFI_USERNAME
+    // Enterprise WiFi (WPA2-Enterprise) - requires username
+    // Set WPA2 Enterprise authentication
+    esp_wifi_sta_wpa2_ent_set_identity((uint8_t *)WIFI_USERNAME, strlen(WIFI_USERNAME));
+    esp_wifi_sta_wpa2_ent_set_username((uint8_t *)WIFI_USERNAME, strlen(WIFI_USERNAME));
+    esp_wifi_sta_wpa2_ent_set_password((uint8_t *)WIFI_PASS, strlen(WIFI_PASS));
+    esp_wifi_sta_wpa2_ent_enable();
+    
+    // Now begin with just SSID (no password in begin() for enterprise)
+    WiFi.begin(WIFI_SSID);
+  #else
+    // Standard WiFi (WPA2-PSK) - no username needed
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
+  #endif
 
   unsigned long start = millis();
   wl_status_t last = WL_IDLE_STATUS;

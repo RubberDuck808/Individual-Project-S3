@@ -3,15 +3,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { fetchCurrentUser, fetchUserByUsername } from "../api/userApi";
 import { useTheme } from "../context/ThemeContext";
 import { useNavigate, useParams } from "react-router-dom";
-import { Users, RadioTower } from "lucide-react";
-
-
-import { Settings, ArrowLeft, Edit3 } from "lucide-react";
+import { Users, RadioTower, Settings } from "lucide-react";
 import ProfileTabs from "../components/profile/tabs/ProfileTabs";
 import FriendsTab from "../components/profile/tabs/FriendsTab";
 import StatsGrid from "../components/profile/stats/StatsGrid";
 import { useUserStats } from "../components/profile/stats/useUserStats";
-import ProfileHeader from "../components/profile/ProfileHeader";
 import UserAvatar from "../components/profile/avatars/UserAvatar";
 
 export default function ProfilePage() {
@@ -24,6 +20,12 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("summary");
 
+  // Reset active tab and clear profileUser when username changes
+  useEffect(() => {
+    setActiveTab("summary");
+    setProfileUser(null); // Clear previous user data to prevent stale redirects
+  }, [username]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -35,15 +37,21 @@ export default function ProfilePage() {
 
         setMe(current);
 
-        if (!username || username === current.username) {
+        // Use case-insensitive comparison to handle username casing differences
+        const usernameLower = username?.toLowerCase();
+        const currentUsernameLower = current.username?.toLowerCase();
+        
+        if (!username || usernameLower === currentUsernameLower) {
           setProfileUser(current);
         } else {
           const other = await fetchUserByUsername(username);
           if (!cancelled) setProfileUser(other);
         }
       } catch (e) {
-        console.error(e);
-        if (!cancelled) setProfileUser(null);
+        console.error("Failed to load profile:", e);
+        if (!cancelled) {
+          setProfileUser(null);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -54,26 +62,43 @@ export default function ProfilePage() {
     };
   }, [username]);
 
+  // Only redirect if we're viewing ourselves but URL doesn't match (and not loading)
+  // This should only fire when the profileUser is actually loaded and matches 'me'
   useEffect(() => {
-    if (!me?.username || !profileUser?.username) return;
+    // Don't run redirect check during loading or if data isn't ready
+    if (loading || !me?.username || !profileUser?.username) return;
 
+    // Only redirect if:
+    // 1. The profileUser loaded is actually 'me' (we're viewing ourselves)
+    // 2. The URL parameter doesn't match our username
+    // This prevents redirects when navigating to other users' profiles
+    const meUsernameLower = me.username?.toLowerCase();
+    const profileUsernameLower = profileUser.username?.toLowerCase();
+    const urlUsernameLower = username?.toLowerCase();
+    
+    // Only redirect if profileUser IS me, but URL shows a different username
+    // This means we loaded our own profile but URL is wrong
     const viewingMeButUrlStale =
-      me.username === profileUser.username && username !== me.username;
+      meUsernameLower === profileUsernameLower && 
+      urlUsernameLower && 
+      urlUsernameLower !== meUsernameLower;
 
     if (viewingMeButUrlStale) {
+      // Only redirect if we're actually viewing ourselves (not a friend)
       navigate(`/profile/${me.username}`, { replace: true });
     }
-  }, [me?.username, profileUser?.username, username, navigate]);
+  }, [me?.username, profileUser?.username, username, navigate, loading]);
 
   const isMe = !!me && !!profileUser && me.username === profileUser.username;
-  const { stats } = useUserStats(profileUser?.username);
-
+  
   const tabs = useMemo(() => {
     return [
       { key: "summary", label: "Summary", icon: RadioTower },
       { key: "friends", label: "Friends", icon: Users },
     ];
   }, []);
+
+  const { stats } = useUserStats(profileUser?.username);
 
   if (loading) {
     return (
@@ -110,6 +135,7 @@ return (
   {bgUrl ? (
     <img 
       src={bgUrl} 
+      alt="Profile background"
       className="w-full h-full object-cover" // Removed opacity and blur
     />
   ) : (

@@ -1,6 +1,6 @@
 import React from "react";
+import PropTypes from "prop-types";
 
-// Standard helper for joining CSS classes
 function cx(...classes) {
   return classes.filter(Boolean).join(" ");
 }
@@ -59,3 +59,13 @@ export default function TripControls({
     </div>
   );
 }
+
+TripControls.propTypes = {
+  isActive: PropTypes.bool.isRequired,
+  distanceKm: PropTypes.number.isRequired,
+  submitting: PropTypes.bool.isRequired,
+  onStart: PropTypes.func.isRequired,
+  onEnd: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  canStart: PropTypes.bool.isRequired,
+};

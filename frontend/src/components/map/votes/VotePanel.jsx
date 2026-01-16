@@ -8,7 +8,6 @@ function cx(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-// Updated TimerRing to match the chunky style
 function TimerRing({ progress = 0 }) {
   const size = 34;
   const stroke = 4; // Chunkier stroke
@@ -40,6 +39,10 @@ function TimerRing({ progress = 0 }) {
   );
 }
 
+TimerRing.propTypes = {
+  progress: PropTypes.number,
+};
+
 export default function VotePanel({
   hazard,
   userLocation,
@@ -69,10 +72,17 @@ export default function VotePanel({
   );
 
   const totalSeconds = useMemo(() => {
-    return Math.max(1, Math.ceil((expiresAt - (Date.now() - secondsLeft * 1000)) / 1000));
-  }, []);
+    const initialTotal = Math.max(1, Math.ceil((expiresAt - Date.now()) / 1000));
+    return initialTotal;
+  }, [expiresAt]);
 
-  const closePanel = useCallback(() => onClose?.(), [onClose]);
+  const closePanel = useCallback(() => {
+    onClose?.();
+  }, [onClose]);
+
+  const closePanelAfterDelay = useCallback(() => {
+    setTimeout(() => closePanel(), 800);
+  }, [closePanel]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -81,13 +91,13 @@ export default function VotePanel({
       if (left <= 0) {
         clearInterval(interval);
         setToast({ type: "info", msg: "Window expired." });
-        setTimeout(() => closePanel(), 800);
+        closePanelAfterDelay();
       }
     }, 250);
     return () => clearInterval(interval);
-  }, [expiresAt, closePanel]);
+  }, [expiresAt, closePanelAfterDelay]);
 
-  const withinAllowedBoundary = distanceMeters == null ? false : distanceMeters <= allowedDistanceMeters;
+  const withinAllowedBoundary = (distanceMeters ?? 0) <= allowedDistanceMeters;
   const canVote = secondsLeft > 0 && withinAllowedBoundary && !!hazardId && !loading;
   const progress = useMemo(() => secondsLeft / Math.max(1, totalSeconds), [secondsLeft, totalSeconds]);
 
@@ -96,20 +106,26 @@ export default function VotePanel({
     try {
       const data = await getVoteCounts(hazardId);
       setVotes(data);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error("Failed to load votes:", err);
+      setToast({ type: "error", msg: "Failed to load votes." });
+    }
   }, [hazardId]);
 
   useEffect(() => { if (hazardId) loadVotes(); }, [hazardId, loadVotes]);
 
-  const showToast = (t) => {
+  const showToast = useCallback((t) => {
     setToast(t);
-    window.clearTimeout(showToast._t);
-    showToast._t = window.setTimeout(() => setToast(null), 2400);
-  };
+    globalThis.clearTimeout(showToast._t);
+    showToast._t = globalThis.setTimeout(() => setToast(null), 2400);
+  }, []);
 
   const handleVote = async (type) => {
     const token = localStorage.getItem("token");
-    if (!token) return showToast({ type: "error", msg: "Log in first!" });
+    if (!token) {
+      showToast({ type: "error", msg: "Log in first!" });
+      return;
+    }
     if (!canVote) return;
 
     setLoading(true);
@@ -117,8 +133,9 @@ export default function VotePanel({
       await submitVote(hazardId, type);
       await loadVotes();
       showToast({ type: "success", msg: "Vote Cast!" });
-      setTimeout(() => closePanel(), 800);
+      closePanelAfterDelay();
     } catch (err) {
+      console.error("Failed to submit vote:", err);
       showToast({ type: "error", msg: "Vote failed." });
     } finally {
       setLoading(false);
@@ -128,8 +145,6 @@ export default function VotePanel({
   return (
     <div className="fixed bottom-36 right-4 z-[100] w-[310px] animate-in slide-in-from-right-10">
       <div className="relative overflow-hidden rounded-[2.5rem] border-[4px] border-black bg-[#FFFDF5] p-6 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
-        
-        {/* Top Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col gap-2">
             <div className="inline-flex items-center gap-2 rounded-xl bg-white border-[3px] border-black px-3 py-1 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
@@ -156,15 +171,15 @@ export default function VotePanel({
             withinAllowedBoundary ? "bg-[#FFD600] text-black" : "bg-slate-100 text-slate-400"
           )}>
             {withinAllowedBoundary 
-              ? `📍 ${Math.round(distanceMeters)}m Away (In Range)` 
-              : `🛑 Too Far (${Math.round(distanceMeters)}m)`}
+              ? `📍 ${Math.round(distanceMeters ?? 0)}m Away (In Range)` 
+              : `🛑 Too Far (${Math.round(distanceMeters ?? 0)}m)`}
           </div>
 
           {/* Chunky Progress Bar */}
           <div className="h-4 w-full bg-white border-[3px] border-black rounded-full p-0.5 overflow-hidden">
             <div
               className="h-full rounded-full bg-[#00D1FF] transition-[width] duration-200 border-r-2 border-black"
-              style={{ width: `${Math.round(progress * 100)}%` }}
+              style={{ width: `${Math.round((progress ?? 0) * 100)}%` }}
             />
           </div>
         </div>

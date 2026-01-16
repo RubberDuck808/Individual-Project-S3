@@ -32,12 +32,12 @@ export default function HomeHero() {
         <div className="flex flex-col items-center gap-3">
           <div className="flex -space-x-4">
             {[
-              { bg: 'bg-[#FF6AC1]', delay: '0s', img: '🐱' },
-              { bg: 'bg-[#00D1FF]', delay: '0.2s', img: '🐸' },
-              { bg: 'bg-[#FFD600]', delay: '0.4s', img: '🐶' }
-            ].map((user, i) => (
+              { id: 'avatar-1', bg: 'bg-[#FF6AC1]', delay: '0s', img: '🐱' },
+              { id: 'avatar-2', bg: 'bg-[#00D1FF]', delay: '0.2s', img: '🐸' },
+              { id: 'avatar-3', bg: 'bg-[#FFD600]', delay: '0.4s', img: '🐶' }
+            ].map((user) => (
               <div 
-                key={i}
+                key={user.id}
                 className={`w-16 h-16 rounded-full border-4 border-black ${user.bg} flex items-center justify-center text-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-bounce`}
                 style={{ animationDuration: '3s', animationDelay: user.delay }}
               >

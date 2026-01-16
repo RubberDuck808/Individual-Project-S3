@@ -33,10 +33,10 @@ export default function Footer() {
                 <ul className="space-y-6">
                   {['Dashboard', 'Leaderboard', 'Telemetry', 'Privacy'].slice(cat === 'Legal' ? 2 : 0).map(link => (
                     <li key={link}>
-                      <a href="#" className="font-black text-xl hover:text-[#FF6AC1] transition-colors flex items-center gap-2 group">
+                      <button type="button" className="font-black text-xl hover:text-[#FF6AC1] transition-colors flex items-center gap-2 group">
                         <span className="w-3 h-3 bg-white rounded-full group-hover:scale-150 transition-transform" />
                         {link}
-                      </a>
+                      </button>
                     </li>
                   ))}
                 </ul>

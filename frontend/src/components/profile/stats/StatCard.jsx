@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 export default function StatCard({ label, value, Icon, loading = false }) {
   return (
@@ -14,3 +15,10 @@ export default function StatCard({ label, value, Icon, loading = false }) {
     </div>
   );
 }
+
+StatCard.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  Icon: PropTypes.elementType,
+  loading: PropTypes.bool,
+};

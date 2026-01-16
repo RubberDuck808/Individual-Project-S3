@@ -7,6 +7,7 @@ export function useUserTracking({ map, location, userMarkerRef, followUser, onMo
     if (!map || !location) return;
 
     const coords = [location.lng, location.lat];
+    let cleanupLoadListener = null;
 
     const ensureMarkerAndUpdate = () => {
       if (!elRef.current) {
@@ -33,19 +34,39 @@ export function useUserTracking({ map, location, userMarkerRef, followUser, onMo
       }
 
       if (followUser) {
-        map.easeToCenter(coords);
+        // Zoom to street level (15) when following user
+        if (typeof map.easeTo === "function") {
+          map.easeTo({
+            center: coords,
+            zoom: 15, // Street level zoom
+            duration: 600,
+            essential: true,
+          });
+        } else {
+          map.easeToCenter(coords);
+          if (typeof map.setZoom === "function") {
+            map.setZoom(15);
+          }
+        }
       }
 
       if (onMove) onMove(location);
     };
 
+    // Check if map is loaded
     if (typeof map.isLoaded === "function" && !map.isLoaded()) {
+      // Map not loaded yet, wait for load event
       if (typeof map.once === "function") {
-        map.once("load", ensureMarkerAndUpdate);
+        cleanupLoadListener = map.once("load", ensureMarkerAndUpdate);
       }
-      return;
+      return () => {
+        if (cleanupLoadListener && typeof cleanupLoadListener === "function") {
+          cleanupLoadListener();
+        }
+      };
     }
 
+    // Map is already loaded, update immediately
     ensureMarkerAndUpdate();
   }, [map, location, followUser, onMove, userMarkerRef]);
 }

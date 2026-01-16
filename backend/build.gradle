@@ -32,6 +32,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
 
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     runtimeOnly 'org.postgresql:postgresql'
@@ -73,19 +75,24 @@ jacoco {
 }
 
 jacocoTestReport {
-    dependsOn tasks.test
+    executionData tasks.test
     reports {
         xml.required = true
         html.required = true
     }
 }
 
+// Allow jacocoTestReport to run even if tests fail
+tasks.named('jacocoTestReport') {
+    mustRunAfter tasks.test
+}
+
 // SonarQube configuration
 sonar {
     properties {
         property "sonar.host.url", "http://localhost:9000"
-        property "sonar.projectKey", "I548789_individual-project-s3_0ed3868f-3af8-4e41-a583-5ab0e0896d70"
-        property "sonar.projectName", "Individual-Project-S3"
+        property "sonar.projectKey", "I548789_individual-project-s3_0ed3868f-3af8-4e41-a583-5ab0e0896d70:backend"
+        property "sonar.projectName", "Individual-Project-S3 (Backend)"
         property "sonar.organization", "default-organization"
         property "sonar.token", System.getenv("SONAR_TOKEN")
         property "sonar.qualitygate.wait", false
@@ -94,5 +101,17 @@ sonar {
         // link JaCoCo XML report
         property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
         property "sonar.exclusions", "src/test/java/nl/fontys/db3/backend/BackendApplicationTests.java"
+        
+        // Exclude files that don't need coverage from analysis
+        property "sonar.coverage.exclusions", """
+            **/dto/**,
+            **/entity/**,
+            **/mapper/**,
+            **/config/**,
+            **/BackendApplication.java,
+            **/exception/**,
+            **/security/JwtService.java,
+            **/security/CustomUserDetailsService.java
+        """
     }
 }

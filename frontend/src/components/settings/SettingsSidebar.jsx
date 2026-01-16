@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 export default function SettingsSidebar({ items, activeKey, onChange, onLogout }) {
   return (
@@ -38,3 +39,14 @@ export default function SettingsSidebar({ items, activeKey, onChange, onLogout }
     </div>
   );
 }
+
+SettingsSidebar.propTypes = {
+  items: PropTypes.arrayOf(PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    icon: PropTypes.elementType,
+  })).isRequired,
+  activeKey: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onLogout: PropTypes.func.isRequired,
+};

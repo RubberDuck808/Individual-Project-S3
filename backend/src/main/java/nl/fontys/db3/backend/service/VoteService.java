@@ -1,5 +1,6 @@
 package nl.fontys.db3.backend.service;
 
+import lombok.extern.slf4j.Slf4j;
 import nl.fontys.db3.backend.dto.VoteDTO;
 import nl.fontys.db3.backend.entity.HazardReport;
 import nl.fontys.db3.backend.entity.User;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class VoteService {
 
@@ -40,22 +42,34 @@ public class VoteService {
 
     @Transactional
     public VoteDTO voteAsDTO(String userEmail, Long hazardId, VoteType type) {
-        if (hazardId == null) throw new IllegalArgumentException("hazardId cannot be null");
+        log.debug("Processing vote - email: {}, hazardId: {}, voteType: {}", userEmail, hazardId, type);
+        
+        if (hazardId == null) {
+            log.warn("Vote failed - hazardId is null");
+            throw new IllegalArgumentException("hazardId cannot be null");
+        }
 
         User user = userRepo.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> {
+                    log.warn("Vote failed - user not found: email: {}", userEmail);
+                    return new IllegalArgumentException("User not found");
+                });
 
         HazardReport hazard = hazardRepo.findById(hazardId)
-                .orElseThrow(() -> new IllegalArgumentException("Hazard not found"));
+                .orElseThrow(() -> {
+                    log.warn("Vote failed - hazard not found: hazardId: {}", hazardId);
+                    return new IllegalArgumentException("Hazard not found");
+                });
 
-        // 1) Creator cannot vote on own report
         if (hazard.getCreatedBy() != null &&
                 hazard.getCreatedBy().getId().equals(user.getId())) {
+            log.warn("Vote failed - user trying to vote on own report: userId: {}, hazardId: {}", 
+                    user.getId(), hazardId);
             throw new IllegalArgumentException("You cannot vote on your own report");
         }
 
-        // 2) User can only vote once (no switching)
         if (voteRepo.existsByHazardReport_IdAndUser_Id(hazardId, user.getId())) {
+            log.warn("Vote failed - user already voted: userId: {}, hazardId: {}", user.getId(), hazardId);
             throw new IllegalArgumentException("You already voted on this report");
         }
 
@@ -66,9 +80,10 @@ public class VoteService {
                 .build();
 
         Vote saved = voteRepo.save(vote);
-
         statisticsService.incrementVotes(user.getId());
 
+        log.info("Vote saved successfully - voteId: {}, userId: {}, hazardId: {}, voteType: {}", 
+                saved.getId(), user.getId(), hazardId, type);
         return toDTO(saved);
     }
 
@@ -96,6 +111,6 @@ public class VoteService {
 
         return voteRepo.findByHazardReport_IdAndUser_Id(hazardId, user.getId())
                 .map(v -> Map.of("voteType", v.getVoteType().name()))
-                .orElseGet(Map::of);
+                .orElseGet(() -> Map.of("voteType", "NONE"));
     }
 }

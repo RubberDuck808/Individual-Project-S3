@@ -1,23 +1,35 @@
 import React from "react";
+import PropTypes from "prop-types";
 import CarIcon from "./CarIcon";
 
 export default function CarSketch({ status = "ok" }) {
-  const badge = status === "ok" ? "✅" : status === "issues" ? "⚠️" : "🔌";
+  let badge;
+  if (status === "ok") {
+    badge = "✅";
+  } else if (status === "issues") {
+    badge = "⚠️";
+  } else {
+    badge = "🔌";
+  }
 
-  const glow =
-    status === "ok"
-      ? "rgba(16,185,129,0.20)"
-      : status === "issues"
-      ? "rgba(245,158,11,0.20)"
-      : "rgba(0,0,0,0.08)";
+  let glow;
+  if (status === "ok") {
+    glow = "rgba(16,185,129,0.20)";
+  } else if (status === "issues") {
+    glow = "rgba(245,158,11,0.20)";
+  } else {
+    glow = "rgba(0,0,0,0.08)";
+  }
 
   // Tailwind color for the SVG via currentColor
-  const carColor =
-    status === "ok"
-      ? "text-emerald-600"
-      : status === "issues"
-      ? "text-amber-600"
-      : "text-gray-400";
+  let carColor;
+  if (status === "ok") {
+    carColor = "text-emerald-600";
+  } else if (status === "issues") {
+    carColor = "text-amber-600";
+  } else {
+    carColor = "text-gray-400";
+  }
 
   return (
     <div className="relative w-full">
@@ -43,3 +55,7 @@ export default function CarSketch({ status = "ok" }) {
     </div>
   );
 }
+
+CarSketch.propTypes = {
+  status: PropTypes.oneOf(["ok", "issues", "disconnected"]),
+};

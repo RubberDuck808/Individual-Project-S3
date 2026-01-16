@@ -8,9 +8,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "sonar": "node sonarConfig.js",
+    "sonar": "node sonarConfig.cjs",
     "test": "vitest run",
-    "test:coverage": "vitest run"
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
@@ -52,6 +52,7 @@
     "sonarqube-scanner": "^4.3.2",
     "tailwindcss": "^3.4.18",
     "vite": "^7.1.7",
+    "vite-plugin-node-polyfills": "^0.24.0",
     "vite-plugin-svgr": "^4.5.0",
     "vitest": "^4.0.15"
   }

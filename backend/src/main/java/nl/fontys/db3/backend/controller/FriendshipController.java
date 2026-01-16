@@ -6,6 +6,7 @@ import nl.fontys.db3.backend.mapper.FriendshipMapper;
 import nl.fontys.db3.backend.service.FriendshipService;
 import nl.fontys.db3.backend.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -30,16 +31,13 @@ public class FriendshipController {
 
     private User currentUser(UserDetails userDetails) {
         if (userDetails == null) {
-            throw new RuntimeException("Unauthorized");
+            throw new AuthenticationException("Unauthorized") {};
         }
         return userService
                 .findByUsernameOrEmail(null, userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
-    // --- Requests ---
-    
-    /** Send friend request by username */
     @PostMapping("/request")
     public ResponseEntity<FriendshipDTO> sendRequest(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -55,7 +53,6 @@ public class FriendshipController {
 
     public record SendFriendRequestRequest(String username) {}
 
-    /** Accept incoming request from username */
     @PostMapping("/accept/{username}")
     public ResponseEntity<FriendshipDTO> accept(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -69,7 +66,6 @@ public class FriendshipController {
         );
     }
 
-    /** Decline incoming request from username */
     @DeleteMapping("/decline/{username}")
     public ResponseEntity<Void> decline(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -80,7 +76,6 @@ public class FriendshipController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Cancel outgoing request to username */
     @DeleteMapping("/cancel/{username}")
     public ResponseEntity<Void> cancel(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -91,7 +86,6 @@ public class FriendshipController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Unfriend by username */
     @DeleteMapping("/unfriend/{username}")
     public ResponseEntity<Void> unfriend(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -101,8 +95,6 @@ public class FriendshipController {
         friendshipService.unfriendByUsername(me.getId(), username);
         return ResponseEntity.noContent().build();
     }
-
-    // --- Lists ---
 
     @GetMapping("/requests/incoming")
     public ResponseEntity<List<FriendshipDTO>> incoming(

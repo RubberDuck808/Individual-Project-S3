@@ -1,8 +1,7 @@
 package nl.fontys.db3.backend.controller;
 
 import nl.fontys.db3.backend.dto.HazardCategoryDTO;
-import nl.fontys.db3.backend.mapper.HazardCategoryMapper;
-import nl.fontys.db3.backend.repository.HazardCategoryRepository;
+import nl.fontys.db3.backend.service.HazardCategoryService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,17 +10,14 @@ import java.util.List;
 @RequestMapping("/api/hazard-categories")
 public class HazardCategoryController {
 
-    private final HazardCategoryRepository categoryRepo;
-    private final HazardCategoryMapper mapper;
+    private final HazardCategoryService categoryService;
 
-    public HazardCategoryController(HazardCategoryRepository categoryRepo,
-                                    HazardCategoryMapper mapper) {
-        this.categoryRepo = categoryRepo;
-        this.mapper = mapper;
+    public HazardCategoryController(HazardCategoryService categoryService) {
+        this.categoryService = categoryService;
     }
 
     @GetMapping
     public List<HazardCategoryDTO> getAllCategories() {
-        return mapper.toDTOList(categoryRepo.findAll());
+        return categoryService.getAllCategories();
     }
 }

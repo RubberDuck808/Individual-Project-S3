@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 export default function CarIcon({ className = "" }) {
   return (
@@ -21,3 +22,7 @@ export default function CarIcon({ className = "" }) {
     </svg>
   );
 }
+
+CarIcon.propTypes = {
+  className: PropTypes.string,
+};

@@ -5,7 +5,9 @@ public class HazardEventDTO {
     private HazardReportDTO hazard;
     private Long hazardId;
 
-    public HazardEventDTO() {}
+    public HazardEventDTO() {
+        // Default constructor required for JSON deserialization
+    }
 
     public static HazardEventDTO upsert(HazardReportDTO hazard) {
         HazardEventDTO e = new HazardEventDTO();
