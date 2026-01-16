@@ -14,6 +14,9 @@ variables:
 
   # SonarQube server
   SONAR_HOST_URL: "http://host.docker.internal:9000"
+  
+  # Docker image pull policy - use if-not-present to avoid network issues
+  DOCKER_PULL_POLICY: "if-not-present"
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
@@ -25,7 +28,9 @@ cache:
 # ================================
 backend-build:
   stage: build
-  image: gradle:8.9-jdk21
+  image: 
+    name: gradle:8.9-jdk21
+    pull_policy: if-not-present
   script:
     - cd backend
     - ./gradlew clean build -x test
@@ -39,7 +44,9 @@ backend-build:
 # ================================
 frontend-build:
   stage: build
-  image: node:22
+  image: 
+    name: node:22
+    pull_policy: if-not-present
   script:
     - cd frontend
     - npm ci
@@ -54,13 +61,17 @@ frontend-build:
 # ================================
 backend-test:
   stage: test
-  image: gradle:8.9-jdk21
+  image: 
+    name: gradle:8.9-jdk21
+    pull_policy: if-not-present
 
   services:
     - name: postgres:16
       alias: postgres
+      pull_policy: if-not-present
     - name: docker:24-dind
       alias: docker
+      pull_policy: if-not-present
 
   variables:
     # prevent PlaceholderResolutionException from app.jwt.secret=${JWT_SECRET}
@@ -106,7 +117,9 @@ backend-test:
 # ================================
 frontend-test:
   stage: test
-  image: node:22
+  image: 
+    name: node:22
+    pull_policy: if-not-present
   allow_failure: false
   script:
     - cd frontend
@@ -125,7 +138,9 @@ frontend-test:
 # ================================
 sonarqube-backend:
   stage: sonar
-  image: gradle:8.9-jdk21
+  image: 
+    name: gradle:8.9-jdk21
+    pull_policy: if-not-present
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
     GIT_DEPTH: "0"
@@ -148,7 +163,9 @@ sonarqube-backend:
 # ================================
 sonarqube-frontend:
   stage: sonar
-  image: node:22
+  image: 
+    name: node:22
+    pull_policy: if-not-present
   allow_failure: true #(DOES NOT FAIL PIPELINE)
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
@@ -174,7 +191,9 @@ sonarqube-frontend:
 # ================================
 docker-backend:
   stage: docker
-  image: docker:24
+  image: 
+    name: docker:24
+    pull_policy: if-not-present
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
@@ -193,7 +212,9 @@ docker-backend:
 # ================================
 docker-frontend:
   stage: docker
-  image: docker:24
+  image: 
+    name: docker:24
+    pull_policy: if-not-present
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
@@ -212,7 +233,9 @@ docker-frontend:
 # ================================
 deploy-backend:
   stage: deploy
-  image: google/cloud-sdk:latest
+  image: 
+    name: google/cloud-sdk:latest
+    pull_policy: if-not-present
   needs:
     - docker-backend
   before_script:
@@ -228,7 +251,9 @@ deploy-backend:
 # ================================
 deploy-frontend:
   stage: deploy
-  image: google/cloud-sdk:latest
+  image: 
+    name: google/cloud-sdk:latest
+    pull_policy: if-not-present
   needs:
     - docker-frontend
   before_script:
