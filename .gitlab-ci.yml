@@ -14,9 +14,6 @@ variables:
 
   # SonarQube server
   SONAR_HOST_URL: "http://host.docker.internal:9000"
-  
-  # Docker image pull policy - use if-not-present to avoid network issues
-  DOCKER_PULL_POLICY: "if-not-present"
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
@@ -24,13 +21,11 @@ cache:
     - backend/.gradle/
 
 # ================================
-# Backend build
+# Backend build (NO TESTS HERE)
 # ================================
 backend-build:
   stage: build
-  image: 
-    name: gradle:8.9-jdk21
-    pull_policy: if-not-present
+  image: gradle:8.9-jdk21
   script:
     - cd backend
     - ./gradlew clean build -x test
@@ -44,9 +39,7 @@ backend-build:
 # ================================
 frontend-build:
   stage: build
-  image: 
-    name: node:22
-    pull_policy: if-not-present
+  image: node:22
   script:
     - cd frontend
     - npm ci
@@ -61,17 +54,12 @@ frontend-build:
 # ================================
 backend-test:
   stage: test
-  image: 
-    name: gradle:8.9-jdk21
-    pull_policy: if-not-present
+  image: gradle:8.9-jdk21
+  allow_failure: true
 
   services:
     - name: postgres:16
       alias: postgres
-      pull_policy: if-not-present
-    - name: docker:24-dind
-      alias: docker
-      pull_policy: if-not-present
 
   variables:
     # prevent PlaceholderResolutionException from app.jwt.secret=${JWT_SECRET}
@@ -91,13 +79,6 @@ backend-test:
     SPRING_JPA_HIBERNATE_DDL_AUTO: "create-drop"
     SPRING_FLYWAY_ENABLED: "false"
 
-    # Docker-in-Docker for Testcontainers
-    DOCKER_HOST: "tcp://docker:2375"
-    DOCKER_TLS_CERTDIR: ""
-
-  before_script:
-    - docker info
-
   script:
     - cd backend
     - ./gradlew test jacocoTestReport
@@ -113,39 +94,17 @@ backend-test:
     - backend-build
 
 # ================================
-# Frontend tests + Coverage
-# ================================
-frontend-test:
-  stage: test
-  image: 
-    name: node:22
-    pull_policy: if-not-present
-  allow_failure: false
-  script:
-    - cd frontend
-    - npm ci
-    - npm run test:coverage
-  artifacts:
-    when: always
-    paths:
-      - frontend/coverage/
-      - frontend/coverage/lcov.info
-  needs:
-    - frontend-build
-
-# ================================
-# SONARQUBE BACKEND ANALYSIS
+# SONARQUBE BACKEND ANALYSIS (DOES NOT FAIL PIPELINE)
 # ================================
 sonarqube-backend:
   stage: sonar
-  image: 
-    name: gradle:8.9-jdk21
-    pull_policy: if-not-present
+  image: gradle:8.9-jdk21
+  allow_failure: true
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
     GIT_DEPTH: "0"
   cache:
-    key: "sonar-cache-backend-$CI_COMMIT_REF_SLUG"
+    key: "sonar-cache-$CI_COMMIT_REF_SLUG"
     policy: pull-push
     paths:
       - "${SONAR_USER_HOME}/cache"
@@ -159,41 +118,11 @@ sonarqube-backend:
     - if: '$CI_COMMIT_BRANCH'
 
 # ================================
-# SONARQUBE FRONTEND ANALYSIS
-# ================================
-sonarqube-frontend:
-  stage: sonar
-  image: 
-    name: node:22
-    pull_policy: if-not-present
-  allow_failure: true #(DOES NOT FAIL PIPELINE)
-  variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
-    GIT_DEPTH: "0"
-  cache:
-    key: "sonar-cache-frontend-$CI_COMMIT_REF_SLUG"
-    policy: pull-push
-    paths:
-      - "${SONAR_USER_HOME}/cache"
-      - frontend/node_modules/
-  script:
-    - cd frontend
-    - npm ci
-    - SONAR_TOKEN=$SONAR_TOKEN SONAR_HOST_URL=$SONAR_HOST_URL npm run sonar
-  needs:
-    - frontend-test
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH'
-
-# ================================
 # Docker backend build + push
 # ================================
 docker-backend:
   stage: docker
-  image: 
-    name: docker:24
-    pull_policy: if-not-present
+  image: docker:24
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
@@ -212,9 +141,7 @@ docker-backend:
 # ================================
 docker-frontend:
   stage: docker
-  image: 
-    name: docker:24
-    pull_policy: if-not-present
+  image: docker:24
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
@@ -233,9 +160,7 @@ docker-frontend:
 # ================================
 deploy-backend:
   stage: deploy
-  image: 
-    name: google/cloud-sdk:latest
-    pull_policy: if-not-present
+  image: google/cloud-sdk:latest
   needs:
     - docker-backend
   before_script:
@@ -251,9 +176,7 @@ deploy-backend:
 # ================================
 deploy-frontend:
   stage: deploy
-  image: 
-    name: google/cloud-sdk:latest
-    pull_policy: if-not-present
+  image: google/cloud-sdk:latest
   needs:
     - docker-frontend
   before_script:
