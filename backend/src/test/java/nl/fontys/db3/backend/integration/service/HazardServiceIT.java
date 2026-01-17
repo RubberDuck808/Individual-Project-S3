@@ -14,20 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@TestPropertySource(properties = {
-    "spring.datasource.url=jdbc:postgresql://localhost:5432/testdb",
-    "spring.datasource.username=test",
-    "spring.datasource.password=test",
-    "spring.jpa.hibernate.ddl-auto=none",
-    "spring.flyway.enabled=true",
-    "app.jwt.secret=ci-test-secret",
-    "MAPBOX_TOKEN=test"
-})
 @Transactional
 class HazardServiceIT {
 

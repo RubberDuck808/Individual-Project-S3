@@ -11,7 +11,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
-import org.springframework.test.context.TestPropertySource;
 
 import java.util.Optional;
 
@@ -22,15 +21,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @DataJpaTest(excludeAutoConfiguration = {
     org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
     org.springframework.boot.autoconfigure.websocket.servlet.WebSocketServletAutoConfiguration.class
-})
-@TestPropertySource(properties = {
-    "spring.datasource.url=jdbc:postgresql://localhost:5432/testdb",
-    "spring.datasource.username=test",
-    "spring.datasource.password=test",
-    "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect",
-    "spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect",
-    "spring.jpa.hibernate.ddl-auto=none",
-    "spring.flyway.enabled=true"
 })
 class UserRepositoryIT {
 

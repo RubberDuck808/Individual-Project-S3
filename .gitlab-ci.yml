@@ -61,7 +61,7 @@ backend-test:
       alias: postgres
 
   variables:
-    JWT_SECRET: "ci-test-secret"
+    JWT_SECRET: "ci-test-secret-key-must-be-at-least-256-bits-long-for-hmac-sha-algorithms-1234567890"
     SPRING_PROFILES_ACTIVE: "test"
 
     POSTGRES_DB: testdb

@@ -11,7 +11,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 
 import java.time.Instant;
 import java.util.List;
@@ -23,15 +22,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @DataJpaTest(excludeAutoConfiguration = {
     org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
     org.springframework.boot.autoconfigure.websocket.servlet.WebSocketServletAutoConfiguration.class
-})
-@TestPropertySource(properties = {
-    "spring.datasource.url=jdbc:postgresql://localhost:5432/testdb",
-    "spring.datasource.username=test",
-    "spring.datasource.password=test",
-    "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect",
-    "spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect",
-    "spring.jpa.hibernate.ddl-auto=none",
-    "spring.flyway.enabled=true"
 })
 class TelemetryHistoryRepositoryIT {
 
