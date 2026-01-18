@@ -15,6 +15,7 @@ public class StatisticsService {
 
     private static final String USER_NOT_FOUND_FOR_USER_ID = "User not found for userId=";
     private static final String STATISTICS_ROW_MISSING_FOR_USER_ID = "Statistics row missing for userId=";
+    private static final String STATISTICS_ROW_MISSING_CREATING_LOG = "Statistics row missing, creating - userId: {}";
 
     private final StatisticsRepository statsRepo;
     private final UserRepository userRepo;
@@ -99,7 +100,7 @@ public class StatisticsService {
     public void incrementVotes(Long userId) {
         log.debug("Incrementing votes - userId: {}", userId);
         if (!statsRepo.existsByUser_Id(userId)) {
-            log.debug("Statistics row missing, creating - userId: {}", userId);
+            log.debug(STATISTICS_ROW_MISSING_CREATING_LOG, userId);
             User user = userRepo.findById(userId)
                     .orElseThrow(() -> {
                         log.error("Increment votes failed - user not found: userId: {}", userId);
@@ -120,7 +121,7 @@ public class StatisticsService {
     public void incrementHazards(Long userId) {
         log.debug("Incrementing hazards - userId: {}", userId);
         if (!statsRepo.existsByUser_Id(userId)) {
-            log.debug("Statistics row missing, creating - userId: {}", userId);
+            log.debug(STATISTICS_ROW_MISSING_CREATING_LOG, userId);
             User user = userRepo.findById(userId)
                     .orElseThrow(() -> {
                         log.error("Increment hazards failed - user not found: userId: {}", userId);
@@ -146,7 +147,7 @@ public class StatisticsService {
         }
 
         if (!statsRepo.existsByUser_Id(userId)) {
-            log.debug("Statistics row missing, creating - userId: {}", userId);
+            log.debug(STATISTICS_ROW_MISSING_CREATING_LOG, userId);
             User user = userRepo.findById(userId)
                     .orElseThrow(() -> {
                         log.error("Increment trips failed - user not found: userId: {}", userId);

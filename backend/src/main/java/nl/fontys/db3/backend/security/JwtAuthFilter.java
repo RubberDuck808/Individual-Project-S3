@@ -47,38 +47,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             if (extractedUsername != null &&
                     SecurityContextHolder.getContext().getAuthentication() == null) {
-
-                try {
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(extractedUsername);
-                    
-                    boolean isValid = jwtService.isTokenValid(token, userDetails.getUsername());
-                    
-                    if (isValid) {
-                        log.debug("JWT authentication successful - username: {}, path: {}", 
-                                extractedUsername, request.getRequestURI());
-                        UsernamePasswordAuthenticationToken authToken =
-                                new UsernamePasswordAuthenticationToken(
-                                        userDetails,
-                                        null,
-                                        userDetails.getAuthorities()
-                                );
-
-                        authToken.setDetails(
-                                new WebAuthenticationDetailsSource().buildDetails(request)
-                        );
-
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
-                    } else {
-                        log.warn("JWT token validation failed - username: {}, path: {}", 
-                                extractedUsername, request.getRequestURI());
-                    }
-                } catch (UsernameNotFoundException e) {
-                    log.warn("JWT authentication failed - user not found: {}, path: {}", 
-                            extractedUsername, request.getRequestURI());
-                } catch (Exception e) {
-                    log.error("JWT authentication error - username: {}, path: {}", 
-                            extractedUsername, request.getRequestURI(), e);
-                }
+                authenticateUser(token, extractedUsername, request);
             }
         } catch (Exception e) {
             log.warn("JWT token extraction failed - path: {}, error: {}", 
@@ -86,5 +55,39 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
         
         filterChain.doFilter(request, response);
+    }
+
+    private void authenticateUser(String token, String extractedUsername, HttpServletRequest request) {
+        try {
+            UserDetails userDetails = userDetailsService.loadUserByUsername(extractedUsername);
+            
+            boolean isValid = jwtService.isTokenValid(token, userDetails.getUsername());
+            
+            if (isValid) {
+                log.debug("JWT authentication successful - username: {}, path: {}", 
+                        extractedUsername, request.getRequestURI());
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
+
+                authToken.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
+
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            } else {
+                log.warn("JWT token validation failed - username: {}, path: {}", 
+                        extractedUsername, request.getRequestURI());
+            }
+        } catch (UsernameNotFoundException e) {
+            log.warn("JWT authentication failed - user not found: {}, path: {}", 
+                    extractedUsername, request.getRequestURI());
+        } catch (Exception e) {
+            log.error("JWT authentication error - username: {}, path: {}", 
+                    extractedUsername, request.getRequestURI(), e);
+        }
     }
 }

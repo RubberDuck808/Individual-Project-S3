@@ -128,11 +128,12 @@ sonarqube-backend:
       - "${SONAR_USER_HOME}/cache"
   script:
     - cd backend
-    - ./gradlew sonar \
-        -Dsonar.host.url=$SONAR_HOST_URL \
-        -Dsonar.token=$SONAR_TOKEN \
-        -Dsonar.qualitygate.wait=true \
-        -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+    - |
+        ./gradlew sonar \
+          -Dsonar.host.url="$SONAR_HOST_URL" \
+          -Dsonar.token="$SONAR_TOKEN" \
+          -Dsonar.qualitygate.wait=true \
+          -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
   needs:
     - backend-test
   rules:
