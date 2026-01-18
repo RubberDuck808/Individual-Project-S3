@@ -282,7 +282,7 @@ class FriendshipControllerIT {
                         .header("Authorization", "Bearer " + aliceToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test

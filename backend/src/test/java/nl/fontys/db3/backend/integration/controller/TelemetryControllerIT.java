@@ -44,18 +44,21 @@ class TelemetryControllerIT {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private nl.fontys.db3.backend.service.DeviceService deviceService;
+
     private Device testDevice;
     private String deviceId;
+    private String apiKey;
 
     @BeforeEach
     void setUp() {
         deviceId = "test-device-123";
-        testDevice = Device.builder()
-                .deviceId(deviceId)
-                .apiKeyHash("test-api-key-hash")
-                .active(true)
-                .build();
-        testDevice = deviceRepository.save(testDevice);
+        // Register device to get a real API key
+        nl.fontys.db3.backend.service.DeviceService.DeviceRegistrationResult result = 
+            deviceService.registerDevice(deviceId, "Test Device");
+        testDevice = result.getDevice();
+        apiKey = result.getApiKey();
     }
 
     @Test
@@ -69,6 +72,7 @@ class TelemetryControllerIT {
         ));
 
         mockMvc.perform(put("/api/telemetry/live")
+                        .header("X-API-Key", apiKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
@@ -113,6 +117,7 @@ class TelemetryControllerIT {
         ));
 
         mockMvc.perform(post("/api/telemetry/history")
+                        .header("X-API-Key", apiKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
@@ -226,6 +231,7 @@ class TelemetryControllerIT {
         ));
 
         mockMvc.perform(put("/api/telemetry/live")
+                        .header("X-API-Key", apiKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest());
