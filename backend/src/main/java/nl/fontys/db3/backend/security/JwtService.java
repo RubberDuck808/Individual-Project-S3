@@ -1,5 +1,6 @@
 package nl.fontys.db3.backend.security;
 
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,11 +46,11 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, String username) {
+        if (token == null || username == null) {
+            return false;
+        }
         try {
             String tokenUsername = extractUsername(token);
-            // System.out.println("[JwtService] Token username: " + tokenUsername);
-            // System.out.println("[JwtService] Provided username: " + username);
-
             Date expiration = Jwts.parser()
                     .verifyWith(getSigningKey())
                     .build()
@@ -57,20 +58,12 @@ public class JwtService {
                     .getPayload()
                     .getExpiration();
             
-            // System.out.println("[JwtService] Token expires: " + expiration);
-            // System.out.println("[JwtService] Current time: " + new Date());
-            
-            boolean usernameValid = tokenUsername.equals(username);
-            boolean notExpired = expiration.after(new Date());
-            
-            // System.out.println("[JwtService] Username valid: " + usernameValid);
-            // System.out.println("[JwtService] Not expired: " + notExpired);
+            boolean usernameValid = tokenUsername != null && tokenUsername.equals(username);
+            boolean notExpired = expiration != null && expiration.after(new Date());
 
             return usernameValid && notExpired;
 
-        } catch (Exception e) {
-            // System.out.println("[JwtService] Token validation error: " + e.getMessage());
-            // e.printStackTrace();
+        } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }

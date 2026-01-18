@@ -1,17 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../api/auth";
+import { isValidEmail } from "../utils/emailValidation";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
-  const isValidEmail = (value) => {
-    if (value.length > 254) return false;
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -23,8 +19,10 @@ export default function LoginPage() {
     if (!password) return setError("Don't forget your password!");
 
     try {
-      await login(email.trim().toLowerCase(), password);
-      navigate("/map");
+      const data = await login(email.trim().toLowerCase(), password);
+      // Redirect admins to admin panel, regular users to map
+      const redirectPath = data.user?.roleName?.toUpperCase() === "ADMIN" ? "/admin" : "/map";
+      navigate(redirectPath);
     } catch {
       setError("Wrong email or password. Try again!");
     }
@@ -40,14 +38,16 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-md">
         {/* Brand Logo / Return Link */}
-        <div 
+        <button 
+          type="button"
           className="flex justify-center mb-10 cursor-pointer group"
           onClick={() => navigate("/")}
+          aria-label="Return to home"
         >
           <div className="w-14 h-14 bg-[#0066FF] border-4 border-black rounded-2xl flex items-center justify-center rotate-[-8deg] group-hover:rotate-0 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <span className="text-white font-[1000] text-3xl">T</span>
           </div>
-        </div>
+        </button>
 
         {/* The Login Card */}
         <div className="bg-white border-[4px] border-black rounded-[2.5rem] p-8 md:p-10 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
@@ -66,8 +66,9 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <label className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Email Address</label>
+              <label htmlFor="login-email" className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Email Address</label>
               <input
+                id="login-email"
                 type="email"
                 placeholder="driver@tripwire.com"
                 className="w-full px-6 py-4 bg-slate-50 border-4 border-black rounded-2xl 
@@ -79,8 +80,9 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Password</label>
+              <label htmlFor="login-password" className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Password</label>
               <input
+                id="login-password"
                 type="password"
                 placeholder="••••••••"
                 className="w-full px-6 py-4 bg-slate-50 border-4 border-black rounded-2xl 

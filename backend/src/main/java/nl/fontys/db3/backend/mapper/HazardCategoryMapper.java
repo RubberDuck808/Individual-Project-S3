@@ -11,6 +11,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public abstract class HazardCategoryMapper {
 
+    @SuppressWarnings("java:S6813") // MapStruct requires @Autowired for dependency injection in abstract mappers
     @Autowired
     protected StorageUrlService storageUrlService;
 

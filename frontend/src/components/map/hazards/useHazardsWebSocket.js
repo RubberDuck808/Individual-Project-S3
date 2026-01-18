@@ -8,11 +8,16 @@ export function useHazardsWebSocket({ enabled, onEvent }) {
     if (!enabled) return;
 
     const base = import.meta.env.VITE_API_URL;
+    if (!base) {
+      console.error("VITE_API_URL is not set. WebSocket connection cannot be established.");
+      return;
+    }
 
     let authHeader;
     try {
       authHeader = getAuthHeader();
     } catch {
+      console.warn("Failed to get auth header for WebSocket");
       return;
     }
 
@@ -23,8 +28,11 @@ export function useHazardsWebSocket({ enabled, onEvent }) {
       connectHeaders: authHeader,
 
       reconnectDelay: 3000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
 
       onConnect: () => {
+        console.log("Hazards WebSocket connected");
         client.subscribe("/topic/hazards", (msg) => {
           try {
             onEvent(JSON.parse(msg.body));
@@ -33,9 +41,24 @@ export function useHazardsWebSocket({ enabled, onEvent }) {
           }
         });
       },
+
+      onDisconnect: () => {
+        console.log("Hazards WebSocket disconnected");
+      },
+
+      onStompError: (frame) => {
+        console.error("WebSocket STOMP error:", frame);
+      },
+
+      onWebSocketError: (event) => {
+        console.error("WebSocket error:", event);
+      },
     });
 
     client.activate();
-    return () => client.deactivate();
+    
+    return () => {
+      client.deactivate();
+    };
   }, [enabled, onEvent]);
 }

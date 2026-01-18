@@ -12,6 +12,7 @@ public interface HazardMapper {
 
     @Mapping(source = "category.name", target = "category")
     @Mapping(source = "createdBy.id", target = "createdBy")
+    @Mapping(source = "createdBy.username", target = "createdByUsername")
     @Mapping(target = "upvotes", expression = "java(hazard.getUpvoteCount())")
     @Mapping(target = "downvotes", expression = "java(hazard.getDownvoteCount())")
     HazardReportDTO toDTO(HazardReport hazard);

@@ -1,35 +1,13 @@
 import React, { useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import CarSketch from "./CarSketch";
 
-// Placeholder “RDW-like” database
 const MOCK_PLATE_DB = {
-  "12-AB-34": {
-    make: "Volkswagen",
-    model: "Golf",
-    year: 2019,
-    fuelType: "Petrol",
-    maxSpeedKmh: 210,
-    massKg: 1280,
-  },
-  "99-ZZ-99": {
-    make: "Toyota",
-    model: "Yaris",
-    year: 2016,
-    fuelType: "Hybrid",
-    maxSpeedKmh: 165,
-    massKg: 1090,
-  },
-  "EV-2025": {
-    make: "Tesla",
-    model: "Model 3",
-    year: 2024,
-    fuelType: "Electric",
-    maxSpeedKmh: 233,
-    massKg: 1765,
-  },
+  "12-AB-34": { make: "Volkswagen", model: "Golf", year: 2019, fuelType: "Petrol", maxSpeedKmh: 210, massKg: 1280 },
+  "99-ZZ-99": { make: "Toyota", model: "Yaris", year: 2016, fuelType: "Hybrid", maxSpeedKmh: 165, massKg: 1090 },
+  "EV-2025": { make: "Tesla", model: "Model 3", year: 2024, fuelType: "Electric", maxSpeedKmh: 233, massKg: 1765 },
 };
 
-// Placeholder error mapping
 const ERROR_MAP = {
   1: { title: "Low oil pressure", detail: "Oil pressure below threshold.", severity: "high" },
   2: { title: "Engine temperature high", detail: "Coolant temp elevated.", severity: "high" },
@@ -40,23 +18,19 @@ const ERROR_MAP = {
 function translateErrors(errorCodes = []) {
   return errorCodes.map((code) => ({
     code,
-    ...(ERROR_MAP[code] || {
-      title: "Unknown issue",
-      detail: "This error code is not mapped yet.",
-      severity: "low",
-    }),
+    ...(ERROR_MAP[code] || { title: "Unknown issue", detail: "This error code is not mapped yet.", severity: "low" }),
   }));
 }
 
-export default function CarHealthPanel({ linkedPlate, setLinkedPlate, telemetry, darkMode }) {
+export default function CarHealthPanel({ plate, setPlate, telemetry }) {
   const [isEditingPlate, setIsEditingPlate] = useState(false);
-  const [draftPlate, setDraftPlate] = useState(linkedPlate);
+  const [draftPlate, setDraftPlate] = useState(plate);
   const [plateMsg, setPlateMsg] = useState("");
 
   const vehicle = useMemo(() => {
-    const key = (linkedPlate || "").trim().toUpperCase();
+    const key = (plate || "").trim().toUpperCase();
     return MOCK_PLATE_DB[key] || null;
-  }, [linkedPlate]);
+  }, [plate]);
 
   const issues = useMemo(() => translateErrors(telemetry?.errorCodes ?? []), [telemetry]);
 
@@ -66,226 +40,117 @@ export default function CarHealthPanel({ linkedPlate, setLinkedPlate, telemetry,
     return "ok";
   }, [telemetry]);
 
-  const cardBase = darkMode
-    ? "bg-white/5 border border-white/10 text-white"
-    : "bg-white/75 border border-black/10 text-gray-900";
-  const subtleText = darkMode ? "text-gray-300" : "text-gray-600";
-
-  function startEdit() {
-    setPlateMsg("");
-    setDraftPlate(linkedPlate);
-    setIsEditingPlate(true);
-  }
-
-  function cancelEdit() {
-    setPlateMsg("");
-    setDraftPlate(linkedPlate);
-    setIsEditingPlate(false);
-  }
+  const brutalCard = "bg-white border-[4px] border-black rounded-[2.5rem] p-8 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]";
+  const innerCard = "bg-[#F8F9FA] border-[3px] border-black rounded-2xl p-4";
 
   function saveEdit() {
     const normalized = (draftPlate || "").trim().toUpperCase();
-    if (!normalized) {
-      setPlateMsg("Please enter a plate.");
-      return;
-    }
-    // Placeholder rule: allow only plates that exist in mock DB for now
     if (!MOCK_PLATE_DB[normalized]) {
-      setPlateMsg("Unknown plate (placeholder). Try 12-AB-34, 99-ZZ-99, EV-2025.");
+      setPlateMsg("Unknown plate. Try 12-AB-34.");
       return;
     }
-    setLinkedPlate(normalized);
+    setPlate(normalized);
     setIsEditingPlate(false);
-    setPlateMsg("Linked car updated.");
+    setPlateMsg("");
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      {/* LEFT */}
-      <div className="lg:col-span-5">
-        <div className={`rounded-3xl p-6 backdrop-blur-xl ${cardBase}`}>
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <div className={`text-sm ${subtleText}`}>Status</div>
-              <div className="text-2xl font-bold mt-1">
-                {status === "ok" && "All Good"}
-                {status === "issues" && "Attention Needed"}
-                {status === "disconnected" && "Device Offline"}
-              </div>
-            </div>
-
-            <div
-              className={[
-                "px-3 py-1.5 rounded-full text-xs font-semibold",
-                status === "ok" &&
-                  (darkMode
-                    ? "bg-emerald-500/20 text-emerald-200"
-                    : "bg-emerald-100 text-emerald-800"),
-                status === "issues" &&
-                  (darkMode
-                    ? "bg-amber-500/20 text-amber-200"
-                    : "bg-amber-100 text-amber-800"),
-                status === "disconnected" &&
-                  (darkMode
-                    ? "bg-gray-500/20 text-gray-200"
-                    : "bg-gray-200 text-gray-700"),
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              {status}
-            </div>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      {/* LEFT COLUMN */}
+      <div className="lg:col-span-5 flex flex-col gap-10">
+        <div className={brutalCard}>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-[1000] uppercase italic text-2xl tracking-tighter">System Status</h3>
+            {(() => {
+              let statusColor = 'bg-slate-300';
+              if (status === 'ok') {
+                statusColor = 'bg-[#00D1FF]';
+              } else if (status === 'issues') {
+                statusColor = 'bg-[#FFD600]';
+              }
+              return (
+                <div className={`px-4 py-1 border-[3px] border-black rounded-full font-black text-xs uppercase ${statusColor}`}>
+                  {status}
+                </div>
+              );
+            })()}
           </div>
 
-          <div className="mt-6 rounded-2xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 p-4">
+          <div className="bg-white border-[3px] border-black rounded-[2rem] p-6 mb-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)]">
             <CarSketch status={status} />
           </div>
 
-          <div className="mt-6">
-            <div className="text-sm font-semibold">Translated issues</div>
-
-            {status === "ok" ? (
-              <div className={`mt-2 text-sm ${subtleText}`}>
-                No active error codes. Everything looks normal.
-              </div>
-            ) : status === "disconnected" ? (
-              <div className={`mt-2 text-sm ${subtleText}`}>
-                Connect the telemetry device to read live health + codes.
-              </div>
+          <div className="space-y-4">
+            <h4 className="font-black uppercase text-sm tracking-widest text-slate-400">Translated Issues</h4>
+            {issues.length === 0 ? (
+              <p className="font-bold text-slate-500 italic">No issues detected. Drive on.</p>
             ) : (
-              <ul className="mt-3 space-y-2">
-                {issues.map((it) => (
-                  <li
-                    key={it.code}
-                    className={[
-                      "rounded-xl px-4 py-3 text-sm border",
-                      darkMode ? "bg-white/5 border-white/10" : "bg-white border-black/10",
-                    ].join(" ")}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="font-semibold">{it.title}</div>
-                      <div className={darkMode ? "text-white/60" : "text-gray-500"}>#{it.code}</div>
-                    </div>
-                    <div className={`mt-1 ${subtleText}`}>{it.detail}</div>
-                  </li>
-                ))}
-              </ul>
+              issues.map(it => (
+                <div key={it.code} className={innerCard}>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-black uppercase text-sm">{it.title}</span>
+                    <span className="font-mono text-xs bg-black text-white px-2 py-0.5 rounded">#{it.code}</span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-500">{it.detail}</p>
+                </div>
+              ))
             )}
           </div>
         </div>
       </div>
 
-      {/* RIGHT */}
-      <div className="lg:col-span-7">
-        <div className={`rounded-3xl p-6 backdrop-blur-xl ${cardBase}`}>
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <div className={`text-sm ${subtleText}`}>Linked vehicle</div>
-              <div className="text-xl font-bold mt-1">
-                Plate: <span className={darkMode ? "text-white" : "text-gray-900"}>{linkedPlate}</span>
-              </div>
-              <div className={`mt-1 text-sm ${subtleText}`}>
-                One car linked for now. Change only if the user switches cars.
-              </div>
-            </div>
-
-            {!isEditingPlate ? (
-              <button
-                onClick={startEdit}
-                className={[
-                  "px-4 py-2 rounded-xl text-sm font-semibold transition border",
-                  darkMode
-                    ? "bg-white/10 hover:bg-white/15 border-white/10"
-                    : "bg-white/70 hover:bg-white border-black/10",
-                ].join(" ")}
-              >
-                Change car
-              </button>
-            ) : (
-              <div className="flex gap-2">
-                <button
-                  onClick={cancelEdit}
-                  className={[
-                    "px-4 py-2 rounded-xl text-sm font-semibold transition border",
-                    darkMode
-                      ? "bg-white/10 hover:bg-white/15 border-white/10"
-                      : "bg-white/70 hover:bg-white border-black/10",
-                  ].join(" ")}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveEdit}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:from-blue-500 hover:to-cyan-400 transition"
-                >
-                  Save
-                </button>
-              </div>
-            )}
+      {/* RIGHT COLUMN */}
+      <div className="lg:col-span-7 flex flex-col gap-10">
+        <div className={brutalCard}>
+          <div className="flex justify-between items-start mb-8 gap-4 flex-wrap">
+             <div>
+                <h3 className="font-[1000] uppercase italic text-2xl tracking-tighter text-[#0066FF]">Vehicle Telemetry</h3>
+                <div className="mt-2 flex items-center gap-2">
+                    <span className="px-3 py-1 bg-black text-[#FFD600] font-black rounded-lg text-sm">{plate}</span>
+                    <button onClick={() => setIsEditingPlate(!isEditingPlate)} className="text-xs font-black uppercase underline decoration-2 underline-offset-4 hover:text-[#0066FF]">
+                        {isEditingPlate ? "Cancel" : "Edit Plate"}
+                    </button>
+                </div>
+             </div>
+             <div className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 border-2 border-black rounded-md ${telemetry?.connected ? 'bg-emerald-400' : 'bg-red-400'}`}>
+                {telemetry?.connected ? "Live Data" : "Offline"}
+             </div>
           </div>
 
           {isEditingPlate && (
-            <div className="mt-4">
-              <label className={`text-xs ${subtleText}`}>New plate</label>
-              <div className="mt-2 flex gap-2">
-                <input
-                  value={draftPlate}
-                  onChange={(e) => setDraftPlate(e.target.value)}
-                  className={[
-                    "px-4 py-2 rounded-xl text-sm outline-none w-56 border",
-                    darkMode
-                      ? "bg-gray-900/40 border-white/10 placeholder:text-white/30"
-                      : "bg-white border-black/10 placeholder:text-gray-400",
-                  ].join(" ")}
-                  placeholder="12-AB-34"
-                />
-                <div className={`text-xs ${subtleText} flex items-center`}>
-                  Try: 12-AB-34 / 99-ZZ-99 / EV-2025
+            <div className="mb-8 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2">
+                <div className="flex gap-3">
+                    <input 
+                        value={draftPlate} 
+                        onChange={(e) => setDraftPlate(e.target.value)}
+                        className="bg-white border-[3px] border-black px-4 py-2 rounded-xl font-bold uppercase w-40 outline-none focus:ring-4 ring-[#0066FF]/20"
+                    />
+                    <button onClick={saveEdit} className="bg-black text-white px-6 py-2 rounded-xl font-black uppercase text-xs">Update</button>
                 </div>
-              </div>
-
-              {plateMsg && (
-                <div className={`mt-2 text-sm ${plateMsg.includes("updated") ? "text-emerald-400" : "text-amber-400"}`}>
-                  {plateMsg}
-                </div>
-              )}
+                {plateMsg && (
+                    <p className="text-xs font-black text-red-500 uppercase">{plateMsg}</p>
+                )}
             </div>
           )}
 
-          {/* vehicle info */}
-          <div className="mt-6">
-            <div className="text-lg font-bold">Vehicle details (placeholder)</div>
-            <div className="mt-4">
-              {vehicle ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InfoTile darkMode={darkMode} label="Make" value={vehicle.make} />
-                  <InfoTile darkMode={darkMode} label="Model" value={vehicle.model} />
-                  <InfoTile darkMode={darkMode} label="Year" value={vehicle.year} />
-                  <InfoTile darkMode={darkMode} label="Fuel type" value={vehicle.fuelType} />
-                  <InfoTile darkMode={darkMode} label="Max speed" value={`${vehicle.maxSpeedKmh} km/h`} />
-                  <InfoTile darkMode={darkMode} label="Mass" value={`${vehicle.massKg} kg`} />
-                </div>
-              ) : (
-                <div className={subtleText}>No vehicle found for this plate (placeholder).</div>
-              )}
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <MetricCard label="Speed" value={telemetry?.speedKmh ?? "—"} unit="KM/H" color="bg-[#00D1FF]" />
+            <MetricCard label="RPM" value={telemetry?.rpm ?? "—"} unit="RPM" color="bg-[#FFD600]" />
+            <MetricCard label="Coolant" value={telemetry?.coolantC ?? "—"} unit="°C" color="bg-white" />
+            <MetricCard label="Battery" value={telemetry?.batteryV ?? "—"} unit="V" color="bg-white" />
+            <MetricCard label="Oil Temp" value={telemetry?.oilTempC ?? "—"} unit="°C" color="bg-white" />
+            <MetricCard label="Fuel" value={telemetry?.fuelPct ?? "—"} unit="%" color="bg-[#FF6AC1]" />
           </div>
 
-          {/* telemetry */}
-          <div className="mt-10">
-            <div className="flex items-center justify-between">
-              <div className="text-lg font-bold">Telemetry (placeholder)</div>
-              <div className={`text-sm ${subtleText}`}>{telemetry?.connected ? "Device connected" : "No device"}</div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
-              <Metric darkMode={darkMode} label="Speed" value={telemetry?.speedKmh ?? "—"} unit="km/h" />
-              <Metric darkMode={darkMode} label="RPM" value={telemetry?.rpm ?? "—"} unit="" />
-              <Metric darkMode={darkMode} label="Coolant" value={telemetry?.coolantC ?? "—"} unit="°C" />
-              <Metric darkMode={darkMode} label="Battery" value={telemetry?.batteryV ?? "—"} unit="V" />
-              <Metric darkMode={darkMode} label="Oil temp" value={telemetry?.oilTempC ?? "—"} unit="°C" />
-              <Metric darkMode={darkMode} label="Fuel" value={telemetry?.fuelPct ?? "—"} unit="%" />
-            </div>
+          <div className="mt-12 pt-8 border-t-[3px] border-black border-dashed flex justify-between items-center">
+             <div>
+                <span className="text-[10px] font-black uppercase text-slate-400 block mb-1">Active Crew Vehicle</span>
+                <span className="text-2xl font-[1000] italic uppercase">{vehicle?.make} {vehicle?.model} <span className="text-slate-300">/</span> {vehicle?.year}</span>
+             </div>
+             <div className="text-right">
+                <span className="text-[10px] font-black uppercase text-slate-400 block mb-1">Fuel Type</span>
+                <span className="font-black uppercase text-sm">{vehicle?.fuelType}</span>
+             </div>
           </div>
         </div>
       </div>
@@ -293,23 +158,36 @@ export default function CarHealthPanel({ linkedPlate, setLinkedPlate, telemetry,
   );
 }
 
-function InfoTile({ label, value, darkMode }) {
-  return (
-    <div className={["rounded-2xl p-4 border", darkMode ? "bg-white/5 border-white/10" : "bg-white border-black/10"].join(" ")}>
-      <div className={darkMode ? "text-xs text-white/60" : "text-xs text-gray-500"}>{label}</div>
-      <div className="mt-1 font-semibold">{value ?? "—"}</div>
-    </div>
-  );
-}
+CarHealthPanel.propTypes = {
+  plate: PropTypes.string,
+  setPlate: PropTypes.func.isRequired,
+  telemetry: PropTypes.shape({
+    connected: PropTypes.bool,
+    errorCodes: PropTypes.arrayOf(PropTypes.number),
+    speedKmh: PropTypes.number,
+    rpm: PropTypes.number,
+    coolantC: PropTypes.number,
+    batteryV: PropTypes.number,
+    oilTempC: PropTypes.number,
+    fuelPct: PropTypes.number,
+  }),
+};
 
-function Metric({ label, value, unit, darkMode }) {
+function MetricCard({ label, value, unit, color }) {
   return (
-    <div className={["rounded-2xl p-4 border", darkMode ? "bg-white/5 border-white/10" : "bg-white border-black/10"].join(" ")}>
-      <div className={darkMode ? "text-xs text-white/60" : "text-xs text-gray-500"}>{label}</div>
-      <div className="mt-2 flex items-end gap-2">
-        <div className="text-xl font-bold">{value}</div>
-        <div className={darkMode ? "text-sm text-white/50" : "text-sm text-gray-500"}>{unit}</div>
+    <div className={`border-[3px] border-black rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${color}`}>
+      <div className="text-[10px] font-black uppercase tracking-widest mb-1">{label}</div>
+      <div className="flex items-baseline gap-1">
+        <span className="text-2xl font-[1000] tracking-tighter">{value}</span>
+        <span className="text-[10px] font-black opacity-60">{unit}</span>
       </div>
     </div>
   );
 }
+
+MetricCard.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  unit: PropTypes.string.isRequired,
+  color: PropTypes.string.isRequired,
+};

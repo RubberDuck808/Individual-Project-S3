@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, UserRound, UserCog, Accessibility, Bell } from "lucide-react";
-import { useTheme } from "../context/ThemeContext";
+import { ArrowLeft, UserRound, UserCog, Users, Cpu } from "lucide-react";
 import { getStoredUser } from "../api/userApi";
 
 import SettingsSidebar from "../components/settings/SettingsSidebar";
@@ -9,16 +8,14 @@ import SectionShell from "../components/settings/sections/SectionShell";
 
 import ProfileSettingsSection from "../components/settings/sections/ProfileSettingsSection";
 import AccountSettingsSection from "../components/settings/sections/AccountSettingsSection";
-// import AccessibilitySettingsSection from "../components/settings/sections/AccessibilitySettingsSection";
-// import NotificationsSettingsSection from "../components/settings/sections/NotificationsSettingsSection";
+import FriendsSettingsSection from "../components/settings/sections/FriendsSettingsSection";
+import DeviceSettingsSection from "../components/settings/sections/DeviceSettingsSection";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { darkMode, setDarkMode } = useTheme();
 
   const [me, setMe] = useState(null);
   const [activeKey, setActiveKey] = useState("profile");
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   useEffect(() => {
     const user = getStoredUser();
@@ -29,8 +26,8 @@ export default function SettingsPage() {
     () => [
       { key: "profile", label: "Profile", icon: UserRound },
       { key: "account", label: "Account", icon: UserCog },
-      // { key: "accessibility", label: "Accessibility", icon: Accessibility },
-      // { key: "notifications", label: "Notifications", icon: Bell },
+      { key: "device", label: "Device", icon: Cpu },
+      { key: "friends", label: "Friends", icon: Users },
     ],
     []
   );
@@ -90,16 +87,13 @@ return (
                 />
               )}
 
-              {/* {activeKey === "accessibility" && (
-                <AccessibilitySettingsSection darkMode={darkMode} setDarkMode={setDarkMode} />
-              )} */}
+              {activeKey === "device" && (
+                <DeviceSettingsSection me={me} />
+              )}
 
-              {/* {activeKey === "notifications" && (
-                <NotificationsSettingsSection
-                  enabled={notificationsEnabled}
-                  setEnabled={setNotificationsEnabled}
-                />
-              )} */}
+              {activeKey === "friends" && (
+                <FriendsSettingsSection me={me} />
+              )}
             </SectionShell>
           </div>
         </div>

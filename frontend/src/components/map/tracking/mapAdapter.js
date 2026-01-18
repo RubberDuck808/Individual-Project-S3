@@ -1,16 +1,24 @@
 import mapboxgl from "mapbox-gl";
 
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+// Validate Mapbox token
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+if (!MAPBOX_TOKEN || MAPBOX_TOKEN.trim() === "") {
+  console.error("VITE_MAPBOX_TOKEN is not set. Map functionality will not work.");
+  throw new Error("Mapbox access token is required. Please set VITE_MAPBOX_TOKEN in your environment variables.");
+}
+
+mapboxgl.accessToken = MAPBOX_TOKEN;
 
 export class MapAdapter {
+  mapLoaded = false;
+
   constructor(container, style) {
-    this.mapLoaded = false;
 
     this.map = new mapboxgl.Map({
       container,
       style,
-      zoom: 14,
-      center: [0, 0],
+      zoom: 15,
+      center: [5.5, 52],
     });
 
     this.map.on("load", () => {
@@ -80,7 +88,6 @@ export class MapAdapter {
     this.map.easeTo(options);
   }
 
-  // Camera setters
   setZoom(zoom) {
     if (!this.isLoaded()) return;
     this.map.setZoom(zoom);
@@ -104,20 +111,27 @@ export class MapAdapter {
     const g = geometry?.type === "Feature" ? geometry.geometry : geometry;
     if (!g) return;
 
+    const extendBoundsWithCoordinates = (coords) => {
+      for (const c of coords) {
+        bounds.extend(c);
+      }
+    };
+
     if (g.type === "LineString") {
-      g.coordinates.forEach((c) => bounds.extend(c));
+      extendBoundsWithCoordinates(g.coordinates);
     } else if (g.type === "Polygon") {
-      g.coordinates?.[0]?.forEach((c) => bounds.extend(c));
+      if (g.coordinates?.[0]) {
+        extendBoundsWithCoordinates(g.coordinates[0]);
+      }
     } else if (g.type === "Point") {
       bounds.extend(g.coordinates);
-    } else {
-      g.coordinates?.forEach?.((c) => bounds.extend(c));
+    } else if (g.coordinates) {
+      extendBoundsWithCoordinates(g.coordinates);
     }
 
     this.map.fitBounds(bounds, { padding, duration });
   }
 
-  // Route Layer
   addRouteLayer(routeId, geometry) {
     if (!this.isLoaded()) return;
 
@@ -151,10 +165,14 @@ export class MapAdapter {
 
     try {
       if (this.map.getLayer(routeId)) this.map.removeLayer(routeId);
-    } catch {}
+    } catch (error) {
+      console.debug("Failed to remove route layer:", error);
+    }
     try {
       if (this.map.getSource(routeId)) this.map.removeSource(routeId);
-    } catch {}
+    } catch (error) {
+      console.debug("Failed to remove route source:", error);
+    }
   }
 
   getLayer(id) {
@@ -170,14 +188,31 @@ export class MapAdapter {
     return this.map.removeSource(id);
   }
 
-  // --- STYLE SWITCH ---
   setStyle(style) {
     if (!this.map) return;
 
+    if (this._styleChanging) {
+      return;
+    }
+
+    this._styleChanging = true;
+
+    const applyStyle = () => {
+      try {
+        this.map.setStyle(style);
+        this.map.once("style.load", () => {
+          this._styleChanging = false;
+        });
+      } catch (e) {
+        console.error("Failed to set map style:", e);
+        this._styleChanging = false;
+      }
+    };
+
     if (this.map.isStyleLoaded()) {
-      this.map.setStyle(style);
+      applyStyle();
     } else {
-      this.map.once("load", () => this.map.setStyle(style));
+      this.map.once("load", applyStyle);
     }
   }
 }

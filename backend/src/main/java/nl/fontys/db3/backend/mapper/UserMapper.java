@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Mapper(componentModel = "spring")
 public abstract class UserMapper {
 
+    @SuppressWarnings("java:S6813") // MapStruct requires @Autowired for dependency injection in abstract mappers
     @Autowired
     protected StorageUrlService storageUrlService;
 

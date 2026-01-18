@@ -1,9 +1,21 @@
 services:
   postgres:
     image: postgres:16
+    container_name: test-postgres
     environment:
       POSTGRES_DB: testdb
       POSTGRES_USER: test
       POSTGRES_PASSWORD: test
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d testdb"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  test_postgres_data:
+    name: individual-project-s3_test_postgres_data

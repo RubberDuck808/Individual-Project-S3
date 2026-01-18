@@ -45,3 +45,5 @@ hardware/.pio/
 hardware/.pio/*
 
 hardware/.vscode/
+*.md
+*.tex

@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import AvatarPicker from "../../profile/avatars/AvatarPicker";
 import UserAvatar from "../../profile/avatars/UserAvatar";
 import BackgroundPicker from "../../profile/backgrounds/BackgroundPicker";
@@ -43,3 +44,11 @@ export default function ProfileSettingsSection({ me, setMe }) {
     </div>
   );
 }
+
+ProfileSettingsSection.propTypes = {
+  me: PropTypes.shape({
+    avatarName: PropTypes.string,
+    backgroundName: PropTypes.string,
+  }),
+  setMe: PropTypes.func.isRequired,
+};

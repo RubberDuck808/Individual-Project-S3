@@ -1,8 +1,7 @@
 import React, { useMemo } from "react";
+import PropTypes from "prop-types";
 import { Check } from 'lucide-react';
 import { haversineMeters } from "../../../utils/geo";
-
-// --- Helper Functions ---
 
 function roundToNearest50(m) {
   if (m == null) return null;
@@ -31,8 +30,6 @@ function iconForManeuver(maneuver) {
   return "➜";
 }
 
-// --- Component ---
-
 export default function TripNavigationHUD({
   steps,
   activeStepIndex,
@@ -41,15 +38,14 @@ export default function TripNavigationHUD({
   onEnd,
   onCancel,
 }) {
-  if (!steps?.length) return null;
-
-  const step = steps[activeStepIndex] ?? steps[0];
-  const instruction = step?.maneuver?.instruction ?? "Keep Moving";
-  const icon = iconForManeuver(step?.maneuver);
+  // Ensure activeStepIndex is valid - calculate before early returns
+  const safeIndex = Math.max(0, Math.min(activeStepIndex || 0, (steps?.length ?? 0) - 1));
+  const step = steps?.[safeIndex];
   const maneuverLngLat = step?.maneuver?.location;
 
-  // Calculate distance logic
+  // Calculate distance logic - must be called before early return
   const distanceToManeuver = useMemo(() => {
+    if (!step) return null;
     if (userLocation?.lat == null || userLocation?.lng == null) return null;
     if (!Array.isArray(maneuverLngLat) || maneuverLngLat.length < 2) return null;
 
@@ -63,8 +59,13 @@ export default function TripNavigationHUD({
     );
 
     return roundToNearest50(d);
-  }, [userLocation?.lat, userLocation?.lng, maneuverLngLat]);
+  }, [userLocation?.lat, userLocation?.lng, maneuverLngLat, step]);
 
+  if (!steps?.length) return null;
+  if (!step) return null;
+
+  const instruction = step?.maneuver?.instruction ?? "Keep Moving";
+  const icon = iconForManeuver(step?.maneuver);
   const distText = formatMeters(distanceToManeuver);
 
   return (
@@ -111,3 +112,15 @@ export default function TripNavigationHUD({
     </div>
   );
 }
+
+TripNavigationHUD.propTypes = {
+  steps: PropTypes.arrayOf(PropTypes.object),
+  activeStepIndex: PropTypes.number.isRequired,
+  userLocation: PropTypes.shape({
+    lat: PropTypes.number,
+    lng: PropTypes.number,
+  }),
+  submitting: PropTypes.bool.isRequired,
+  onEnd: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+};

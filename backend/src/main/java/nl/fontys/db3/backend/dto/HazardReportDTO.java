@@ -16,6 +16,7 @@ public class HazardReportDTO {
     private String category;
     private String status;
     private Long createdBy; 
+    private String createdByUsername; // Username of the user who created the hazard
     private long upvotes;
     private long downvotes;
 }

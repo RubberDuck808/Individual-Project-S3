@@ -1,10 +1,8 @@
-// Error
 async function readError(res) {
   const contentType = res.headers.get("content-type") || "";
   try {
     if (contentType.includes("application/json")) {
       const data = await res.json();
-      // Common patterns: {error:"..."}, {message:"..."} etc.
       return data.error || data.message || JSON.stringify(data);
     }
     return await res.text();
@@ -13,7 +11,6 @@ async function readError(res) {
   }
 }
 
-// Register
 export async function register(username, email, password, name) {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/register`, {
     method: "POST",
@@ -28,8 +25,6 @@ export async function register(username, email, password, name) {
   return res.json();
 }
 
-
-// Login
 export async function login(email, password) {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/login`, {
     method: "POST",
@@ -43,24 +38,26 @@ export async function login(email, password) {
 
   const data = await res.json();
 
-  // Store authentication data
   localStorage.setItem("token", data.token);
   localStorage.setItem("user", JSON.stringify(data.user));
 
   return data;
 }
 
-// Authentication fetch helper
 export async function authFetch(path, options = {}) {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("Not authenticated");
 
+  const defaultHeaders = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+
   const res = await fetch(`${import.meta.env.VITE_API_URL}${path}`, {
     ...options,
     headers: {
-      ...(options.headers || {}),
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...defaultHeaders,
+      ...options.headers,
     },
   });
 
@@ -75,16 +72,12 @@ export async function authFetch(path, options = {}) {
   return res.text();
 }
 
-// Get current user
 export async function fetchCurrentUser() {
   const user = await authFetch("/api/users/me");
-
-  // Keep localStorage in sync (nice to have)
   localStorage.setItem("user", JSON.stringify(user));
   return user;
 }
 
-// Logged user helper
 export function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");

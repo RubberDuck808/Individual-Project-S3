@@ -5,7 +5,7 @@ import lombok.*;
 
 @Entity
 @Table(
-    name = "statistics",
+    name = "\"statistics\"",  // Quote table name as 'statistics' is a PostgreSQL reserved word
     uniqueConstraints = @UniqueConstraint(columnNames = {"user_id"})
 )
 @Getter @Setter

@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import SectionShell from "./SectionShell";
 
 export default function NotificationsSettingsSection({ enabled, setEnabled }) {
@@ -29,3 +30,8 @@ export default function NotificationsSettingsSection({ enabled, setEnabled }) {
     </SectionShell>
   );
 }
+
+NotificationsSettingsSection.propTypes = {
+  enabled: PropTypes.bool.isRequired,
+  setEnabled: PropTypes.func.isRequired,
+};

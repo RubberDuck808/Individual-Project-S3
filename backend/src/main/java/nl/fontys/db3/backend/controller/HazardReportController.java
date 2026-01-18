@@ -1,49 +1,72 @@
 package nl.fontys.db3.backend.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import nl.fontys.db3.backend.dto.HazardCreateRequestDTO;
 import nl.fontys.db3.backend.dto.HazardReportDTO;
 import nl.fontys.db3.backend.mapper.HazardMapper;
-import nl.fontys.db3.backend.service.hazard.HazardCommandService;
-import nl.fontys.db3.backend.service.hazard.HazardQueryService;
+import nl.fontys.db3.backend.service.HazardService;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/hazards")
 public class HazardReportController {
 
-    private final HazardQueryService queryService;
-    private final HazardCommandService commandService;
+    private final HazardService hazardService;
     private final HazardMapper hazardMapper;
 
     public HazardReportController(
-            HazardQueryService queryService,
-            HazardCommandService commandService,
+            HazardService hazardService,
             HazardMapper hazardMapper
     ) {
-        this.queryService = queryService;
-        this.commandService = commandService;
+        this.hazardService = hazardService;
         this.hazardMapper = hazardMapper;
     }
 
-    /** GET all open hazards */
     @GetMapping("/open")
     public List<HazardReportDTO> getOpenHazards() {
-        return hazardMapper.toDTOList(queryService.getOpenHazards());
+        log.debug("Getting open hazards");
+        try {
+            List<HazardReportDTO> hazards = hazardMapper.toDTOList(hazardService.getOpenHazards());
+            log.debug("Retrieved {} open hazards", hazards.size());
+            return hazards;
+        } catch (Exception e) {
+            log.error("Error getting open hazards", e);
+            throw e;
+        }
     }
 
-    /** POST create new hazard (createdBy comes from JWT) */
     @PostMapping
     public HazardReportDTO create(@RequestBody HazardCreateRequestDTO dto, Authentication authentication) {
-        String email = authentication.getName(); // e.g. oscar@test.com
-        return hazardMapper.toDTO(commandService.createHazard(dto, email));
+        String email = authentication.getName();
+        log.info("Creating hazard - email: {}, categoryId: {}, lat: {}, lng: {}", 
+                email, dto.getCategoryId(), dto.getLatitude(), dto.getLongitude());
+        try {
+            HazardReportDTO created = hazardMapper.toDTO(hazardService.createHazard(dto, email));
+            log.info("Hazard created successfully - hazardId: {}, email: {}", created.getId(), email);
+            return created;
+        } catch (Exception e) {
+            log.error("Error creating hazard - email: {}", email, e);
+            throw e;
+        }
     }
 
-    /** GET hazards created by a given username */
     @GetMapping("/by-user/{username}")
     public List<HazardReportDTO> getHazardsByUser(@PathVariable String username) {
-        return hazardMapper.toDTOList(queryService.getHazardsByUsername(username));
+        log.debug("Getting hazards by user - username: {}", username);
+        try {
+            List<HazardReportDTO> hazards = hazardMapper.toDTOList(hazardService.getHazardsByUsername(username));
+            log.debug("Retrieved {} hazards for user: {}", hazards.size(), username);
+            return hazards;
+        } catch (IllegalArgumentException e) {
+            log.warn("Get hazards by user failed - username: {}, reason: {}", username, e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Error getting hazards by user - username: {}", username, e);
+            throw e;
+        }
     }
 }

@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import PropTypes from "prop-types";
 import { getCategoriesCached, createHazard } from "../../../api/hazardApi";
 
 function cx(...classes) {
@@ -9,8 +10,20 @@ export default function HazardFormPanel({ coords, onClose }) {
   const [categories, setCategories] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
+  const toastTimeoutRef = useRef(null);
 
   const locating = !coords || coords.loading || coords.lat == null || coords.lng == null;
+
+  const showToast = useCallback((t) => {
+    setToast(t);
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = globalThis.setTimeout(() => {
+      setToast(null);
+      toastTimeoutRef.current = null;
+    }, 2400);
+  }, []);
 
   useEffect(() => {
     getCategoriesCached()
@@ -18,13 +31,13 @@ export default function HazardFormPanel({ coords, onClose }) {
       .catch((err) => {
         showToast({ type: "error", msg: "Failed to load hazard types." });
       });
-  }, []);
-
-  const showToast = useCallback((t) => {
-    setToast(t);
-    window.clearTimeout(showToast._t);
-    showToast._t = window.setTimeout(() => setToast(null), 2400);
-  }, []);
+    
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, [showToast]);
 
   const handleSelect = async (categoryId) => {
     if (locating) return showToast({ type: "info", msg: "Scanning for location..." });
@@ -46,7 +59,12 @@ export default function HazardFormPanel({ coords, onClose }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
       {/* Backdrop */}
-      <div onClick={onClose} className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        aria-label="Close form"
+      />
 
       <div className="relative w-full max-w-lg bg-[#FFFDF5] border-[4px] border-black rounded-[2.5rem] shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden animate-in slide-in-from-bottom-10 duration-300">
         
@@ -110,3 +128,12 @@ export default function HazardFormPanel({ coords, onClose }) {
     </div>
   );
 }
+
+HazardFormPanel.propTypes = {
+  coords: PropTypes.shape({
+    lat: PropTypes.number,
+    lng: PropTypes.number,
+    loading: PropTypes.bool,
+  }),
+  onClose: PropTypes.func.isRequired,
+};

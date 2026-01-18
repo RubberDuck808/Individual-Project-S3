@@ -1,5 +1,6 @@
-import { Buffer } from "buffer";
-window.Buffer = Buffer;
+// Using 'buffer' package polyfill for browser compatibility (not Node.js built-in 'node:buffer')
+import { Buffer } from "buffer"; // NOSONAR
+globalThis.Buffer = Buffer;
 
 import React from "react";
 import ReactDOM from "react-dom/client";

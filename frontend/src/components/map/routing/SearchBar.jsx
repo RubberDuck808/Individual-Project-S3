@@ -1,7 +1,35 @@
 import React, { useEffect, useRef, useState } from "react";
+import PropTypes from "prop-types";
 
 function cx(...classes) {
   return classes.filter(Boolean).join(" ");
+}
+
+// Move async function to outer scope to avoid SonarQube issue
+async function performSearch(searchQuery, location) {
+  const token = import.meta.env.VITE_MAPBOX_TOKEN;
+  if (!token || token.trim() === "") {
+    console.error("Mapbox token not configured");
+    return [];
+  }
+
+  const baseUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+    searchQuery
+  )}.json?access_token=${token}&autocomplete=true&types=poi,address,place&limit=6`;
+
+  const url =
+    location?.lng && location?.lat
+      ? `${baseUrl}&proximity=${location.lng},${location.lat}`
+      : baseUrl;
+
+  const res = await fetch(url);
+  
+  if (!res.ok) {
+    return [];
+  }
+
+  const data = await res.json();
+  return data.features || [];
 }
 
 export default function SearchBar({
@@ -53,36 +81,27 @@ export default function SearchBar({
       return;
     }
 
+    let isMounted = true;
     const timeout = setTimeout(async () => {
       try {
-        const baseUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-          query
-        )}.json?access_token=${
-          import.meta.env.VITE_MAPBOX_TOKEN
-        }&autocomplete=true&types=poi,address,place&limit=6`;
-
-        const url =
-          userLocation?.lng && userLocation?.lat
-            ? `${baseUrl}&proximity=${userLocation.lng},${userLocation.lat}`
-            : baseUrl;
-
-        const res = await fetch(url);
-        const data = await res.json();
-        const feats = data.features || [];
-        setResults(feats);
-
-        if (!suppressDropdown && feats.length > 0) {
-          setShowDropdown(true);
-        } else {
+        const results = await performSearch(query, userLocation);
+        if (isMounted) {
+          setResults(results);
+          setShowDropdown(!suppressDropdown && results.length > 0);
+        }
+      } catch (error) {
+        console.error("Search error:", error);
+        if (isMounted) {
+          setResults([]);
           setShowDropdown(false);
         }
-      } catch {
-        setResults([]);
-        setShowDropdown(false);
       }
     }, 300);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      isMounted = false;
+      clearTimeout(timeout);
+    };
   }, [query, userLocation, suppressDropdown, onCleared]);
 
   const getLabel = (place) => {
@@ -161,14 +180,15 @@ export default function SearchBar({
           )}
         >
           {results.map((place, idx) => (
-            <div
+            <button
               key={place.id}
+              type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => handleSelect(place)}
               className={cx(
-                "px-6 py-4 cursor-pointer transition-colors border-black flex items-center gap-3",
+                "px-6 py-4 cursor-pointer transition-colors border-black flex items-center gap-3 w-full text-left",
                 idx !== results.length - 1 && "border-b-[3px]",
-                "hover:bg-[#00D1FF] group/item"
+                "hover:bg-[#00D1FF] group/item bg-transparent"
               )}
             >
               <span className="text-lg opacity-40 group-hover/item:opacity-100 transition-opacity">📍</span>
@@ -180,10 +200,23 @@ export default function SearchBar({
                   {place.place_name?.split(",").slice(1).join(",").trim() || "Location"}
                 </div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       )}
     </div>
   );
 }
+
+SearchBar.propTypes = {
+  onSelect: PropTypes.func,
+  onCleared: PropTypes.func,
+  userLocation: PropTypes.shape({
+    lat: PropTypes.number,
+    lng: PropTypes.number,
+  }),
+  darkMode: PropTypes.bool,
+  clearSignal: PropTypes.number,
+  closeDropdownSignal: PropTypes.number,
+  suppressDropdown: PropTypes.bool,
+};

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { fetchAvatars, changeMyAvatar } from "../../../api/avatarApi";
+import PropTypes from "prop-types";
+import { changeMyAvatar } from "../../../api/avatarApi";
+import { useAssetsCache } from "../../../context/AssetsCacheContext";
 
 function cx(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -19,7 +21,13 @@ function SelectionTile({ url, name, selected, onClick }) {
     >
       <div className="w-full aspect-square rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center border-2 border-black/5">
         {url ? (
-          <img src={url} alt={name} className="w-full h-full object-cover" />
+          <img 
+            src={url} 
+            alt={name} 
+            className="w-full h-full object-cover" 
+            loading="lazy"
+            decoding="async"
+          />
         ) : (
           <div className="w-full h-full bg-[#00D1FF]" />
         )}
@@ -29,8 +37,7 @@ function SelectionTile({ url, name, selected, onClick }) {
 }
 
 export default function AvatarPicker({ currentAvatarName, onUpdated }) {
-  const [avatars, setAvatars] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { avatars, loading: cacheLoading, error: cacheError } = useAssetsCache();
   const [selected, setSelected] = useState(currentAvatarName || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -38,23 +45,6 @@ export default function AvatarPicker({ currentAvatarName, onUpdated }) {
   useEffect(() => {
     setSelected(currentAvatarName || "");
   }, [currentAvatarName]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const list = await fetchAvatars();
-        if (!cancelled) setAvatars(list);
-      } catch (e) {
-        if (!cancelled) setError(e?.message || "Failed to load avatars");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
 
   const handleSave = async () => {
     if (!selected) return;
@@ -71,9 +61,12 @@ export default function AvatarPicker({ currentAvatarName, onUpdated }) {
     }
   };
 
-  if (loading) return <div className="font-black animate-pulse uppercase tracking-widest text-slate-400">Loading characters...</div>;
+  if (cacheLoading) return <div className="font-black animate-pulse uppercase tracking-widest text-slate-400">Loading characters...</div>;
+  if (cacheError) return <div className="font-black uppercase tracking-widest text-red-500">Error: {cacheError}</div>;
+  if (!avatars) return <div className="font-black uppercase tracking-widest text-slate-400">No avatars available</div>;
 
   const hasChanged = selected !== currentAvatarName;
+  const activeAvatars = avatars.filter((a) => a.active);
 
   return (
     <div className="w-full space-y-6">
@@ -102,18 +95,28 @@ export default function AvatarPicker({ currentAvatarName, onUpdated }) {
       )}
 
       <div className="w-full grid grid-cols-3 sm:grid-cols-4 gap-4">
-        {avatars
-          .filter((a) => a.active)
-          .map((a) => (
-            <SelectionTile
-              key={a.name}
-              url={a.url}
-              name={a.name}
-              selected={selected === a.name}
-              onClick={() => setSelected(a.name)}
-            />
-          ))}
+        {activeAvatars.map((a) => (
+          <SelectionTile
+            key={a.name}
+            url={a.url}
+            name={a.name}
+            selected={selected === a.name}
+            onClick={() => setSelected(a.name)}
+          />
+        ))}
       </div>
     </div>
   );
 }
+
+AvatarPicker.propTypes = {
+  currentAvatarName: PropTypes.string,
+  onUpdated: PropTypes.func,
+};
+
+SelectionTile.propTypes = {
+  url: PropTypes.string,
+  name: PropTypes.string.isRequired,
+  selected: PropTypes.bool.isRequired,
+  onClick: PropTypes.func.isRequired,
+};

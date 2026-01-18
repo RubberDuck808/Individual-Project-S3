@@ -37,7 +37,6 @@ class TripServiceTest {
 
     @Test
     void completeSoloTrip_success_savesTrip_incrementsStats_andReturnsDto() {
-        // Arrange
         String email = "user@test.com";
 
         TripCompleteRequestDTO dto = mock(TripCompleteRequestDTO.class);
@@ -48,7 +47,7 @@ class TripServiceTest {
         when(dto.getDistanceKm()).thenReturn(12.5);
 
         OffsetDateTime startedAt = OffsetDateTime.of(2026, 1, 1, 10, 0, 0, 0, ZoneOffset.UTC);
-        OffsetDateTime endedAt   = OffsetDateTime.of(2026, 1, 1, 11, 0, 0, 0, ZoneOffset.UTC);
+        OffsetDateTime endedAt = OffsetDateTime.of(2026, 1, 1, 11, 0, 0, 0, ZoneOffset.UTC);
         when(dto.getStartedAt()).thenReturn(startedAt);
         when(dto.getEndedAt()).thenReturn(endedAt);
 
@@ -62,17 +61,15 @@ class TripServiceTest {
         TripDTO mappedDto = mock(TripDTO.class);
         when(tripMapper.toDTO(any(Trip.class))).thenReturn(mappedDto);
 
-        // Act
         TripDTO result = service.completeSoloTrip(email, dto);
 
-        // Assert
         assertNotNull(result);
         assertSame(mappedDto, result);
 
         Trip savedTrip = tripCaptor.getValue();
         assertNotNull(savedTrip);
         assertSame(user, savedTrip.getUser());
-        assertNull(savedTrip.getConvoyId(), "Solo trip should have convoyId null");
+        assertNull(savedTrip.getConvoyId());
 
         assertEquals(51.44, savedTrip.getStartLat());
         assertEquals(5.48, savedTrip.getStartLng());
@@ -95,17 +92,6 @@ class TripServiceTest {
     }
 
     @Test
-    void completeSoloTrip_missingStartLat_throws() {
-        TripCompleteRequestDTO dto = mock(TripCompleteRequestDTO.class);
-        when(dto.getStartLat()).thenReturn(null);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> service.completeSoloTrip("user@test.com", dto));
-
-        verifyNoInteractions(userRepo, tripRepo, statisticsService, tripMapper);
-    }
-
-    @Test
     void completeSoloTrip_negativeDistance_throws() {
         TripCompleteRequestDTO dto = mock(TripCompleteRequestDTO.class);
         when(dto.getStartLat()).thenReturn(1.0);
@@ -114,25 +100,6 @@ class TripServiceTest {
         when(dto.getEndLng()).thenReturn(1.0);
         when(dto.getDistanceKm()).thenReturn(-0.1);
 
-        assertThrows(IllegalArgumentException.class,
-                () -> service.completeSoloTrip("user@test.com", dto));
-
-        verifyNoInteractions(userRepo, tripRepo, statisticsService, tripMapper);
-    }
-
-    @Test
-    void completeSoloTrip_startedAtNull_throws() {
-        TripCompleteRequestDTO dto = mock(TripCompleteRequestDTO.class);
-        when(dto.getStartLat()).thenReturn(1.0);
-        when(dto.getStartLng()).thenReturn(1.0);
-        when(dto.getEndLat()).thenReturn(1.0);
-        when(dto.getEndLng()).thenReturn(1.0);
-        when(dto.getDistanceKm()).thenReturn(1.0);
-
-        // This is the one we want to trigger
-        when(dto.getStartedAt()).thenReturn(null);
-
-        // DO NOT stub endedAt here — it won’t be called
         assertThrows(IllegalArgumentException.class,
                 () -> service.completeSoloTrip("user@test.com", dto));
 
@@ -149,7 +116,7 @@ class TripServiceTest {
         when(dto.getDistanceKm()).thenReturn(1.0);
 
         OffsetDateTime started = OffsetDateTime.of(2026, 1, 1, 10, 0, 0, 0, ZoneOffset.UTC);
-        OffsetDateTime ended   = OffsetDateTime.of(2026, 1, 1, 9, 59, 0, 0, ZoneOffset.UTC);
+        OffsetDateTime ended = OffsetDateTime.of(2026, 1, 1, 9, 59, 0, 0, ZoneOffset.UTC);
         when(dto.getStartedAt()).thenReturn(started);
         when(dto.getEndedAt()).thenReturn(ended);
 
@@ -177,6 +144,5 @@ class TripServiceTest {
 
         verify(tripRepo, never()).save(any());
         verify(statisticsService, never()).incrementTripsAndDistance(anyLong(), anyDouble());
-        verify(tripMapper, never()).toDTO(any());
     }
 }

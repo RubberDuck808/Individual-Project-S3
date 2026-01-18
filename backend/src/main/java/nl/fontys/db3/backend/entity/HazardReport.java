@@ -8,7 +8,10 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import static nl.fontys.db3.backend.service.Constants.HAZARD_EXPIRATION_HOURS;
+
 @Entity
+@Table(name = "hazard_report")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
 public class HazardReport {
@@ -59,7 +62,7 @@ public class HazardReport {
 
     public boolean isExpired() {
         return getLastInteractionTime()
-                .plusHours(24)
+                .plusHours(HAZARD_EXPIRATION_HOURS)
                 .isBefore(LocalDateTime.now());
     }
 

@@ -239,7 +239,7 @@ export default function MapPage() {
 
   requestAnimationFrame(() => {
     mapRef.current?.recenterToUserWithZoom?.(TRIP_ZOOM, TRIP_PITCH);
-    window.setTimeout(() => {
+    globalThis.setTimeout(() => {
       mapRef.current?.recenterToUserWithZoom?.(TRIP_ZOOM, TRIP_PITCH);
     }, 250);
   });

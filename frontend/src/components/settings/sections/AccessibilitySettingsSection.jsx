@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import SectionShell from "./SectionShell";
 
 export default function AccessibilitySettingsSection({ darkMode, setDarkMode }) {
@@ -29,3 +30,8 @@ export default function AccessibilitySettingsSection({ darkMode, setDarkMode }) 
     </SectionShell>
   );
 }
+
+AccessibilitySettingsSection.propTypes = {
+  darkMode: PropTypes.bool.isRequired,
+  setDarkMode: PropTypes.func.isRequired,
+};

@@ -18,7 +18,7 @@ export function findNearestHazardWithin(hazards, location, maxMeters) {
   let bestD = Infinity;
 
   for (const h of hazards) {
-    if (!h || h.latitude == null || h.longitude == null) continue;
+    if (!h?.latitude || h.longitude == null) continue;
 
     const d = haversineMeters(location.lat, location.lng, h.latitude, h.longitude);
     if (d <= maxMeters && d < bestD) {

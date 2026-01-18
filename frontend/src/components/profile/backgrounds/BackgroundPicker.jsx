@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { fetchBackgrounds, changeMyBackground } from "../../../api/backgroundApi";
+import PropTypes from "prop-types";
+import { changeMyBackground } from "../../../api/backgroundApi";
+import { useAssetsCache } from "../../../context/AssetsCacheContext";
+import { getThumbnailUrl } from "../../../utils/imageUtils";
 
 function cx(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
 function SelectionTile({ url, name, selected, onClick }) {
+  // For settings, we want to optimize image loading
+  // Display size is small (~200-300px), so we can use lower priority
+  const thumbnailUrl = getThumbnailUrl(url);
+  
   return (
     <button
       onClick={onClick}
@@ -18,8 +25,25 @@ function SelectionTile({ url, name, selected, onClick }) {
       type="button"
     >
       <div className="w-full aspect-video rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center border-2 border-black/5">
-        {url ? (
-          <img src={url} alt={name} className="w-full h-full object-cover" />
+        {thumbnailUrl ? (
+          <img 
+            src={thumbnailUrl} 
+            alt={name} 
+            className="w-full h-full object-cover" 
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
+            // Set explicit dimensions to help browser optimize
+            width="300"
+            height="169"
+            // Use CSS to ensure image is displayed at smaller size
+            // This helps browser optimize, though it still downloads full size
+            style={{ 
+              imageRendering: 'auto',
+              maxWidth: '100%',
+              height: 'auto'
+            }}
+          />
         ) : (
           <div className="w-full h-full bg-[#FF6AC1]" />
         )}
@@ -29,8 +53,7 @@ function SelectionTile({ url, name, selected, onClick }) {
 }
 
 export default function BackgroundPicker({ currentBackgroundName, onUpdated }) {
-  const [backgrounds, setBackgrounds] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { backgrounds, loading: cacheLoading, error: cacheError } = useAssetsCache();
   const [selected, setSelected] = useState(currentBackgroundName || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -38,23 +61,6 @@ export default function BackgroundPicker({ currentBackgroundName, onUpdated }) {
   useEffect(() => {
     setSelected(currentBackgroundName || "");
   }, [currentBackgroundName]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const list = await fetchBackgrounds();
-        if (!cancelled) setBackgrounds(list);
-      } catch (e) {
-        if (!cancelled) setError(e?.message || "Failed to load backgrounds");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
 
   const handleSave = async () => {
     if (!selected) return;
@@ -71,13 +77,24 @@ export default function BackgroundPicker({ currentBackgroundName, onUpdated }) {
     }
   };
 
-  if (loading) return (
+  if (cacheLoading) return (
     <div className="font-black animate-pulse uppercase tracking-widest text-slate-400">
       Fetching Scenes...
     </div>
   );
+  if (cacheError) return (
+    <div className="font-black uppercase tracking-widest text-red-500">
+      Error: {cacheError}
+    </div>
+  );
+  if (!backgrounds) return (
+    <div className="font-black uppercase tracking-widest text-slate-400">
+      No backgrounds available
+    </div>
+  );
 
   const hasChanged = selected !== currentBackgroundName;
+  const activeBackgrounds = backgrounds.filter((b) => b.active);
 
   return (
     <div className="w-full space-y-6">
@@ -106,18 +123,28 @@ export default function BackgroundPicker({ currentBackgroundName, onUpdated }) {
       )}
 
       <div className="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        {backgrounds
-          .filter((b) => b.active)
-          .map((b) => (
-            <SelectionTile
-              key={b.name}
-              url={b.url}
-              name={b.name}
-              selected={selected === b.name}
-              onClick={() => setSelected(b.name)}
-            />
-          ))}
+        {activeBackgrounds.map((b) => (
+          <SelectionTile
+            key={b.name}
+            url={b.url}
+            name={b.name}
+            selected={selected === b.name}
+            onClick={() => setSelected(b.name)}
+          />
+        ))}
       </div>
     </div>
   );
 }
+
+BackgroundPicker.propTypes = {
+  currentBackgroundName: PropTypes.string,
+  onUpdated: PropTypes.func,
+};
+
+SelectionTile.propTypes = {
+  url: PropTypes.string,
+  name: PropTypes.string.isRequired,
+  selected: PropTypes.bool.isRequired,
+  onClick: PropTypes.func.isRequired,
+};

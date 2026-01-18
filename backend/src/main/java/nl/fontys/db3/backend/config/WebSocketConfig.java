@@ -13,6 +13,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws")
             .setAllowedOrigins(
                 "http://localhost:5173",
+                "http://localhost:5174",
                 "https://tripwire-frontend-166064655547.europe-west4.run.app"
             )
             .withSockJS();

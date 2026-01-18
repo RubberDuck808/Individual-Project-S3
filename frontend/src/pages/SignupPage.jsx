@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { register } from "../api/auth";
+import { isValidEmail } from "../utils/emailValidation";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -11,11 +12,6 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const isValidEmail = (value) => {
-    if (value.length > 254) return false;
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -37,7 +33,6 @@ export default function SignupPage() {
 
     try {
       await register(username.trim(), email.trim().toLowerCase(), password, name);
-      // Using a custom "Success" style would be better than a native alert!
       navigate("/login");
     } catch (err) {
       setError(err.message || "The engine stalled. Try again?");
@@ -56,14 +51,16 @@ export default function SignupPage() {
 
       <div className="relative z-10 w-full max-w-lg">
         {/* Brand Logo */}
-        <div 
-          className="flex justify-center mb-8 cursor-pointer group"
+        <button
+          type="button"
+          className="flex justify-center mb-8 cursor-pointer group mx-auto"
           onClick={() => navigate("/")}
+          aria-label="Go to home page"
         >
           <div className="w-14 h-14 bg-[#0066FF] border-4 border-black rounded-2xl flex items-center justify-center rotate-[-8deg] group-hover:rotate-0 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <span className="text-white font-[1000] text-3xl">T</span>
           </div>
-        </div>
+        </button>
 
         {/* Signup Card */}
         <div className="bg-white border-[4px] border-black rounded-[3rem] p-8 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
@@ -85,8 +82,9 @@ export default function SignupPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Codename</label>
+                <label htmlFor="signup-username" className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Codename</label>
                 <input
+                  id="signup-username"
                   type="text"
                   placeholder="SpeedyJoe"
                   className="w-full px-6 py-4 bg-slate-50 border-4 border-black rounded-2xl font-bold focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#00D1FF] transition-all"
@@ -95,8 +93,9 @@ export default function SignupPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Real Name</label>
+                <label htmlFor="signup-name" className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Real Name</label>
                 <input
+                  id="signup-name"
                   type="text"
                   placeholder="Joe Smith"
                   className="w-full px-6 py-4 bg-slate-50 border-4 border-black rounded-2xl font-bold focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#FFD600] transition-all"
@@ -107,8 +106,9 @@ export default function SignupPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Email</label>
+              <label htmlFor="signup-email" className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Email</label>
               <input
+                id="signup-email"
                 type="email"
                 placeholder="hello@tripwire.com"
                 className="w-full px-6 py-4 bg-slate-50 border-4 border-black rounded-2xl font-bold focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#FF6AC1] transition-all"
@@ -119,8 +119,9 @@ export default function SignupPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Password</label>
+                <label htmlFor="signup-password" className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Password</label>
                 <input
+                  id="signup-password"
                   type="password"
                   placeholder="••••••••"
                   className="w-full px-6 py-4 bg-slate-50 border-4 border-black rounded-2xl font-bold focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#0066FF] transition-all"
@@ -129,8 +130,9 @@ export default function SignupPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Confirm</label>
+                <label htmlFor="signup-confirm-password" className="text-[10px] font-[1000] uppercase tracking-[0.2em] text-slate-400 ml-4">Confirm</label>
                 <input
+                  id="signup-confirm-password"
                   type="password"
                   placeholder="••••••••"
                   className="w-full px-6 py-4 bg-slate-50 border-4 border-black rounded-2xl font-bold focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_0px_#0066FF] transition-all"

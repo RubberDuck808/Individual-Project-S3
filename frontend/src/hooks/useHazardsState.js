@@ -20,81 +20,127 @@ export function useHazardsState({
 
   // Avoid stale selectedHazard in WS reducer
   const selectedHazardRef = useRef(null);
+  const currentUsernameRef = useRef(currentUsername);
+  
   useEffect(() => {
     selectedHazardRef.current = selectedHazard;
   }, [selectedHazard]);
+  
+  useEffect(() => {
+    currentUsernameRef.current = currentUsername;
+  }, [currentUsername]);
 
-  // Initial fetch
   useEffect(() => {
     if (!enabled) return;
     getAllHazards().then(setHazards).catch(console.error);
   }, [enabled]);
 
-  // WS reducer (stable)
-  const onWsEvent = useCallback((evt) => {
-    setHazards((prev) => {
-      if (!evt?.type) return prev;
-
-      if (evt.type === "UPSERT" && evt.hazard) {
-        const h = evt.hazard;
-
-        // Keep only OPEN/VERIFIED
-        const isActive = h.status === "OPEN" || h.status === "VERIFIED";
-        if (!isActive) {
-          if (selectedHazardRef.current?.id === h.id) {
-            setSelectedHazard(null);
-            setVoteExpiresAt(null);
-          }
-          return prev.filter((x) => x.id !== h.id);
-        }
-
-        const idx = prev.findIndex((x) => x.id === h.id);
-        if (idx === -1) return [h, ...prev];
-
-        const next = [...prev];
-        next[idx] = h;
-        return next;
-      }
-
-      if (evt.type === "DELETE" && evt.hazardId != null) {
-        if (selectedHazardRef.current?.id === evt.hazardId) {
-          setSelectedHazard(null);
-          setVoteExpiresAt(null);
-        }
-        return prev.filter((x) => x.id !== evt.hazardId);
-      }
-
-      return prev;
-    });
+  const clearSelectionIfMatches = useCallback((hazardId) => {
+    if (selectedHazardRef.current?.id === hazardId) {
+      setSelectedHazard(null);
+      setVoteExpiresAt(null);
+    }
   }, []);
+  
+  const isSelectedHazard = useCallback((hazardId) => {
+    return selectedHazardRef.current?.id === hazardId;
+  }, []);
+
+  const isCurrentUser = useCallback((hazardUsername) => {
+    const username = currentUsernameRef.current;
+    return username && String(hazardUsername) === String(username);
+  }, []);
+
+  // Helper function - doesn't need to be a callback since it doesn't use reactive values
+  const getHazardUsername = (h) => {
+    return h?.username ?? h?.createdByUsername ?? h?.reportedByUsername ?? null;
+  };
+
+  const clearSelectionIfFromCurrentUser = useCallback((h) => {
+    const hazardUsername = getHazardUsername(h);
+    if (!hazardUsername || !isSelectedHazard(h.id)) return;
+    if (isCurrentUser(hazardUsername)) {
+      setSelectedHazard(null);
+      setVoteExpiresAt(null);
+    }
+  }, [isSelectedHazard, isCurrentUser]);
+  
+  const isHazardActive = useCallback((h) => {
+    return h.status === "OPEN" || h.status === "VERIFIED";
+  }, []);
+
+  const handleUpsertEvent = useCallback((prev, h) => {
+    if (!isHazardActive(h)) {
+      clearSelectionIfMatches(h.id);
+      return prev.filter((x) => x.id !== h.id);
+    }
+
+    clearSelectionIfFromCurrentUser(h);
+    
+    const idx = prev.findIndex((x) => x.id === h.id);
+    if (idx === -1) {
+      return [h, ...prev];
+    }
+
+    const next = [...prev];
+    next[idx] = h;
+    return next;
+  }, [isHazardActive, clearSelectionIfMatches, clearSelectionIfFromCurrentUser]);
+  
+  const handleDeleteEvent = useCallback((prev, hazardId) => {
+    clearSelectionIfMatches(hazardId);
+    return prev.filter((x) => x.id !== hazardId);
+  }, [clearSelectionIfMatches]);
+
+  const processWsEvent = useCallback((prev, evt) => {
+    if (evt.type === "UPSERT" && evt.hazard) {
+      return handleUpsertEvent(prev, evt.hazard);
+    }
+    if (evt.type === "DELETE" && evt.hazardId != null) {
+      return handleDeleteEvent(prev, evt.hazardId);
+    }
+    return prev;
+  }, [handleUpsertEvent, handleDeleteEvent]);
+
+  const onWsEvent = useCallback((evt) => {
+    if (!evt?.type) return;
+    setHazards((prev) => processWsEvent(prev, evt));
+  }, [processWsEvent]);
 
   useHazardsWebSocket({
     enabled,
     onEvent: onWsEvent,
   });
 
+  const isHazardFromCurrentUser = useCallback((h) => {
+    if (!currentUsername || !h) return false;
+    const hazardUsername = getHazardUsername(h);
+    return hazardUsername && String(hazardUsername) === String(currentUsername);
+  }, [currentUsername]);
 
-  // This is to check if the hazard that we're receiving is from the user who created it "In Progress"
+  // Filter out hazards created by the current user (they can't vote on their own hazards)
   const eligibleHazards = useMemo(() => {
     if (!currentUsername) return hazards;
 
-    return hazards.filter((h) => {
-      const hazardUsername =
-        h.username ?? h.createdByUsername ?? h.reportedByUsername ?? null;
+    return hazards.filter((h) => !isHazardFromCurrentUser(h));
+  }, [hazards, currentUsername, isHazardFromCurrentUser]);
 
-      
-      if (!hazardUsername) return true;
+  const canTriggerProximityVote = useCallback(() => {
+    return enabled && location && voteArmed && !selectedHazard;
+  }, [enabled, location, voteArmed, selectedHazard]);
 
-      return String(hazardUsername) !== String(currentUsername);
-    });
-  }, [hazards, currentUsername]);
+  const triggerVoteForHazard = useCallback((hazard) => {
+    if (isHazardFromCurrentUser(hazard)) {
+      return;
+    }
+    setSelectedHazard(hazard);
+    setVoteExpiresAt(Date.now() + voteTimeSeconds * 1000);
+    setVoteArmed(false);
+  }, [isHazardFromCurrentUser, voteTimeSeconds]);
 
   // Proximity trigger
   useEffect(() => {
-    if (!enabled) return;
-    if (!location) return;
-    if (!voteArmed) return;
-    if (selectedHazard) return;
+    if (!canTriggerProximityVote()) return;
 
     const found = findNearestHazardWithin(
       eligibleHazards,
@@ -103,50 +149,65 @@ export function useHazardsState({
     );
     if (!found) return;
 
-    setSelectedHazard(found.hazard);
-    setVoteExpiresAt(Date.now() + voteTimeSeconds * 1000);
-    setVoteArmed(false);
+    triggerVoteForHazard(found.hazard);
   }, [
-    enabled,
+    canTriggerProximityVote,
     eligibleHazards,
     location,
-    voteArmed,
-    selectedHazard,
     openDistanceMeters,
-    voteTimeSeconds,
+    triggerVoteForHazard,
   ]);
 
-  useEffect(() => {
-    if (!enabled) return;
-    if (!location) return;
+  const closeVotePanelInternal = useCallback(() => {
+    setSelectedHazard(null);
+    setVoteExpiresAt(null);
+    setVoteArmed(false);
+  }, []);
 
+  // Close vote panel if currently selected hazard is from current user
+  useEffect(() => {
+    if (!enabled || !selectedHazard || !currentUsername) return;
+    if (isHazardFromCurrentUser(selectedHazard)) {
+      closeVotePanelInternal();
+    }
+  }, [enabled, selectedHazard, currentUsername, isHazardFromCurrentUser, closeVotePanelInternal]);
+
+  const checkAndRearmVote = useCallback(() => {
+    if (!enabled || !location) return;
     const nearAny = !!findNearestHazardWithin(
       eligibleHazards,
       location,
       rearmDistanceMeters
     );
-    if (!nearAny) setVoteArmed(true);
-  }, [enabled, eligibleHazards, location, rearmDistanceMeters]);
+    if (!nearAny) {
+      setVoteArmed(true);
+    }
+  }, [enabled, location, eligibleHazards, rearmDistanceMeters]);
+
+  useEffect(() => {
+    checkAndRearmVote();
+  }, [checkAndRearmVote]);
+
+  const getVoteTimeRemaining = useCallback((expiresAt) => {
+    return expiresAt - Date.now();
+  }, []);
 
   // Auto-close when vote timer expires
   useEffect(() => {
-    if (!enabled) return;
-    if (!voteExpiresAt || !selectedHazard) return;
+    if (!enabled || !voteExpiresAt || !selectedHazard) return;
 
-    const msLeft = voteExpiresAt - Date.now();
+    const msLeft = getVoteTimeRemaining(voteExpiresAt);
     if (msLeft <= 0) {
-      setSelectedHazard(null);
-      setVoteExpiresAt(null);
+      closeVotePanelInternal();
       return;
     }
 
     const t = setTimeout(() => {
-      setSelectedHazard(null);
-      setVoteExpiresAt(null);
+      closeVotePanelInternal();
     }, msLeft);
 
     return () => clearTimeout(t);
-  }, [enabled, voteExpiresAt, selectedHazard]);
+  }, [enabled, voteExpiresAt, selectedHazard, getVoteTimeRemaining, closeVotePanelInternal]);
 
   const closeVotePanel = useCallback(() => {
     setSelectedHazard(null);

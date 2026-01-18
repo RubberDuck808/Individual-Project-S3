@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import StatCard from "./StatCard";
 
 export default function StatsGrid({ stats }) {
@@ -16,3 +17,13 @@ export default function StatsGrid({ stats }) {
     </div>
   );
 }
+
+StatsGrid.propTypes = {
+  stats: PropTypes.arrayOf(PropTypes.shape({
+    key: PropTypes.string,
+    label: PropTypes.string.isRequired,
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    icon: PropTypes.elementType,
+    loading: PropTypes.bool,
+  })).isRequired,
+};

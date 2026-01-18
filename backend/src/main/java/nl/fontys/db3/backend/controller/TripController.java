@@ -17,7 +17,6 @@ public class TripController {
         this.tripService = tripService;
     }
 
-    /** Complete a SOLO trip. */
     @PostMapping("/complete")
     public ResponseEntity<TripDTO> completeTrip(
             @RequestBody TripCompleteRequestDTO dto,

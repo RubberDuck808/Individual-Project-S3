@@ -50,22 +50,18 @@ frontend-build:
     expire_in: 1 week
 
 # ================================
-# Backend tests + JaCoCo coverage (WITH POSTGRES)
+# Backend tests + JaCoCo coverage 
 # ================================
 backend-test:
   stage: test
   image: gradle:8.9-jdk21
-  allow_failure: true
 
   services:
     - name: postgres:16
       alias: postgres
 
   variables:
-    # prevent PlaceholderResolutionException from app.jwt.secret=${JWT_SECRET}
-    JWT_SECRET: "ci-test-secret"
-
-    # optional: only if you have application-test.properties and want it used
+    JWT_SECRET: "ci-test-secret-key-must-be-at-least-256-bits-long-for-hmac-sha-algorithms-1234567890"
     SPRING_PROFILES_ACTIVE: "test"
 
     POSTGRES_DB: testdb
@@ -76,11 +72,15 @@ backend-test:
     SPRING_DATASOURCE_USERNAME: "test"
     SPRING_DATASOURCE_PASSWORD: "test"
 
-    SPRING_JPA_HIBERNATE_DDL_AUTO: "create-drop"
-    SPRING_FLYWAY_ENABLED: "false"
+    # Use Flyway migrations in CI
+    SPRING_FLYWAY_ENABLED: "true"
+    SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
 
   script:
     - cd backend
+    # Wait for Postgres to be ready
+    - apt-get update && apt-get install -y postgresql-client
+    - until pg_isready -h postgres -p 5432 -U "$POSTGRES_USER"; do echo "waiting for postgres..."; sleep 1; done
     - ./gradlew test jacocoTestReport
 
   artifacts:
@@ -94,12 +94,30 @@ backend-test:
     - backend-build
 
 # ================================
-# SONARQUBE BACKEND ANALYSIS (DOES NOT FAIL PIPELINE)
+# Frontend tests + Coverage 
+# ================================
+frontend-test:
+  stage: test
+  image: node:22
+  allow_failure: true
+  script:
+    - cd frontend
+    - npm ci
+    - npm run test:coverage
+  artifacts:
+    when: always
+    paths:
+      - frontend/coverage/
+      - frontend/coverage/lcov.info
+  needs:
+    - frontend-build
+
+# ================================
+# SONARQUBE BACKEND ANALYSIS 
 # ================================
 sonarqube-backend:
   stage: sonar
   image: gradle:8.9-jdk21
-  allow_failure: true
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
     GIT_DEPTH: "0"
@@ -110,9 +128,40 @@ sonarqube-backend:
       - "${SONAR_USER_HOME}/cache"
   script:
     - cd backend
-    - ./gradlew sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.token=$SONAR_TOKEN -Dsonar.qualitygate.wait=false -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+    - |
+        ./gradlew sonar \
+          -Dsonar.host.url="$SONAR_HOST_URL" \
+          -Dsonar.token="$SONAR_TOKEN" \
+          -Dsonar.qualitygate.wait=true \
+          -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
   needs:
     - backend-test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
+# ================================
+# SONARQUBE FRONTEND ANALYSIS
+# ================================
+sonarqube-frontend:
+  stage: sonar
+  image: node:22
+  allow_failure: true
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "0"
+  cache:
+    key: "sonar-cache-frontend-$CI_COMMIT_REF_SLUG"
+    policy: pull-push
+    paths:
+      - "${SONAR_USER_HOME}/cache"
+      - frontend/node_modules/
+  script:
+    - cd frontend
+    - npm ci
+    - SONAR_TOKEN=$SONAR_TOKEN SONAR_HOST_URL=$SONAR_HOST_URL npm run sonar
+  needs:
+    - frontend-test
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH'
@@ -146,7 +195,10 @@ docker-frontend:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
-    - docker build --build-arg VITE_API_URL="$VITE_API_URL" --build-arg VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" -t rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA -f frontend/Dockerfile frontend/
+    - docker build --build-arg VITE_API_URL="$VITE_API_URL" \
+                   --build-arg VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" \
+                   -t rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA \
+                   -f frontend/Dockerfile frontend/
     - docker push rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA
     - docker tag rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA rubberduck808/tripwire-frontend:latest
     - docker push rubberduck808/tripwire-frontend:latest
@@ -167,7 +219,12 @@ deploy-backend:
     - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
     - gcloud config set project $GCP_PROJECT
   script:
-    - gcloud run deploy tripwire-backend --image=docker.io/rubberduck808/tripwire-backend:latest --region=$GCP_REGION --platform=managed --allow-unauthenticated --port=8080
+    - gcloud run deploy tripwire-backend \
+        --image=docker.io/rubberduck808/tripwire-backend:latest \
+        --region=$GCP_REGION \
+        --platform=managed \
+        --allow-unauthenticated \
+        --port=8080
   only:
     - main
 
@@ -183,6 +240,11 @@ deploy-frontend:
     - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
     - gcloud config set project $GCP_PROJECT
   script:
-    - gcloud run deploy tripwire-frontend --image=docker.io/rubberduck808/tripwire-frontend:latest --region=$GCP_REGION --platform=managed --allow-unauthenticated --port=80
+    - gcloud run deploy tripwire-frontend \
+        --image=docker.io/rubberduck808/tripwire-frontend:latest \
+        --region=$GCP_REGION \
+        --platform=managed \
+        --allow-unauthenticated \
+        --port=80
   only:
     - main

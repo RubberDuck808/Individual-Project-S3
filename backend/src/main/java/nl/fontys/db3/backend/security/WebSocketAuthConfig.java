@@ -1,6 +1,7 @@
 package nl.fontys.db3.backend.security;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessagingException;
@@ -24,12 +25,18 @@ public class WebSocketAuthConfig implements WebSocketMessageBrokerConfigurer {
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(new ChannelInterceptor() {
             @Override
-            public Message<?> preSend(Message<?> message, MessageChannel channel) {
-
+            @SuppressWarnings("java:S2638") // ChannelInterceptor.preSend explicitly allows @Nullable per Spring interface
+            @Nullable
+            public Message<?> preSend(@Nullable Message<?> message, MessageChannel channel) {
+                if (message == null) {
+                    return null;
+                }
                 StompHeaderAccessor accessor =
                         MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-                if (accessor == null) return message;
+                if (accessor == null) {
+                    return message;
+                }
 
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
                     String auth = accessor.getFirstNativeHeader("Authorization");

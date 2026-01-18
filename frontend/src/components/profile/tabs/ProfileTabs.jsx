@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 const cx = (...classes) => classes.filter(Boolean).join(" ");
 
@@ -29,3 +30,13 @@ export default function ProfileTabs({ tabs, activeKey, onChange }) {
     </div>
   );
 }
+
+ProfileTabs.propTypes = {
+  tabs: PropTypes.arrayOf(PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    icon: PropTypes.elementType,
+  })).isRequired,
+  activeKey: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
