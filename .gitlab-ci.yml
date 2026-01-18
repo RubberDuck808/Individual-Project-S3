@@ -182,6 +182,8 @@ docker-backend:
     - docker push rubberduck808/tripwire-backend:latest
   needs:
     - backend-build
+    - backend-test
+    - sonarqube-backend
   only:
     - main
 
@@ -204,6 +206,8 @@ docker-frontend:
     - docker push rubberduck808/tripwire-frontend:latest
   needs:
     - frontend-build
+    - frontend-test
+    - sonarqube-frontend
   only:
     - main
 
