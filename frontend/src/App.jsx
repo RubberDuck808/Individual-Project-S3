@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import React, { lazy, Suspense } from "react";
+import { Routes, Route } from "react-router-dom";
+
 import MainLayout from "./layouts/MainLayout";
 import MapPage from "./pages/MapPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -35,57 +36,69 @@ export default function App() {
   const Provider = USE_SPOOF ? SimulatedRouteProvider : RealLocationProvider;
 
   return (
-    <BrowserRouter>
-      <Provider>
-        <AssetsCacheProvider>
-          <Routes>
-            {/* Public */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
+    <Provider>
+      <AssetsCacheProvider>
+        <Routes>
+          {/* Public */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
 
-            {/* Protected User Routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<MainLayout />}>
-                <Route path="/map" element={<MapPage />} />
-                <Route path="/profile/:username" element={<ProfilePage />} />
-                <Route path="/car" element={<CarHealthPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-              </Route>
+          {/* Protected User Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<MainLayout />}>
+              <Route path="/map" element={<MapPage />} />
+              <Route path="/profile/:username" element={<ProfilePage />} />
+              <Route path="/car" element={<CarHealthPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
             </Route>
+          </Route>
 
-            {/* Protected Admin Routes - Lazy Loaded */}
-            <Route element={<ProtectedRoute requireRole="ADMIN" />}>
-              <Route element={
+          {/* Protected Admin Routes - Lazy Loaded */}
+          <Route element={<ProtectedRoute requireRole="ADMIN" />}>
+            <Route
+              element={
                 <Suspense fallback={<LoadingSpinner />}>
                   <AdminLayout />
                 </Suspense>
-              }>
-                <Route path="/admin" element={
+              }
+            >
+              <Route
+                path="/admin"
+                element={
                   <Suspense fallback={<LoadingSpinner />}>
                     <AdminDashboardPage />
                   </Suspense>
-                } />
-                <Route path="/admin/users" element={
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
                   <Suspense fallback={<LoadingSpinner />}>
                     <AdminUsersPage />
                   </Suspense>
-                } />
-                <Route path="/admin/devices" element={
+                }
+              />
+              <Route
+                path="/admin/devices"
+                element={
                   <Suspense fallback={<LoadingSpinner />}>
                     <AdminDevicesPage />
                   </Suspense>
-                } />
-                <Route path="/admin/assets" element={
+                }
+              />
+              <Route
+                path="/admin/assets"
+                element={
                   <Suspense fallback={<LoadingSpinner />}>
                     <AdminAssetsPage />
                   </Suspense>
-                } />
-              </Route>
+                }
+              />
             </Route>
-          </Routes>
-        </AssetsCacheProvider>
-      </Provider>
-    </BrowserRouter>
+          </Route>
+        </Routes>
+      </AssetsCacheProvider>
+    </Provider>
   );
 }
