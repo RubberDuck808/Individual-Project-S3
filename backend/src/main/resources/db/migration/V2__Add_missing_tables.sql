@@ -199,6 +199,16 @@ BEGIN
     ALTER TABLE public.trip ADD COLUMN end_lng double precision;
     ALTER TABLE public.trip ADD COLUMN created_at timestamp with time zone DEFAULT now();
   END IF;
+  
+  -- Add convoy_id column if it doesn't exist
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+    AND table_name = 'trip' 
+    AND column_name = 'convoy_id'
+  ) THEN
+    ALTER TABLE public.trip ADD COLUMN convoy_id bigint;
+  END IF;
 END $$;
 
 -- Add icon_path and active to hazard_category if not exists
