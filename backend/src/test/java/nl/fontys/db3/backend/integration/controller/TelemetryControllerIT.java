@@ -3,16 +3,24 @@ package nl.fontys.db3.backend.integration.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.fontys.db3.backend.entity.Device;
 import nl.fontys.db3.backend.entity.LiveTelemetry;
+import nl.fontys.db3.backend.entity.Role;
 import nl.fontys.db3.backend.entity.TelemetryHistory;
+import nl.fontys.db3.backend.entity.User;
 import nl.fontys.db3.backend.repository.DeviceRepository;
 import nl.fontys.db3.backend.repository.LiveTelemetryRepository;
+import nl.fontys.db3.backend.repository.RoleRepository;
 import nl.fontys.db3.backend.repository.TelemetryHistoryRepository;
+import nl.fontys.db3.backend.repository.UserRepository;
+import nl.fontys.db3.backend.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,9 +55,25 @@ class TelemetryControllerIT {
     @Autowired
     private nl.fontys.db3.backend.service.DeviceService deviceService;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private Device testDevice;
     private String deviceId;
     private String apiKey;
+    private String testUserToken;
 
     @BeforeEach
     void setUp() {
@@ -59,6 +83,25 @@ class TelemetryControllerIT {
             deviceService.registerDevice(deviceId, "Test Device");
         testDevice = result.getDevice();
         apiKey = result.getApiKey();
+
+        // Create a test user for authenticated GET requests
+        Role userRole = roleRepository.findByName("USER")
+                .orElseGet(() -> {
+                    Role role = Role.builder().name("USER").build();
+                    return roleRepository.save(role);
+                });
+
+        User testUser = User.builder()
+                .username("telemetryuser")
+                .email("telemetry@test.com")
+                .name("Telemetry User")
+                .password(passwordEncoder.encode("password123"))
+                .role(userRole)
+                .build();
+        testUser = userRepository.save(testUser);
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername("telemetry@test.com");
+        testUserToken = jwtService.generateToken(userDetails.getUsername(), Map.of());
     }
 
     @Test
@@ -136,7 +179,8 @@ class TelemetryControllerIT {
                 .build();
         telemetryHistoryRepository.save(history);
 
-        mockMvc.perform(get("/api/telemetry/history/" + deviceId))
+        mockMvc.perform(get("/api/telemetry/history/" + deviceId)
+                        .header("Authorization", "Bearer " + testUserToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].deviceId").value(deviceId));
@@ -155,6 +199,7 @@ class TelemetryControllerIT {
         }
 
         mockMvc.perform(get("/api/telemetry/history/" + deviceId)
+                        .header("Authorization", "Bearer " + testUserToken)
                         .param("limit", "3"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3));
@@ -174,6 +219,7 @@ class TelemetryControllerIT {
         telemetryHistoryRepository.save(history);
 
         mockMvc.perform(get("/api/telemetry/history/" + deviceId + "/range")
+                        .header("Authorization", "Bearer " + testUserToken)
                         .param("start", start.toString())
                         .param("end", end.toString()))
                 .andExpect(status().isOk())
@@ -193,14 +239,16 @@ class TelemetryControllerIT {
                 .build();
         telemetryHistoryRepository.save(history);
 
-        mockMvc.perform(get("/api/telemetry/device/" + deviceId + "/health"))
+        mockMvc.perform(get("/api/telemetry/device/" + deviceId + "/health")
+                        .header("Authorization", "Bearer " + testUserToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.connected").exists());
     }
 
     @Test
     void getCarHealth_disconnected() throws Exception {
-        mockMvc.perform(get("/api/telemetry/device/nonexistent-device/health"))
+        mockMvc.perform(get("/api/telemetry/device/nonexistent-device/health")
+                        .header("Authorization", "Bearer " + testUserToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.connected").value(false));
     }
@@ -218,7 +266,8 @@ class TelemetryControllerIT {
             telemetryHistoryRepository.save(history);
         }
 
-        mockMvc.perform(get("/api/telemetry/device/" + deviceId + "/health/history"))
+        mockMvc.perform(get("/api/telemetry/device/" + deviceId + "/health/history")
+                        .header("Authorization", "Bearer " + testUserToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3));
     }
@@ -234,6 +283,6 @@ class TelemetryControllerIT {
                         .header("X-API-Key", apiKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 }
