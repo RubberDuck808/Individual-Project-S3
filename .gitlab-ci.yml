@@ -72,13 +72,11 @@ backend-test:
     SPRING_DATASOURCE_USERNAME: "test"
     SPRING_DATASOURCE_PASSWORD: "test"
 
-    # Use Flyway migrations in CI
     SPRING_FLYWAY_ENABLED: "true"
     SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
 
   script:
     - cd backend
-    # Wait for Postgres to be ready
     - apt-get update && apt-get install -y postgresql-client
     - until pg_isready -h postgres -p 5432 -U "$POSTGRES_USER"; do echo "waiting for postgres..."; sleep 1; done
     - ./gradlew test jacocoTestReport
@@ -176,12 +174,18 @@ docker-backend:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
-    - docker build -t rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA -f backend/Dockerfile backend/
+    - |
+        docker build \
+          -t rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA \
+          -f backend/Dockerfile \
+          backend/
     - docker push rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA
     - docker tag rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA rubberduck808/tripwire-backend:latest
     - docker push rubberduck808/tripwire-backend:latest
   needs:
     - backend-build
+    - backend-test
+    - sonarqube-backend
   only:
     - main
 
@@ -195,15 +199,20 @@ docker-frontend:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
-    - docker build --build-arg VITE_API_URL="$VITE_API_URL" \
-                   --build-arg VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" \
-                   -t rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA \
-                   -f frontend/Dockerfile frontend/
+    - |
+        docker build \
+          --build-arg VITE_API_URL="$VITE_API_URL" \
+          --build-arg VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" \
+          -t rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA \
+          -f frontend/Dockerfile \
+          frontend/
     - docker push rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA
     - docker tag rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA rubberduck808/tripwire-frontend:latest
     - docker push rubberduck808/tripwire-frontend:latest
   needs:
     - frontend-build
+    - frontend-test
+    - sonarqube-frontend
   only:
     - main
 
@@ -219,12 +228,13 @@ deploy-backend:
     - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
     - gcloud config set project $GCP_PROJECT
   script:
-    - gcloud run deploy tripwire-backend \
-        --image=docker.io/rubberduck808/tripwire-backend:latest \
-        --region=$GCP_REGION \
-        --platform=managed \
-        --allow-unauthenticated \
-        --port=8080
+    - |
+        gcloud run deploy tripwire-backend \
+          --image docker.io/rubberduck808/tripwire-backend:latest \
+          --region "$GCP_REGION" \
+          --platform managed \
+          --allow-unauthenticated \
+          --port 8080
   only:
     - main
 
@@ -240,11 +250,13 @@ deploy-frontend:
     - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
     - gcloud config set project $GCP_PROJECT
   script:
-    - gcloud run deploy tripwire-frontend \
-        --image=docker.io/rubberduck808/tripwire-frontend:latest \
-        --region=$GCP_REGION \
-        --platform=managed \
-        --allow-unauthenticated \
-        --port=80
+    - |
+        gcloud run deploy tripwire-frontend \
+          --image docker.io/rubberduck808/tripwire-frontend:latest \
+          --region "$GCP_REGION" \
+          --platform managed \
+          --allow-unauthenticated \
+          --port 80
   only:
     - main
+
