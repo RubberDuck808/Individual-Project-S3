@@ -57,6 +57,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/devices/register").authenticated()
                 // Telemetry endpoints require device API key (handled by filter)
                 .requestMatchers("/api/telemetry/live", "/api/telemetry/history").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/telemetry/live/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/telemetry/history/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/telemetry/device/**").authenticated()
                 // Admin endpoints require ADMIN role
