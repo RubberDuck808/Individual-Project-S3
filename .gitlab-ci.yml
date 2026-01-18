@@ -259,3 +259,4 @@ deploy-frontend:
           --port 80
   only:
     - main
+

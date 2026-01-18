@@ -35,9 +35,9 @@ export default function App() {
   const Provider = USE_SPOOF ? SimulatedRouteProvider : RealLocationProvider;
 
   return (
-    <Provider>
-      <AssetsCacheProvider>
-        <BrowserRouter>
+    <BrowserRouter>
+      <Provider>
+        <AssetsCacheProvider>
           <Routes>
             {/* Public */}
             <Route path="/" element={<HomePage />} />
@@ -84,8 +84,8 @@ export default function App() {
               </Route>
             </Route>
           </Routes>
-        </BrowserRouter>
-      </AssetsCacheProvider>
-    </Provider>
+        </AssetsCacheProvider>
+      </Provider>
+    </BrowserRouter>
   );
 }
