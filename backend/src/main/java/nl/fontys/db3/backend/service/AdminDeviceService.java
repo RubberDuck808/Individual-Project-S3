@@ -3,6 +3,7 @@ package nl.fontys.db3.backend.service;
 import lombok.RequiredArgsConstructor;
 import nl.fontys.db3.backend.dto.AdminDeviceDTO;
 import nl.fontys.db3.backend.entity.*;
+import nl.fontys.db3.backend.exception.NotFoundException;
 import nl.fontys.db3.backend.repository.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,14 +34,14 @@ public class AdminDeviceService {
     @Transactional(readOnly = true)
     public AdminDeviceDTO getDeviceById(Long id) {
         Device device = deviceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(DEVICE_NOT_FOUND_PREFIX + id));
+                .orElseThrow(() -> new NotFoundException(DEVICE_NOT_FOUND_PREFIX + id));
         return toAdminDeviceDTO(device);
     }
 
     @Transactional(readOnly = true)
     public AdminDeviceDTO getDeviceByDeviceId(String deviceId) {
         Device device = deviceRepository.findByDeviceId(deviceId)
-                .orElseThrow(() -> new RuntimeException(DEVICE_NOT_FOUND_PREFIX + deviceId));
+                .orElseThrow(() -> new NotFoundException(DEVICE_NOT_FOUND_PREFIX + deviceId));
         return toAdminDeviceDTO(device);
     }
 
