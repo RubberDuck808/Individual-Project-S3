@@ -15,6 +15,9 @@ import nl.fontys.db3.backend.repository.VoteRepository;
 import nl.fontys.db3.backend.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -167,12 +170,14 @@ class VoteControllerIT {
                 .andExpect(jsonPath("$.voteType").value("DOWNVOTE"));
     }
 
-    @Test
-    void voteJson_invalidVoteType() throws Exception {
-        String requestBody = objectMapper.writeValueAsString(Map.of(
-                "hazardId", hazard.getId(),
-                "voteType", "INVALID"
-        ));
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"INVALID", "invalid", "WRONG"})
+    void voteJson_invalidVoteType(String voteType) throws Exception {
+        java.util.Map<String, Object> requestMap = new java.util.HashMap<>();
+        requestMap.put("hazardId", hazard.getId());
+        requestMap.put("voteType", voteType);
+        String requestBody = objectMapper.writeValueAsString(requestMap);
 
         mockMvc.perform(post("/api/votes")
                         .header("Authorization", "Bearer " + testUserToken)
@@ -248,5 +253,50 @@ class VoteControllerIT {
                         .header("Authorization", "Bearer " + testUserToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.voteType").value("NONE"));
+    }
+
+    @Test
+    void voteJson_lowercaseVoteType() throws Exception {
+        String requestBody = objectMapper.writeValueAsString(Map.of(
+                "hazardId", hazard.getId(),
+                "voteType", "upvote"
+        ));
+
+        mockMvc.perform(post("/api/votes")
+                        .header("Authorization", "Bearer " + testUserToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.voteType").value("UPVOTE"));
+    }
+
+    @Test
+    void getAllVotes_unauthorized() throws Exception {
+        mockMvc.perform(get("/api/votes"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getVotes_emptyHazard() throws Exception {
+        // Create a new hazard with no votes
+        HazardReport emptyHazard = HazardReport.builder()
+                .latitude(51.4416)
+                .longitude(5.4697)
+                .category(category)
+                .createdBy(hazardCreator)
+                .status(nl.fontys.db3.backend.entity.HazardStatus.OPEN)
+                .build();
+        emptyHazard = hazardReportRepository.save(emptyHazard);
+
+        mockMvc.perform(get("/api/votes/" + emptyHazard.getId() + "/count"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.upvotes").value(0))
+                .andExpect(jsonPath("$.downvotes").value(0));
+    }
+
+    @Test
+    void myVote_unauthorized() throws Exception {
+        mockMvc.perform(get("/api/votes/" + hazard.getId() + "/mine"))
+                .andExpect(status().isUnauthorized());
     }
 }

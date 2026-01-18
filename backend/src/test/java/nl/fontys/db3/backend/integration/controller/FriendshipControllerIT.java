@@ -273,4 +273,57 @@ class FriendshipControllerIT {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
     }
+
+    @Test
+    void sendRequest_userNotFound() throws Exception {
+        String requestBody = objectMapper.writeValueAsString(Map.of("username", "nonexistent"));
+
+        mockMvc.perform(post("/api/friendships/request")
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void acceptRequest_unauthorized() throws Exception {
+        mockMvc.perform(post("/api/friendships/accept/bob"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getIncomingRequests_unauthorized() throws Exception {
+        mockMvc.perform(get("/api/friendships/requests/incoming"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getOutgoingRequests_unauthorized() throws Exception {
+        mockMvc.perform(get("/api/friendships/requests/outgoing"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getFriends_unauthorized() throws Exception {
+        mockMvc.perform(get("/api/friendships"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void unfriend_unauthorized() throws Exception {
+        mockMvc.perform(delete("/api/friendships/unfriend/bob"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void cancelRequest_unauthorized() throws Exception {
+        mockMvc.perform(delete("/api/friendships/cancel/bob"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void declineRequest_unauthorized() throws Exception {
+        mockMvc.perform(delete("/api/friendships/decline/bob"))
+                .andExpect(status().isUnauthorized());
+    }
 }

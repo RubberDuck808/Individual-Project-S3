@@ -244,4 +244,88 @@ class UserControllerIT {
                         .content(requestBody))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void changeMyAvatar_unauthorized() throws Exception {
+        String requestBody = objectMapper.writeValueAsString(Map.of("avatarName", "avatar1"));
+
+        mockMvc.perform(put("/api/users/me/avatar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void changeMyBackground_unauthorized() throws Exception {
+        String requestBody = objectMapper.writeValueAsString(Map.of("backgroundName", "bg1"));
+
+        mockMvc.perform(put("/api/users/me/background")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void register_missingFields() throws Exception {
+        // Missing required fields
+        String requestBody = objectMapper.writeValueAsString(Map.of(
+                "username", "newuser"
+        ));
+
+        mockMvc.perform(post("/api/users/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void login_missingPassword() throws Exception {
+        String requestBody = objectMapper.writeValueAsString(Map.of(
+                "email", "test@test.com"
+        ));
+
+        mockMvc.perform(post("/api/users/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void login_invalidEmail() throws Exception {
+        String requestBody = objectMapper.writeValueAsString(Map.of(
+                "email", "nonexistent@test.com",
+                "password", "password123"
+        ));
+
+        mockMvc.perform(post("/api/users/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateMe_invalidCurrentPassword() throws Exception {
+        String requestBody = objectMapper.writeValueAsString(Map.of(
+                "name", "Updated Name",
+                "currentPassword", "wrongpassword",
+                "newPassword", "newpassword123"
+        ));
+
+        mockMvc.perform(put("/api/users/me")
+                        .header("Authorization", "Bearer " + testUserToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void changeMyAvatar_avatarNotFound() throws Exception {
+        String requestBody = objectMapper.writeValueAsString(Map.of("avatarName", "nonexistent"));
+
+        mockMvc.perform(put("/api/users/me/avatar")
+                        .header("Authorization", "Bearer " + testUserToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest());
+    }
 }
