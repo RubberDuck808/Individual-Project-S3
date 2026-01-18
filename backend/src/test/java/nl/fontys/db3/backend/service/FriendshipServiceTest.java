@@ -188,4 +188,33 @@ class FriendshipServiceTest {
         verify(friendshipRepository).save(any(Friendship.class));
     }
 
+    @Test
+    void cancelOutgoingToUsername_success_deletesFriendship() {
+        User addressee = mock(User.class);
+        when(addressee.getId()).thenReturn(2L);
+        when(userRepository.findByUsername("bob")).thenReturn(Optional.of(addressee));
+
+        Friendship friendship = mock(Friendship.class);
+        when(friendship.getStatus()).thenReturn(FriendshipStatus.REQUESTED);
+        User requester = mock(User.class);
+        when(requester.getId()).thenReturn(1L);
+        when(friendship.getRequester()).thenReturn(requester);
+        when(friendshipRepository.findBetweenUsers(1L, 2L)).thenReturn(Optional.of(friendship));
+
+        service.cancelOutgoingToUsername(1L, "bob");
+
+        verify(friendshipRepository).delete(friendship);
+    }
+
+    @Test
+    void unfriend_notAccepted_throws() {
+        Friendship friendship = mock(Friendship.class);
+        when(friendship.getStatus()).thenReturn(FriendshipStatus.REQUESTED);
+        when(friendshipRepository.findBetweenUsers(1L, 2L)).thenReturn(Optional.of(friendship));
+
+        assertThrows(IllegalArgumentException.class, () -> service.unfriend(1L, 2L));
+
+        verify(friendshipRepository, never()).delete(any());
+    }
+
 }
