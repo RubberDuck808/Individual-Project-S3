@@ -1,7 +1,6 @@
 package nl.fontys.db3.backend.integration.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import nl.fontys.db3.backend.entity.Device;
 import nl.fontys.db3.backend.entity.LiveTelemetry;
 import nl.fontys.db3.backend.entity.Role;
 import nl.fontys.db3.backend.entity.TelemetryHistory;
@@ -70,7 +69,6 @@ class TelemetryControllerIT {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private Device testDevice;
     private String deviceId;
     private String apiKey;
     private String testUserToken;
@@ -81,7 +79,6 @@ class TelemetryControllerIT {
         // Register device to get a real API key
         nl.fontys.db3.backend.service.DeviceService.DeviceRegistrationResult result = 
             deviceService.registerDevice(deviceId, "Test Device");
-        testDevice = result.getDevice();
         apiKey = result.getApiKey();
 
         // Create a test user for authenticated GET requests
@@ -98,7 +95,7 @@ class TelemetryControllerIT {
                 .password(passwordEncoder.encode("password123"))
                 .role(userRole)
                 .build();
-        testUser = userRepository.save(testUser);
+        userRepository.save(testUser);
 
         UserDetails userDetails = userDetailsService.loadUserByUsername("telemetry@test.com");
         testUserToken = jwtService.generateToken(userDetails.getUsername(), Map.of());
