@@ -224,9 +224,6 @@ sonarqube-backend:
     paths:
       - "${SONAR_USER_HOME}/cache"
       - backend/.gradle/
-  dependencies:
-    - backend-test
-    - backend-build
   script:
     - cd backend
     # Verify JaCoCo report exists (should be available from backend-test job artifacts)
@@ -250,6 +247,7 @@ sonarqube-backend:
           -Dsonar.exclusions="src/test/java/nl/fontys/db3/backend/BackendApplicationTests.java"
   needs:
     - backend-test
+    - backend-build
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH'
