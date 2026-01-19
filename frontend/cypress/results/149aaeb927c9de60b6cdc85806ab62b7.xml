@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="5.680" tests="3" failures="0">
+  <testsuite name="Root Suite" timestamp="2026-01-19T22:31:14" tests="0" file="cypress\e2e\critical-signup.cy.js" time="0.000" failures="0">
+  </testsuite>
+  <testsuite name="Critical: User Signup Flow" timestamp="2026-01-19T22:31:14" tests="3" time="5.678" failures="0">
+    <testcase name="Critical: User Signup Flow should successfully create a new user account" time="2.490" classname="should successfully create a new user account">
+    </testcase>
+    <testcase name="Critical: User Signup Flow should show validation errors for invalid input" time="2.937" classname="should show validation errors for invalid input">
+    </testcase>
+    <testcase name="Critical: User Signup Flow should navigate to login page from signup" time="0.176" classname="should navigate to login page from signup">
+    </testcase>
+  </testsuite>
+</testsuites>

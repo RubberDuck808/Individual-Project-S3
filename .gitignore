@@ -47,3 +47,16 @@ hardware/.pio/*
 hardware/.vscode/
 *.md
 *.tex
+
+
+cypress/results/
+cypress/screenshots/
+cypress/videos/
+.scannerwork/
+**/.scannerwork/
+
+# Backend logs
+backend/logs/
+backend/**/*.log
+
+

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="9.709" tests="2" failures="0">
+  <testsuite name="Root Suite" timestamp="2026-01-19T22:22:56" tests="0" file="cypress\e2e\critical-multi-user-hazard.cy.js" time="0.000" failures="0">
+  </testsuite>
+  <testsuite name="Critical: Multi-User Hazard Interaction Flow" timestamp="2026-01-19T22:22:56" tests="2" time="9.707" failures="0">
+    <testcase name="Critical: Multi-User Hazard Interaction Flow should allow User B to vote on User A&apos;s reported hazard" time="5.118" classname="should allow User B to vote on User A&apos;s reported hazard">
+    </testcase>
+    <testcase name="Critical: Multi-User Hazard Interaction Flow should show User A&apos;s hazard in User B&apos;s hazard list" time="4.323" classname="should show User A&apos;s hazard in User B&apos;s hazard list">
+    </testcase>
+  </testsuite>
+</testsuites>

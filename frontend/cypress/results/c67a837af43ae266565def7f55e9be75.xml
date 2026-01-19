@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="12.638" tests="3" failures="0">
+  <testsuite name="Root Suite" timestamp="2026-01-19T22:22:33" tests="0" file="cypress\e2e\critical-hazard-reporting.cy.js" time="0.000" failures="0">
+  </testsuite>
+  <testsuite name="Critical: Hazard Reporting Flow" timestamp="2026-01-19T22:22:33" tests="3" time="12.633" failures="0">
+    <testcase name="Critical: Hazard Reporting Flow should successfully report a hazard when authenticated" time="8.091" classname="should successfully report a hazard when authenticated">
+    </testcase>
+    <testcase name="Critical: Hazard Reporting Flow should require authentication to report hazards" time="0.443" classname="should require authentication to report hazards">
+    </testcase>
+    <testcase name="Critical: Hazard Reporting Flow should show error if location is not available" time="3.751" classname="should show error if location is not available">
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="30.621" tests="9" failures="1">
+  <testsuite name="Root Suite" timestamp="2026-01-19T22:23:09" tests="0" file="cypress\e2e\critical-profile.cy.js" time="0.000" failures="0">
+  </testsuite>
+  <testsuite name="Critical: Profile Page Flow" timestamp="2026-01-19T22:23:09" tests="9" time="30.617" failures="1">
+    <testcase name="Critical: Profile Page Flow should display own profile when viewing /profile/me" time="1.594" classname="should display own profile when viewing /profile/me">
+    </testcase>
+    <testcase name="Critical: Profile Page Flow should display own profile with correct username in URL" time="1.239" classname="should display own profile with correct username in URL">
+    </testcase>
+    <testcase name="Critical: Profile Page Flow should display other user&apos;s profile" time="4.283" classname="should display other user&apos;s profile">
+    </testcase>
+    <testcase name="Critical: Profile Page Flow should display user statistics" time="2.501" classname="should display user statistics">
+    </testcase>
+    <testcase name="Critical: Profile Page Flow should display friends list" time="4.581" classname="should display friends list">
+    </testcase>
+    <testcase name="Critical: Profile Page Flow should switch between tabs" time="0.000" classname="should switch between tabs">
+      <failure message="Timed out retrying after 5000ms: Expected to find content: &apos;/summary/i&apos; but never did." type="AssertionError"><![CDATA[AssertionError: Timed out retrying after 5000ms: Expected to find content: '/summary/i' but never did.
+    at Context.eval (webpack://frontend/./cypress/e2e/critical-profile.cy.js:224:47)]]></failure>
+    </testcase>
+    <testcase name="Critical: Profile Page Flow should navigate to settings from profile" time="4.087" classname="should navigate to settings from profile">
+    </testcase>
+    <testcase name="Critical: Profile Page Flow should handle non-existent profile gracefully" time="4.734" classname="should handle non-existent profile gracefully">
+    </testcase>
+    <testcase name="Critical: Profile Page Flow should require authentication to view profile" time="0.199" classname="should require authentication to view profile">
+    </testcase>
+  </testsuite>
+</testsuites>

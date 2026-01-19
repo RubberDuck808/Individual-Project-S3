@@ -87,17 +87,20 @@ backend-test:
       junit: backend/build/test-results/test/*.xml
     paths:
       - backend/build/reports/jacoco/
+      - backend/build/test-results/
+      - backend/build/classes/
+      - backend/build/reports/tests/
+    expire_in: 1 week
 
   needs:
     - backend-build
 
 # ================================
-# Frontend tests + Coverage 
+# Frontend Unit Tests + Coverage 
 # ================================
 frontend-test:
   stage: test
   image: node:22
-  allow_failure: true
   script:
     - cd frontend
     - npm ci
@@ -111,6 +114,100 @@ frontend-test:
     - frontend-build
 
 # ================================
+# Frontend E2E Tests (Cypress)
+# ================================
+frontend-e2e:
+  stage: test
+  image: cypress/browsers:node-22.11.0-chrome-131.0.6778.85-1-ff-132.0.1-edge-131.0.2779.51-1
+  services:
+    - name: postgres:16
+      alias: postgres-e2e
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    
+    # Test database configuration
+    POSTGRES_DB: testdb
+    POSTGRES_USER: test
+    POSTGRES_PASSWORD: test
+    SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-e2e:5432/testdb"
+    SPRING_DATASOURCE_USERNAME: "test"
+    SPRING_DATASOURCE_PASSWORD: "test"
+    SPRING_PROFILES_ACTIVE: "test"
+    SPRING_FLYWAY_ENABLED: "true"
+    SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
+    JWT_SECRET: "ci-test-secret-key-must-be-at-least-256-bits-long-for-hmac-sha-algorithms-1234567890"
+    
+    # Frontend and backend URLs for e2e tests
+    CYPRESS_BASE_URL: "http://frontend-e2e:80"
+    CYPRESS_API_URL: "http://backend-e2e:8080"
+    VITE_API_URL: "http://backend-e2e:8080"
+    VITE_MAPBOX_TOKEN: "test"
+    
+    # Ports (internal to docker network)
+    BACKEND_PORT: "8080"
+    FRONTEND_PORT: "80"
+  
+  before_script:
+    # Install Docker Compose
+    - apk add --no-cache docker-compose curl
+    
+    # Wait for postgres to be ready
+    - apk add --no-cache postgresql-client
+    - until pg_isready -h postgres-e2e -p 5432 -U "$POSTGRES_USER"; do echo "waiting for postgres..."; sleep 1; done
+    
+    # Build and start backend
+    - echo "Building backend..."
+    - cd backend
+    - docker build -t backend-e2e:test -f Dockerfile .
+    - cd ..
+    
+    # Build and start frontend
+    - echo "Building frontend..."
+    - cd frontend
+    - docker build --build-arg VITE_API_URL="http://backend-e2e:8080" --build-arg VITE_MAPBOX_TOKEN="test" -t frontend-e2e:test -f Dockerfile .
+    - cd ..
+    
+    # Start services
+    - docker network create e2e-network || true
+    - docker run -d --name postgres-e2e --network e2e-network -e POSTGRES_DB=$POSTGRES_DB -e POSTGRES_USER=$POSTGRES_USER -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD postgres:16
+    - docker run -d --name backend-e2e --network e2e-network -p 8081:8080 -e SPRING_DATASOURCE_URL="jdbc:postgresql://postgres-e2e:5432/$POSTGRES_DB" -e SPRING_DATASOURCE_USERNAME=$POSTGRES_USER -e SPRING_DATASOURCE_PASSWORD=$POSTGRES_PASSWORD -e SPRING_PROFILES_ACTIVE=test -e SPRING_FLYWAY_ENABLED=true -e JWT_SECRET="$JWT_SECRET" backend-e2e:test
+    - docker run -d --name frontend-e2e --network e2e-network -p 5174:80 -e VITE_API_URL="http://backend-e2e:8080" -e VITE_MAPBOX_TOKEN="test" frontend-e2e:test
+    
+    # Wait for services to be ready
+    - echo "Waiting for backend..."
+    - until curl -f http://localhost:8081/actuator/health; do sleep 2; done
+    - echo "Waiting for frontend..."
+    - until curl -f http://localhost:5174; do sleep 2; done
+    
+    # Install Cypress dependencies
+    - cd frontend
+    - npm ci
+
+  script:
+    # Run Cypress E2E tests
+    - cd frontend
+    - npm run test:e2e:test
+
+  artifacts:
+    when: always
+    paths:
+      - frontend/cypress/results/
+      - frontend/cypress/screenshots/
+      - frontend/cypress/videos/
+    reports:
+      junit: frontend/cypress/results/*.xml
+    expire_in: 1 week
+
+  needs:
+    - frontend-build
+    - backend-build
+    - frontend-test
+
+
+# ================================
 # SONARQUBE BACKEND ANALYSIS 
 # ================================
 sonarqube-backend:
@@ -119,24 +216,44 @@ sonarqube-backend:
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
     GIT_DEPTH: "0"
+    JWT_SECRET: "ci-test-secret-key-must-be-at-least-256-bits-long-for-hmac-sha-algorithms-1234567890"
+    SPRING_PROFILES_ACTIVE: "test"
   cache:
     key: "sonar-cache-$CI_COMMIT_REF_SLUG"
     policy: pull-push
     paths:
       - "${SONAR_USER_HOME}/cache"
+      - backend/.gradle/
+  dependencies:
+    - backend-test
+    - backend-build
   script:
     - cd backend
+    # Verify JaCoCo report exists (should be available from backend-test job artifacts)
+    - |
+      if [ ! -f "build/reports/jacoco/test/jacocoTestReport.xml" ]; then
+        echo "ERROR: JaCoCo report not found. Please ensure backend-test job completed successfully."
+        exit 1
+      else
+        echo "JaCoCo report found at build/reports/jacoco/test/jacocoTestReport.xml"
+      fi
+    # Run SonarQube analysis with all configuration matching build.gradle
+    # Includes all test files: **/*Test.java and **/*IT.java
     - |
         ./gradlew sonar \
           -Dsonar.host.url="$SONAR_HOST_URL" \
           -Dsonar.token="$SONAR_TOKEN" \
-          -Dsonar.qualitygate.wait=true \
-          -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+          -Dsonar.qualitygate.wait=false \
+          -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml \
+          -Dsonar.tests=src/test/java \
+          -Dsonar.test.inclusions="**/*Test.java,**/*IT.java" \
+          -Dsonar.exclusions="src/test/java/nl/fontys/db3/backend/BackendApplicationTests.java"
   needs:
     - backend-test
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH'
+  allow_failure: false
 
 # ================================
 # SONARQUBE FRONTEND ANALYSIS
@@ -167,7 +284,7 @@ sonarqube-frontend:
 # ================================
 # Docker backend build + push
 # ================================
-docker-backend:
+  docker-backend:
   stage: docker
   image: docker:24
   before_script:
@@ -186,13 +303,13 @@ docker-backend:
     - backend-build
     - backend-test
     - sonarqube-backend
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 # ================================
 # Docker frontend build + push
 # ================================
-docker-frontend:
+  docker-frontend:
   stage: docker
   image: docker:24
   before_script:
@@ -213,13 +330,13 @@ docker-frontend:
     - frontend-build
     - frontend-test
     - sonarqube-frontend
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 # ================================
 # Deploy BACKEND to Cloud Run
 # ================================
-deploy-backend:
+  deploy-backend:
   stage: deploy
   image: google/cloud-sdk:latest
   needs:
@@ -235,13 +352,13 @@ deploy-backend:
           --platform managed \
           --allow-unauthenticated \
           --port 8080
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 # ================================
 # Deploy FRONTEND to Cloud Run
 # ================================
-deploy-frontend:
+  deploy-frontend:
   stage: deploy
   image: google/cloud-sdk:latest
   needs:
@@ -257,6 +374,6 @@ deploy-frontend:
           --platform managed \
           --allow-unauthenticated \
           --port 80
-  only:
-    - main
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 

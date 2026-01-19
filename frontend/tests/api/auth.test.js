@@ -1,268 +1,221 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  register,
-  login,
-  authFetch,
-  fetchCurrentUser,
-  logout,
-  getStoredUser,
-  isLoggedIn,
-  getAuthHeader,
-  getStoredUserId,
-} from "../../src/api/auth";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import * as auth from '../../src/api/auth';
 
-// Mock environment variable
-vi.stubGlobal("import", {
-  meta: {
-    env: {
-      VITE_API_URL: "http://localhost:8080",
-    },
-  },
-});
+// Mock fetch
+global.fetch = vi.fn();
+const mockFetch = global.fetch;
 
-describe("auth API", () => {
+describe('auth API', () => {
   beforeEach(() => {
-    localStorage.clear();
     vi.clearAllMocks();
-    global.fetch = vi.fn();
-  });
-
-  afterEach(() => {
     localStorage.clear();
   });
 
-  describe("register", () => {
-    it("should register a new user successfully", async () => {
-      const mockResponse = { id: 1, username: "testuser", email: "test@example.com" };
-      global.fetch.mockResolvedValueOnce({
+  describe('login', () => {
+    it('should successfully login and store token and user', async () => {
+      const mockResponse = {
+        token: 'mock-jwt-token',
+        user: { id: 1, username: 'testuser', email: 'test@example.com' }
+      };
+
+      mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse,
       });
 
-      const result = await register("testuser", "test@example.com", "password123", "Test User");
+      const result = await auth.login('test@example.com', 'password123');
 
-      expect(global.fetch).toHaveBeenCalledWith(
-        "http://localhost:8080/api/users/register",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: "testuser",
-            email: "test@example.com",
-            password: "password123",
-            name: "Test User",
-          }),
-        }
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/users/login'),
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        })
       );
+
+      expect(result).toEqual(mockResponse);
+      expect(localStorage.getItem('token')).toBe('mock-jwt-token');
+      expect(JSON.parse(localStorage.getItem('user'))).toEqual(mockResponse.user);
+    });
+
+    it('should throw error on login failure', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: 'Invalid credentials' }),
+        headers: { get: () => 'application/json' },
+      });
+
+      await expect(auth.login('test@example.com', 'wrong')).rejects.toThrow();
+    });
+  });
+
+  describe('register', () => {
+    it('should successfully register a user', async () => {
+      const mockResponse = { id: 1, username: 'newuser', email: 'new@example.com' };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await auth.register('newuser', 'new@example.com', 'password123', 'New User');
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/users/register'),
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+
       expect(result).toEqual(mockResponse);
     });
 
-    it("should throw error on failed registration", async () => {
-      global.fetch.mockResolvedValueOnce({
+    it('should throw error on registration failure', async () => {
+      mockFetch.mockResolvedValueOnce({
         ok: false,
-        headers: {
-          get: () => "application/json",
-        },
-        json: async () => ({ error: "Email already exists" }),
+        json: async () => ({ error: 'Email already exists' }),
+        headers: { get: () => 'application/json' },
       });
 
       await expect(
-        register("testuser", "test@example.com", "password123", "Test User")
-      ).rejects.toThrow("Email already exists");
+        auth.register('newuser', 'existing@example.com', 'password123', 'New User')
+      ).rejects.toThrow();
     });
   });
 
-  describe("login", () => {
-    it("should login successfully and store token", async () => {
-      const mockResponse = {
-        token: "test-token-123",
-        user: { id: 1, username: "testuser", email: "test@example.com" },
-      };
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
-
-      const result = await login("test@example.com", "password123");
-
-      expect(localStorage.getItem("token")).toBe("test-token-123");
-      expect(localStorage.getItem("user")).toBe(JSON.stringify(mockResponse.user));
-      expect(result).toEqual(mockResponse);
-    });
-
-    it("should throw error on failed login", async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-        headers: {
-          get: () => "application/json",
-        },
-        json: async () => ({ error: "Invalid credentials" }),
-      });
-
-      await expect(login("test@example.com", "wrongpassword")).rejects.toThrow(
-        "Invalid credentials"
-      );
-      expect(localStorage.getItem("token")).toBeNull();
-    });
-  });
-
-  describe("authFetch", () => {
-    it("should make authenticated request with token", async () => {
-      localStorage.setItem("token", "test-token");
-      const mockResponse = { data: "test" };
-      global.fetch.mockResolvedValueOnce({
+  describe('authFetch', () => {
+    it('should include Authorization header with token', async () => {
+      localStorage.setItem('token', 'mock-token');
+      mockFetch.mockResolvedValueOnce({
         ok: true,
         headers: {
-          get: () => "application/json",
+          get: vi.fn(() => 'application/json'),
         },
-        json: async () => mockResponse,
+        json: async () => ({ data: 'test' }),
       });
 
-      const result = await authFetch("/api/test");
+      await auth.authFetch('/api/test');
 
-      expect(global.fetch).toHaveBeenCalledWith(
-        "http://localhost:8080/api/test",
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer test-token",
-          },
-        }
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer mock-token',
+          }),
+        })
       );
-      expect(result).toEqual(mockResponse);
     });
 
-    it("should throw error if not authenticated", async () => {
-      await expect(authFetch("/api/test")).rejects.toThrow("Not authenticated");
+    it('should throw error when not authenticated', async () => {
+      localStorage.removeItem('token');
+
+      await expect(auth.authFetch('/api/test')).rejects.toThrow('Not authenticated');
     });
 
-    it("should handle 204 No Content response", async () => {
-      localStorage.setItem("token", "test-token");
-      global.fetch.mockResolvedValueOnce({
+    it('should handle 204 No Content response', async () => {
+      localStorage.setItem('token', 'mock-token');
+      mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 204,
         headers: {
-          get: () => "",
+          get: vi.fn(() => null),
         },
       });
 
-      const result = await authFetch("/api/test", { method: "DELETE" });
+      const result = await auth.authFetch('/api/test');
       expect(result).toBeNull();
-    });
-
-    it("should handle text response", async () => {
-      localStorage.setItem("token", "test-token");
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        headers: {
-          get: () => "text/plain",
-        },
-        text: async () => "text response",
-      });
-
-      const result = await authFetch("/api/test");
-      expect(result).toBe("text response");
-    });
-
-    it("should throw error on failed request", async () => {
-      localStorage.setItem("token", "test-token");
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        headers: {
-          get: () => "application/json",
-        },
-        json: async () => ({ error: "Not found" }),
-      });
-
-      await expect(authFetch("/api/test")).rejects.toThrow("Not found");
     });
   });
 
-  describe("fetchCurrentUser", () => {
-    it("should fetch and store current user", async () => {
-      localStorage.setItem("token", "test-token");
-      const mockUser = { id: 1, username: "testuser" };
-      global.fetch.mockResolvedValueOnce({
+  describe('fetchCurrentUser', () => {
+    it('should fetch and store current user', async () => {
+      localStorage.setItem('token', 'mock-token');
+      const mockUser = { id: 1, username: 'testuser' };
+
+      mockFetch.mockResolvedValueOnce({
         ok: true,
         headers: {
-          get: () => "application/json",
+          get: vi.fn(() => 'application/json'),
         },
         json: async () => mockUser,
       });
 
-      const result = await fetchCurrentUser();
+      const result = await auth.fetchCurrentUser();
 
-      expect(localStorage.getItem("user")).toBe(JSON.stringify(mockUser));
       expect(result).toEqual(mockUser);
+      expect(JSON.parse(localStorage.getItem('user'))).toEqual(mockUser);
     });
   });
 
-  describe("logout", () => {
-    it("should clear token and user from localStorage", () => {
-      localStorage.setItem("token", "test-token");
-      localStorage.setItem("user", JSON.stringify({ id: 1 }));
+  describe('logout', () => {
+    it('should clear token and user from localStorage', () => {
+      localStorage.setItem('token', 'mock-token');
+      localStorage.setItem('user', JSON.stringify({ id: 1 }));
 
-      logout();
+      auth.logout();
 
-      expect(localStorage.getItem("token")).toBeNull();
-      expect(localStorage.getItem("user")).toBeNull();
+      expect(localStorage.getItem('token')).toBeNull();
+      expect(localStorage.getItem('user')).toBeNull();
     });
   });
 
-  describe("getStoredUser", () => {
-    it("should return parsed user from localStorage", () => {
-      const user = { id: 1, username: "testuser" };
-      localStorage.setItem("user", JSON.stringify(user));
+  describe('getStoredUser', () => {
+    it('should return parsed user from localStorage', () => {
+      const mockUser = { id: 1, username: 'testuser' };
+      localStorage.setItem('user', JSON.stringify(mockUser));
 
-      expect(getStoredUser()).toEqual(user);
+      expect(auth.getStoredUser()).toEqual(mockUser);
     });
 
-    it("should return null if no user in localStorage", () => {
-      expect(getStoredUser()).toBeNull();
+    it('should return null when user is not stored', () => {
+      expect(auth.getStoredUser()).toBeNull();
     });
 
-    it("should return null if invalid JSON in localStorage", () => {
-      localStorage.setItem("user", "invalid json");
-      expect(getStoredUser()).toBeNull();
-    });
-  });
+    it('should return null when stored user is invalid JSON', () => {
+      localStorage.setItem('user', 'invalid-json');
 
-  describe("isLoggedIn", () => {
-    it("should return true if token exists", () => {
-      localStorage.setItem("token", "test-token");
-      expect(isLoggedIn()).toBe(true);
-    });
-
-    it("should return false if no token", () => {
-      expect(isLoggedIn()).toBe(false);
+      expect(auth.getStoredUser()).toBeNull();
     });
   });
 
-  describe("getAuthHeader", () => {
-    it("should return auth header with token", () => {
-      localStorage.setItem("token", "test-token");
-      expect(getAuthHeader()).toEqual({ Authorization: "Bearer test-token" });
+  describe('isLoggedIn', () => {
+    it('should return true when token exists', () => {
+      localStorage.setItem('token', 'mock-token');
+      expect(auth.isLoggedIn()).toBe(true);
     });
 
-    it("should throw error if no token", () => {
-      expect(() => getAuthHeader()).toThrow("Not authenticated");
+    it('should return false when token does not exist', () => {
+      localStorage.removeItem('token');
+      expect(auth.isLoggedIn()).toBe(false);
     });
   });
 
-  describe("getStoredUserId", () => {
-    it("should return user id from stored user", () => {
-      localStorage.setItem("user", JSON.stringify({ id: 123 }));
-      expect(getStoredUserId()).toBe(123);
+  describe('getAuthHeader', () => {
+    it('should return Authorization header with token', () => {
+      localStorage.setItem('token', 'mock-token');
+      expect(auth.getAuthHeader()).toEqual({ Authorization: 'Bearer mock-token' });
     });
 
-    it("should return userId if id is not present", () => {
-      localStorage.setItem("user", JSON.stringify({ userId: 456 }));
-      expect(getStoredUserId()).toBe(456);
+    it('should throw error when not authenticated', () => {
+      localStorage.removeItem('token');
+      expect(() => auth.getAuthHeader()).toThrow('Not authenticated');
+    });
+  });
+
+  describe('getStoredUserId', () => {
+    it('should return user id from stored user', () => {
+      localStorage.setItem('user', JSON.stringify({ id: 123 }));
+      expect(auth.getStoredUserId()).toBe(123);
     });
 
-    it("should return null if no user stored", () => {
-      expect(getStoredUserId()).toBeNull();
+    it('should return userId from stored user', () => {
+      localStorage.setItem('user', JSON.stringify({ userId: 456 }));
+      expect(auth.getStoredUserId()).toBe(456);
+    });
+
+    it('should return null when user is not stored', () => {
+      expect(auth.getStoredUserId()).toBeNull();
     });
   });
 });

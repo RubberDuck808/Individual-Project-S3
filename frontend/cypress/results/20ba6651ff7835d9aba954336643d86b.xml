@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="41.737" tests="11" failures="1">
+  <testsuite name="Root Suite" timestamp="2026-01-19T22:34:13" tests="0" file="cypress\e2e\critical-settings.cy.js" time="0.000" failures="0">
+  </testsuite>
+  <testsuite name="Critical: Settings Page Flow" timestamp="2026-01-19T22:34:13" tests="11" time="41.735" failures="1">
+    <testcase name="Critical: Settings Page Flow should display settings page" time="1.097" classname="should display settings page">
+    </testcase>
+    <testcase name="Critical: Settings Page Flow should navigate to profile settings section" time="0.596" classname="should navigate to profile settings section">
+    </testcase>
+    <testcase name="Critical: Settings Page Flow should navigate to account settings section" time="4.428" classname="should navigate to account settings section">
+    </testcase>
+    <testcase name="Critical: Settings Page Flow should update username in account settings" time="6.720" classname="should update username in account settings">
+    </testcase>
+    <testcase name="Critical: Settings Page Flow should update name in account settings (not profile section)" time="2.821" classname="should update name in account settings (not profile section)">
+    </testcase>
+    <testcase name="Critical: Settings Page Flow should display device settings section" time="3.992" classname="should display device settings section">
+    </testcase>
+    <testcase name="Critical: Settings Page Flow should add a new device" time="4.276" classname="should add a new device">
+    </testcase>
+    <testcase name="Critical: Settings Page Flow should display friends settings section" time="2.562" classname="should display friends settings section">
+    </testcase>
+    <testcase name="Critical: Settings Page Flow should logout from settings" time="0.000" classname="should logout from settings">
+      <failure message="Timed out retrying after 10000ms: Expected to find content: &apos;/profile|account|device|friends/i&apos; but never did." type="AssertionError"><![CDATA[AssertionError: Timed out retrying after 10000ms: Expected to find content: '/profile|account|device|friends/i' but never did.
+    at Context.eval (webpack://frontend/./cypress/e2e/critical-settings.cy.js:236:71)]]></failure>
+    </testcase>
+    <testcase name="Critical: Settings Page Flow should navigate back to profile from settings" time="4.638" classname="should navigate back to profile from settings">
+    </testcase>
+    <testcase name="Critical: Settings Page Flow should require authentication to access settings" time="0.091" classname="should require authentication to access settings">
+    </testcase>
+  </testsuite>
+</testsuites>

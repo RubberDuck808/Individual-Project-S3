@@ -1,204 +1,342 @@
 package nl.fontys.db3.backend.service;
 
+import nl.fontys.db3.backend.dto.UserStatsDTO;
 import nl.fontys.db3.backend.dto.VoteDTO;
-import nl.fontys.db3.backend.entity.HazardReport;
-import nl.fontys.db3.backend.entity.User;
-import nl.fontys.db3.backend.entity.Vote;
-import nl.fontys.db3.backend.entity.VoteType;
+import nl.fontys.db3.backend.entity.*;
 import nl.fontys.db3.backend.repository.HazardReportRepository;
 import nl.fontys.db3.backend.repository.UserRepository;
 import nl.fontys.db3.backend.repository.VoteRepository;
-
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class VoteServiceTest {
 
-    @Mock private VoteRepository voteRepo;
-    @Mock private UserRepository userRepo;
-    @Mock private HazardReportRepository hazardRepo;
-    @Mock private StatisticsService statisticsService;
+    @Mock
+    private VoteRepository voteRepo;
+
+    @Mock
+    private UserRepository userRepo;
+
+    @Mock
+    private HazardReportRepository hazardRepo;
+
+    @Mock
+    private StatisticsService statisticsService;
 
     @InjectMocks
-    private VoteService service;
+    private VoteService voteService;
+
+    private User testUser;
+    private User hazardCreator;
+    private Role userRole;
+    private HazardCategory category;
+    private HazardReport hazard;
+    private Vote vote;
+
+    @BeforeEach
+    void setUp() {
+        userRole = new Role(1L, "USER");
+        testUser = User.builder()
+                .id(1L)
+                .username("voter")
+                .email("voter@example.com")
+                .name("Voter User")
+                .password("encoded")
+                .role(userRole)
+                .build();
+
+        hazardCreator = User.builder()
+                .id(2L)
+                .username("creator")
+                .email("creator@example.com")
+                .name("Creator User")
+                .password("encoded")
+                .role(userRole)
+                .build();
+
+        category = HazardCategory.builder()
+                .id(1L)
+                .name("Pothole")
+                .iconPath("/icons/pothole.png")
+                .active(true)
+                .build();
+
+        hazard = HazardReport.builder()
+                .id(1L)
+                .latitude(52.0)
+                .longitude(5.0)
+                .category(category)
+                .createdBy(hazardCreator)
+                .status(HazardStatus.OPEN)
+                .build();
+
+        vote = Vote.builder()
+                .id(1L)
+                .hazardReport(hazard)
+                .user(testUser)
+                .voteType(VoteType.UPVOTE)
+                .build();
+    }
 
     @Test
-    void voteAsDTO_success_savesVote_incrementsStats_andReturnsDto() {
-        String email = "user@test.com";
-        Long hazardId = 99L;
+    void getAllVotes_success() {
+        // Given
+        Vote vote2 = Vote.builder()
+                .id(2L)
+                .hazardReport(hazard)
+                .user(hazardCreator)
+                .voteType(VoteType.DOWNVOTE)
+                .build();
+        when(voteRepo.findAll()).thenReturn(List.of(vote, vote2));
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn(7L);
-        when(userRepo.findByEmail(email)).thenReturn(Optional.of(user));
+        // When
+        List<VoteDTO> result = voteService.getAllVotes();
 
-        User creator = mock(User.class);
-        when(creator.getId()).thenReturn(123L);
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals(1L, result.get(0).getId());
+        assertEquals("UPVOTE", result.get(0).getVoteType());
+        verify(voteRepo).findAll();
+    }
 
-        HazardReport hazard = mock(HazardReport.class);
-        when(hazard.getId()).thenReturn(hazardId);
-        when(hazard.getCreatedBy()).thenReturn(creator);
-        when(hazardRepo.findById(hazardId)).thenReturn(Optional.of(hazard));
-
-        when(voteRepo.existsByHazardReport_IdAndUser_Id(hazardId, 7L)).thenReturn(false);
-
-        ArgumentCaptor<Vote> captor = ArgumentCaptor.forClass(Vote.class);
-        when(voteRepo.save(captor.capture())).thenAnswer(inv -> {
-            return inv.getArgument(0);
+    @Test
+    void voteAsDTO_success() {
+        // Given
+        when(userRepo.findByEmail("voter@example.com")).thenReturn(Optional.of(testUser));
+        when(hazardRepo.findById(1L)).thenReturn(Optional.of(hazard));
+        when(voteRepo.existsByHazardReport_IdAndUser_Id(1L, 1L)).thenReturn(false);
+        when(voteRepo.save(any(Vote.class))).thenAnswer(invocation -> {
+            Vote v = invocation.getArgument(0);
+            v.setId(1L);
+            return v;
         });
 
-        VoteDTO dto = service.voteAsDTO(email, hazardId, VoteType.UPVOTE);
+        // When
+        VoteDTO result = voteService.voteAsDTO("voter@example.com", 1L, VoteType.UPVOTE);
 
-        Vote savedVote = captor.getValue();
-        assertNotNull(savedVote);
-        assertSame(user, savedVote.getUser());
-        assertSame(hazard, savedVote.getHazardReport());
-        assertEquals(VoteType.UPVOTE, savedVote.getVoteType());
-
-        verify(statisticsService).incrementVotes(7L);
-
-        assertEquals("UPVOTE", dto.getVoteType());
-        assertEquals(7L, dto.getUserId());
-        assertEquals(hazardId, dto.getHazardId());
+        // Then
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("UPVOTE", result.getVoteType());
+        assertEquals(1L, result.getUserId());
+        assertEquals(1L, result.getHazardId());
+        verify(userRepo).findByEmail("voter@example.com");
+        verify(hazardRepo).findById(1L);
+        verify(voteRepo).existsByHazardReport_IdAndUser_Id(1L, 1L);
+        verify(voteRepo).save(any(Vote.class));
+        verify(statisticsService).incrementVotes(1L);
     }
 
     @Test
-    void voteAsDTO_hazardIdNull_throws() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.voteAsDTO("user@test.com", null, VoteType.UPVOTE));
-
-        verifyNoInteractions(userRepo, hazardRepo, voteRepo, statisticsService);
+    void voteAsDTO_nullHazardId_throwsException() {
+        // When/Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> voteService.voteAsDTO("voter@example.com", null, VoteType.UPVOTE));
+        assertEquals("hazardId cannot be null", exception.getMessage());
+        verify(userRepo, never()).findByEmail(any());
+        verify(hazardRepo, never()).findById(any());
     }
 
     @Test
-    void voteAsDTO_userNotFound_throws() {
-        when(userRepo.findByEmail("user@test.com")).thenReturn(Optional.empty());
+    void voteAsDTO_userNotFound_throwsException() {
+        // Given
+        when(userRepo.findByEmail("voter@example.com")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
-                () -> service.voteAsDTO("user@test.com", 1L, VoteType.UPVOTE));
-
-        verify(hazardRepo, never()).findById(anyLong());
-        verify(voteRepo, never()).save(any());
-        verify(statisticsService, never()).incrementVotes(anyLong());
+        // When/Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> voteService.voteAsDTO("voter@example.com", 1L, VoteType.UPVOTE));
+        assertEquals("User not found", exception.getMessage());
+        verify(userRepo).findByEmail("voter@example.com");
+        verify(hazardRepo, never()).findById(any());
     }
 
     @Test
-    void voteAsDTO_hazardNotFound_throws() {
-        User user = mock(User.class);
-        when(userRepo.findByEmail("user@test.com")).thenReturn(Optional.of(user));
-
+    void voteAsDTO_hazardNotFound_throwsException() {
+        // Given
+        when(userRepo.findByEmail("voter@example.com")).thenReturn(Optional.of(testUser));
         when(hazardRepo.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
-                () -> service.voteAsDTO("user@test.com", 1L, VoteType.UPVOTE));
+        // When/Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> voteService.voteAsDTO("voter@example.com", 1L, VoteType.UPVOTE));
+        assertEquals("Hazard not found", exception.getMessage());
+        verify(userRepo).findByEmail("voter@example.com");
+        verify(hazardRepo).findById(1L);
+        verify(voteRepo, never()).existsByHazardReport_IdAndUser_Id(any(), any());
+    }
 
-        verify(voteRepo, never()).existsByHazardReport_IdAndUser_Id(anyLong(), anyLong());
+    @Test
+    void voteAsDTO_ownReport_throwsException() {
+        // Given
+        hazard.setCreatedBy(testUser); // Same user as voter
+        when(userRepo.findByEmail("voter@example.com")).thenReturn(Optional.of(testUser));
+        when(hazardRepo.findById(1L)).thenReturn(Optional.of(hazard));
+
+        // When/Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> voteService.voteAsDTO("voter@example.com", 1L, VoteType.UPVOTE));
+        assertEquals("You cannot vote on your own report", exception.getMessage());
+        verify(userRepo).findByEmail("voter@example.com");
+        verify(hazardRepo).findById(1L);
+        verify(voteRepo, never()).existsByHazardReport_IdAndUser_Id(any(), any());
         verify(voteRepo, never()).save(any());
-        verify(statisticsService, never()).incrementVotes(anyLong());
     }
 
-
     @Test
-    void voteAsDTO_creatorCannotVoteOnOwnReport_throws() {
-        String email = "user@test.com";
-        Long hazardId = 1L;
+    void voteAsDTO_alreadyVoted_throwsException() {
+        // Given
+        when(userRepo.findByEmail("voter@example.com")).thenReturn(Optional.of(testUser));
+        when(hazardRepo.findById(1L)).thenReturn(Optional.of(hazard));
+        when(voteRepo.existsByHazardReport_IdAndUser_Id(1L, 1L)).thenReturn(true);
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn(7L);
-        when(userRepo.findByEmail(email)).thenReturn(Optional.of(user));
-
-        HazardReport hazard = mock(HazardReport.class);
-        when(hazardRepo.findById(hazardId)).thenReturn(Optional.of(hazard));
-
-        // createdBy has same id as user
-        User createdBy = mock(User.class);
-        when(createdBy.getId()).thenReturn(7L);
-        when(hazard.getCreatedBy()).thenReturn(createdBy);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> service.voteAsDTO(email, hazardId, VoteType.UPVOTE));
-
+        // When/Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> voteService.voteAsDTO("voter@example.com", 1L, VoteType.UPVOTE));
+        assertEquals("You already voted on this report", exception.getMessage());
+        verify(userRepo).findByEmail("voter@example.com");
+        verify(hazardRepo).findById(1L);
+        verify(voteRepo).existsByHazardReport_IdAndUser_Id(1L, 1L);
         verify(voteRepo, never()).save(any());
-        verify(statisticsService, never()).incrementVotes(anyLong());
     }
 
     @Test
-    void voteAsDTO_alreadyVoted_throws() {
-        String email = "user@test.com";
-        Long hazardId = 1L;
+    void voteAsDTO_removeVoteType_success() {
+        // Given
+        when(userRepo.findByEmail("voter@example.com")).thenReturn(Optional.of(testUser));
+        when(hazardRepo.findById(1L)).thenReturn(Optional.of(hazard));
+        when(voteRepo.existsByHazardReport_IdAndUser_Id(1L, 1L)).thenReturn(false);
+        when(voteRepo.save(any(Vote.class))).thenAnswer(invocation -> {
+            Vote v = invocation.getArgument(0);
+            v.setId(1L);
+            return v;
+        });
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn(7L);
-        when(userRepo.findByEmail(email)).thenReturn(Optional.of(user));
+        // When
+        VoteDTO result = voteService.voteAsDTO("voter@example.com", 1L, VoteType.DOWNVOTE);
 
-        HazardReport hazard = mock(HazardReport.class);
-        when(hazard.getCreatedBy()).thenReturn(null); // simplify
-        when(hazardRepo.findById(hazardId)).thenReturn(Optional.of(hazard));
-
-        when(voteRepo.existsByHazardReport_IdAndUser_Id(hazardId, 7L)).thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> service.voteAsDTO(email, hazardId, VoteType.UPVOTE));
-
-        verify(voteRepo, never()).save(any());
-        verify(statisticsService, never()).incrementVotes(anyLong());
+        // Then
+        assertNotNull(result);
+        assertEquals("DOWNVOTE", result.getVoteType());
+        verify(voteRepo).save(any(Vote.class));
     }
 
     @Test
-    void getMyVote_whenVoteExists_returnsMapWithVoteType() {
-        String email = "user@test.com";
-        Long hazardId = 5L;
+    void countVotes_success() {
+        // Given
+        when(voteRepo.countByHazardReport_IdAndVoteType(1L, VoteType.UPVOTE)).thenReturn(5L);
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn(7L);
-        when(userRepo.findByEmail(email)).thenReturn(Optional.of(user));
+        // When
+        long result = voteService.countVotes(1L, VoteType.UPVOTE);
 
-        Vote vote = mock(Vote.class);
-        when(vote.getVoteType()).thenReturn(VoteType.DOWNVOTE);
-
-        when(voteRepo.findByHazardReport_IdAndUser_Id(hazardId, 7L)).thenReturn(Optional.of(vote));
-
-        Map<String, String> result = service.getMyVote(email, hazardId);
-
-        assertEquals(Map.of("voteType", "DOWNVOTE"), result);
+        // Then
+        assertEquals(5L, result);
+        verify(voteRepo).countByHazardReport_IdAndVoteType(1L, VoteType.UPVOTE);
     }
 
     @Test
-    void getMyVote_whenNoVote_returnsEmptyMap() {
-        String email = "user@test.com";
-        Long hazardId = 5L;
+    void countVotes_downvoteType_success() {
+        // Given
+        when(voteRepo.countByHazardReport_IdAndVoteType(1L, VoteType.DOWNVOTE)).thenReturn(2L);
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn(7L);
-        when(userRepo.findByEmail(email)).thenReturn(Optional.of(user));
+        // When
+        long result = voteService.countVotes(1L, VoteType.DOWNVOTE);
 
-        when(voteRepo.findByHazardReport_IdAndUser_Id(hazardId, 7L)).thenReturn(Optional.empty());
+        // Then
+        assertEquals(2L, result);
+        verify(voteRepo).countByHazardReport_IdAndVoteType(1L, VoteType.DOWNVOTE);
+    }
 
-        Map<String, String> result = service.getMyVote(email, hazardId);
+    @Test
+    void getLifetimeVotesCastByUser_success() {
+        // Given
+        UserStatsDTO stats = UserStatsDTO.builder()
+                .totalTrips(10)
+                .totalDistanceKm(100.0)
+                .totalHazardsReported(5)
+                .totalVotes(15L)
+                .build();
 
+        when(statisticsService.getStatsByUsername("voter")).thenReturn(stats);
+
+        // When
+        long result = voteService.getLifetimeVotesCastByUser("voter");
+
+        // Then
+        assertEquals(15L, result);
+        verify(statisticsService).getStatsByUsername("voter");
+    }
+
+    @Test
+    void getMyVote_voteExists_success() {
+        // Given
+        when(userRepo.findByEmail("voter@example.com")).thenReturn(Optional.of(testUser));
+        when(voteRepo.findByHazardReport_IdAndUser_Id(1L, 1L)).thenReturn(Optional.of(vote));
+
+        // When
+        Map<String, String> result = voteService.getMyVote("voter@example.com", 1L);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("UPVOTE", result.get("voteType"));
+        verify(userRepo).findByEmail("voter@example.com");
+        verify(voteRepo).findByHazardReport_IdAndUser_Id(1L, 1L);
+    }
+
+    @Test
+    void getMyVote_noVote_success() {
+        // Given
+        when(userRepo.findByEmail("voter@example.com")).thenReturn(Optional.of(testUser));
+        when(voteRepo.findByHazardReport_IdAndUser_Id(1L, 1L)).thenReturn(Optional.empty());
+
+        // When
+        Map<String, String> result = voteService.getMyVote("voter@example.com", 1L);
+
+        // Then
+        assertNotNull(result);
         assertEquals("NONE", result.get("voteType"));
-        assertEquals(1, result.size());
+        verify(userRepo).findByEmail("voter@example.com");
+        verify(voteRepo).findByHazardReport_IdAndUser_Id(1L, 1L);
     }
 
     @Test
-    void getMyVote_userNotFound_throws() {
-        when(userRepo.findByEmail("user@test.com")).thenReturn(Optional.empty());
+    void getMyVote_userNotFound_throwsException() {
+        // Given
+        when(userRepo.findByEmail("voter@example.com")).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
-                () -> service.getMyVote("user@test.com", 1L));
+        // When/Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> voteService.getMyVote("voter@example.com", 1L));
+        assertEquals("User not found", exception.getMessage());
+        verify(userRepo).findByEmail("voter@example.com");
+        verify(voteRepo, never()).findByHazardReport_IdAndUser_Id(any(), any());
+    }
 
-        verifyNoInteractions(voteRepo);
+    @Test
+    void getMyVote_downvoteType_success() {
+        // Given
+        vote.setVoteType(VoteType.DOWNVOTE);
+        when(userRepo.findByEmail("voter@example.com")).thenReturn(Optional.of(testUser));
+        when(voteRepo.findByHazardReport_IdAndUser_Id(1L, 1L)).thenReturn(Optional.of(vote));
+
+        // When
+        Map<String, String> result = voteService.getMyVote("voter@example.com", 1L);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("DOWNVOTE", result.get("voteType"));
     }
 }

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="36.101" tests="9" failures="0">
+  <testsuite name="Root Suite" timestamp="2026-01-19T22:27:55" tests="0" file="cypress\e2e\critical-car-health.cy.js" time="0.000" failures="0">
+  </testsuite>
+  <testsuite name="Critical: Car Health Page Flow" timestamp="2026-01-19T22:27:55" tests="9" time="36.099" failures="0">
+    <testcase name="Critical: Car Health Page Flow should display car health page when device is connected" time="2.044" classname="should display car health page when device is connected">
+    </testcase>
+    <testcase name="Critical: Car Health Page Flow should display telemetry data" time="0.877" classname="should display telemetry data">
+    </testcase>
+    <testcase name="Critical: Car Health Page Flow should handle no device scenario" time="3.078" classname="should handle no device scenario">
+    </testcase>
+    <testcase name="Critical: Car Health Page Flow should display plate number input" time="2.755" classname="should display plate number input">
+    </testcase>
+    <testcase name="Critical: Car Health Page Flow should handle device fetch error" time="7.241" classname="should handle device fetch error">
+    </testcase>
+    <testcase name="Critical: Car Health Page Flow should handle telemetry fetch error" time="5.981" classname="should handle telemetry fetch error">
+    </testcase>
+    <testcase name="Critical: Car Health Page Flow should display loading state" time="1.918" classname="should display loading state">
+    </testcase>
+    <testcase name="Critical: Car Health Page Flow should handle disconnected device" time="11.402" classname="should handle disconnected device">
+    </testcase>
+    <testcase name="Critical: Car Health Page Flow should require authentication to access car health page" time="0.191" classname="should require authentication to access car health page">
+    </testcase>
+  </testsuite>
+</testsuites>

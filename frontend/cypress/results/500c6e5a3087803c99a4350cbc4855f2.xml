@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="7.579" tests="9" failures="0">
+  <testsuite name="Root Suite" timestamp="2026-01-19T22:25:08" tests="0" file="cypress\e2e\login.cy.js" time="0.000" failures="0">
+  </testsuite>
+  <testsuite name="Critical: Login Page" timestamp="2026-01-19T22:25:08" tests="9" time="7.578" failures="0">
+    <testcase name="Critical: Login Page should display login form" time="0.755" classname="should display login form">
+    </testcase>
+    <testcase name="Critical: Login Page should show error when submitting empty form" time="0.553" classname="should show error when submitting empty form">
+    </testcase>
+    <testcase name="Critical: Login Page should show error when email is invalid" time="0.954" classname="should show error when email is invalid">
+    </testcase>
+    <testcase name="Critical: Login Page should show error when password is missing" time="0.677" classname="should show error when password is missing">
+    </testcase>
+    <testcase name="Critical: Login Page should navigate to signup page when clicking create account" time="0.286" classname="should navigate to signup page when clicking create account">
+    </testcase>
+    <testcase name="Critical: Login Page should navigate to home page when clicking logo" time="0.416" classname="should navigate to home page when clicking logo">
+    </testcase>
+    <testcase name="Critical: Login Page should handle failed login attempt with backend integration" time="1.265" classname="should handle failed login attempt with backend integration">
+    </testcase>
+    <testcase name="Critical: Login Page should successfully login and redirect when credentials are valid" time="0.995" classname="should successfully login and redirect when credentials are valid">
+    </testcase>
+    <testcase name="Critical: Login Page should redirect admin users to admin panel after login" time="1.228" classname="should redirect admin users to admin panel after login">
+    </testcase>
+  </testsuite>
+</testsuites>

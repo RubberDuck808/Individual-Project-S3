@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="16.862" tests="4" failures="0">
+  <testsuite name="Root Suite" timestamp="2026-01-19T22:31:22" tests="0" file="cypress\e2e\critical-voting.cy.js" time="0.000" failures="0">
+  </testsuite>
+  <testsuite name="Critical: Voting on Hazards Flow" timestamp="2026-01-19T22:31:22" tests="4" time="16.860" failures="0">
+    <testcase name="Critical: Voting on Hazards Flow should successfully vote on a hazard" time="4.319" classname="should successfully vote on a hazard">
+    </testcase>
+    <testcase name="Critical: Voting on Hazards Flow should show vote counts" time="3.738" classname="should show vote counts">
+    </testcase>
+    <testcase name="Critical: Voting on Hazards Flow should require authentication to vote" time="0.140" classname="should require authentication to vote">
+    </testcase>
+    <testcase name="Critical: Voting on Hazards Flow should prevent voting on own hazards" time="8.382" classname="should prevent voting on own hazards">
+    </testcase>
+  </testsuite>
+</testsuites>

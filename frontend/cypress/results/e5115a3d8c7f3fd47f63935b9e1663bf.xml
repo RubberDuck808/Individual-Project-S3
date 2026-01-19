@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="61.204" tests="13" failures="0">
+  <testsuite name="Root Suite" timestamp="2026-01-19T22:20:13" tests="0" file="cypress\e2e\critical-admin.cy.js" time="0.000" failures="0">
+  </testsuite>
+  <testsuite name="Critical: Admin Panel Flow" timestamp="2026-01-19T22:20:13" tests="13" time="61.202" failures="0">
+    <testcase name="Critical: Admin Panel Flow should display admin dashboard" time="1.820" classname="should display admin dashboard">
+    </testcase>
+    <testcase name="Critical: Admin Panel Flow should display users management page" time="0.990" classname="should display users management page">
+    </testcase>
+    <testcase name="Critical: Admin Panel Flow should update user role" time="3.570" classname="should update user role">
+    </testcase>
+    <testcase name="Critical: Admin Panel Flow should deactivate user" time="2.285" classname="should deactivate user">
+    </testcase>
+    <testcase name="Critical: Admin Panel Flow should display devices management page" time="5.699" classname="should display devices management page">
+    </testcase>
+    <testcase name="Critical: Admin Panel Flow should activate/deactivate device" time="7.931" classname="should activate/deactivate device">
+    </testcase>
+    <testcase name="Critical: Admin Panel Flow should display assets management page" time="5.667" classname="should display assets management page">
+    </testcase>
+    <testcase name="Critical: Admin Panel Flow should navigate between admin sections" time="6.903" classname="should navigate between admin sections">
+    </testcase>
+    <testcase name="Critical: Admin Panel Flow should handle admin dashboard loading state" time="7.816" classname="should handle admin dashboard loading state">
+    </testcase>
+    <testcase name="Critical: Admin Panel Flow should handle admin dashboard error state" time="4.574" classname="should handle admin dashboard error state">
+    </testcase>
+    <testcase name="Critical: Admin Panel Flow should redirect non-admin users from admin routes" time="2.307" classname="should redirect non-admin users from admin routes">
+    </testcase>
+    <testcase name="Critical: Admin Panel Flow should require authentication to access admin panel" time="0.109" classname="should require authentication to access admin panel">
+    </testcase>
+    <testcase name="Critical: Admin Panel Flow should logout from admin panel" time="10.961" classname="should logout from admin panel">
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Mocha Tests" time="34.008" tests="5" failures="0">
+  <testsuite name="Root Suite" timestamp="2026-01-19T22:21:57" tests="0" file="cypress\e2e\critical-friends.cy.js" time="0.000" failures="0">
+  </testsuite>
+  <testsuite name="Critical: Adding Friends Flow" timestamp="2026-01-19T22:21:57" tests="5" time="34.006" failures="0">
+    <testcase name="Critical: Adding Friends Flow should successfully send a friend request" time="5.874" classname="should successfully send a friend request">
+    </testcase>
+    <testcase name="Critical: Adding Friends Flow should show validation error for empty username" time="4.126" classname="should show validation error for empty username">
+    </testcase>
+    <testcase name="Critical: Adding Friends Flow should display incoming friend requests" time="9.414" classname="should display incoming friend requests">
+    </testcase>
+    <testcase name="Critical: Adding Friends Flow should allow accepting friend requests" time="14.170" classname="should allow accepting friend requests">
+    </testcase>
+    <testcase name="Critical: Adding Friends Flow should require authentication to manage friends" time="0.159" classname="should require authentication to manage friends">
+    </testcase>
+  </testsuite>
+</testsuites>

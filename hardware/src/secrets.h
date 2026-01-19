@@ -4,12 +4,13 @@
 // ============================================
 // WiFi Configuration
 // ============================================
-#define WIFI_SSID "KPN1D1BA6"
-#define WIFI_PASS "6WVMVcJL1L9tcHcM"
+
+// #define WIFI_SSID "KPN1D1BA6"
+// #define WIFI_PASS "6WVMVcJL1L9tcHcM"
 
 // // Iphone Hotspot
-// #define WIFI_SSID "OscarIphone"
-// #define WIFI_PASS "Rashid2005"
+#define WIFI_SSID "OscarIphone"
+#define WIFI_PASS "Rashid2005"
 
 // Optional: For enterprise WiFi (WPA2-Enterprise), uncomment and set:
 // #define WIFI_USERNAME "your-username"
@@ -21,7 +22,7 @@
 // #define WIFI_USERNAME "548789@student.fontys.nl"
 
 // Backend Configuration
-#define BACKEND_BASE_URL "http://192.168.2.2:8080"
+#define BACKEND_BASE_URL "https://tripwire-backend-166064655547.europe-west4.run.app"
 
 // Device Configuration
 
