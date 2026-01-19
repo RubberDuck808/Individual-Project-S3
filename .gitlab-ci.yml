@@ -6,7 +6,8 @@ stages:
   - deploy
 
 variables:
-  DOCKER_HOST: tcp://host.docker.internal:2375
+  # Default for jobs that use docker:dind
+  DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
 
   GCP_REGION: europe-west4
@@ -50,7 +51,7 @@ frontend-build:
     expire_in: 1 week
 
 # ================================
-# Backend tests + JaCoCo coverage 
+# Backend tests + JaCoCo coverage
 # ================================
 backend-test:
   stage: test
@@ -96,7 +97,7 @@ backend-test:
     - backend-build
 
 # ================================
-# Frontend Unit Tests + Coverage 
+# Frontend Unit Tests + Coverage
 # ================================
 frontend-test:
   stage: test
@@ -114,82 +115,90 @@ frontend-test:
     - frontend-build
 
 # ================================
-# Frontend E2E Tests (Cypress)
+# Frontend E2E Tests (Cypress) - WITH DIND
 # ================================
 frontend-e2e:
   stage: test
   image: cypress/browsers:node-22.11.0-chrome-131.0.6778.85-1-ff-132.0.1-edge-131.0.2779.51-1
   services:
-    - name: postgres:16
-      alias: postgres-e2e
     - name: docker:24-dind
       alias: docker
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
-    
-    # Test database configuration
+
+    # Test DB + app config used inside containers
     POSTGRES_DB: testdb
     POSTGRES_USER: test
     POSTGRES_PASSWORD: test
-    SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-e2e:5432/testdb"
-    SPRING_DATASOURCE_USERNAME: "test"
-    SPRING_DATASOURCE_PASSWORD: "test"
+    JWT_SECRET: "ci-test-secret-key-must-be-at-least-256-bits-long-for-hmac-sha-algorithms-1234567890"
+
     SPRING_PROFILES_ACTIVE: "test"
     SPRING_FLYWAY_ENABLED: "true"
     SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
-    JWT_SECRET: "ci-test-secret-key-must-be-at-least-256-bits-long-for-hmac-sha-algorithms-1234567890"
-    
-    # Frontend and backend URLs for e2e tests
-    CYPRESS_BASE_URL: "http://frontend-e2e:80"
-    CYPRESS_API_URL: "http://backend-e2e:8080"
-    VITE_API_URL: "http://backend-e2e:8080"
+
+    # Cypress config
+    CYPRESS_BASE_URL: "http://localhost:5174"
+    CYPRESS_API_URL: "http://localhost:8081"
+    VITE_API_URL: "http://localhost:8081"
     VITE_MAPBOX_TOKEN: "test"
-    
-    # Ports (internal to docker network)
-    BACKEND_PORT: "8080"
-    FRONTEND_PORT: "80"
-  
+
   before_script:
-    # Install Docker Compose
-    - apk add --no-cache docker-compose curl
-    
-    # Wait for postgres to be ready
-    - apk add --no-cache postgresql-client
-    - until pg_isready -h postgres-e2e -p 5432 -U "$POSTGRES_USER"; do echo "waiting for postgres..."; sleep 1; done
-    
-    # Build and start backend
-    - echo "Building backend..."
-    - cd backend
-    - docker build -t backend-e2e:test -f Dockerfile .
-    - cd ..
-    
-    # Build and start frontend
-    - echo "Building frontend..."
-    - cd frontend
-    - docker build --build-arg VITE_API_URL="http://backend-e2e:8080" --build-arg VITE_MAPBOX_TOKEN="test" -t frontend-e2e:test -f Dockerfile .
-    - cd ..
-    
-    # Start services
+    - apt-get update && apt-get install -y curl
+
+    # Build backend image
+    - echo "Building backend image..."
+    - docker build -t backend-e2e:test -f backend/Dockerfile backend/
+
+    # Build frontend image
+    - echo "Building frontend image..."
+    - docker build --build-arg VITE_API_URL="http://backend-e2e:8080" --build-arg VITE_MAPBOX_TOKEN="test" -t frontend-e2e:test -f frontend/Dockerfile frontend/
+
+    # Create network
     - docker network create e2e-network || true
+
+    # Start postgres
+    - docker rm -f postgres-e2e backend-e2e frontend-e2e || true
     - docker run -d --name postgres-e2e --network e2e-network -e POSTGRES_DB=$POSTGRES_DB -e POSTGRES_USER=$POSTGRES_USER -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD postgres:16
-    - docker run -d --name backend-e2e --network e2e-network -p 8081:8080 -e SPRING_DATASOURCE_URL="jdbc:postgresql://postgres-e2e:5432/$POSTGRES_DB" -e SPRING_DATASOURCE_USERNAME=$POSTGRES_USER -e SPRING_DATASOURCE_PASSWORD=$POSTGRES_PASSWORD -e SPRING_PROFILES_ACTIVE=test -e SPRING_FLYWAY_ENABLED=true -e JWT_SECRET="$JWT_SECRET" backend-e2e:test
-    - docker run -d --name frontend-e2e --network e2e-network -p 5174:80 -e VITE_API_URL="http://backend-e2e:8080" -e VITE_MAPBOX_TOKEN="test" frontend-e2e:test
-    
-    # Wait for services to be ready
+
+    # Start backend (internal port 8080; expose to job on 8081)
+    - docker run -d --name backend-e2e --network e2e-network -p 8081:8080
+      -e SPRING_DATASOURCE_URL="jdbc:postgresql://postgres-e2e:5432/$POSTGRES_DB"
+      -e SPRING_DATASOURCE_USERNAME=$POSTGRES_USER
+      -e SPRING_DATASOURCE_PASSWORD=$POSTGRES_PASSWORD
+      -e SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE
+      -e SPRING_FLYWAY_ENABLED=$SPRING_FLYWAY_ENABLED
+      -e SPRING_JPA_HIBERNATE_DDL_AUTO=$SPRING_JPA_HIBERNATE_DDL_AUTO
+      -e JWT_SECRET="$JWT_SECRET"
+      backend-e2e:test
+
+    # Start frontend (expose to job on 5174)
+    - docker run -d --name frontend-e2e --network e2e-network -p 5174:80
+      -e VITE_API_URL="http://backend-e2e:8080"
+      -e VITE_MAPBOX_TOKEN="test"
+      frontend-e2e:test
+
+    # Wait for services
     - echo "Waiting for backend..."
     - until curl -f http://localhost:8081/actuator/health; do sleep 2; done
     - echo "Waiting for frontend..."
     - until curl -f http://localhost:5174; do sleep 2; done
-    
-    # Install Cypress dependencies
+
+    # Install Cypress deps in repo (tests live in frontend/)
     - cd frontend
     - npm ci
+    - cd ..
 
   script:
-    # Run Cypress E2E tests
     - cd frontend
     - npm run test:e2e:test
+
+  after_script:
+    - docker logs backend-e2e || true
+    - docker logs frontend-e2e || true
+    - docker logs postgres-e2e || true
+    - docker rm -f postgres-e2e backend-e2e frontend-e2e || true
+    - docker network rm e2e-network || true
 
   artifacts:
     when: always
@@ -206,9 +215,8 @@ frontend-e2e:
     - backend-build
     - frontend-test
 
-
 # ================================
-# SONARQUBE BACKEND ANALYSIS 
+# SONARQUBE BACKEND ANALYSIS
 # ================================
 sonarqube-backend:
   stage: sonar
@@ -226,25 +234,22 @@ sonarqube-backend:
       - backend/.gradle/
   script:
     - cd backend
-    # Verify JaCoCo report exists (should be available from backend-test job artifacts)
     - |
       if [ ! -f "build/reports/jacoco/test/jacocoTestReport.xml" ]; then
-        echo "ERROR: JaCoCo report not found. Please ensure backend-test job completed successfully."
+        echo "ERROR: JaCoCo report not found. Ensure backend-test completed successfully."
         exit 1
       else
-        echo "JaCoCo report found at build/reports/jacoco/test/jacocoTestReport.xml"
+        echo "JaCoCo report found."
       fi
-    # Run SonarQube analysis with all configuration matching build.gradle
-    # Includes all test files: **/*Test.java and **/*IT.java
     - |
-        ./gradlew sonar \
-          -Dsonar.host.url="$SONAR_HOST_URL" \
-          -Dsonar.token="$SONAR_TOKEN" \
-          -Dsonar.qualitygate.wait=false \
-          -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml \
-          -Dsonar.tests=src/test/java \
-          -Dsonar.test.inclusions="**/*Test.java,**/*IT.java" \
-          -Dsonar.exclusions="src/test/java/nl/fontys/db3/backend/BackendApplicationTests.java"
+      ./gradlew sonar \
+        -Dsonar.host.url="$SONAR_HOST_URL" \
+        -Dsonar.token="$SONAR_TOKEN" \
+        -Dsonar.qualitygate.wait=false \
+        -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml \
+        -Dsonar.tests=src/test/java \
+        -Dsonar.test.inclusions="**/*Test.java,**/*IT.java" \
+        -Dsonar.exclusions="src/test/java/nl/fontys/db3/backend/BackendApplicationTests.java"
   needs:
     - backend-test
     - backend-build
@@ -280,20 +285,26 @@ sonarqube-frontend:
     - if: '$CI_COMMIT_BRANCH'
 
 # ================================
-# Docker backend build + push
+# Docker backend build + push (WITH DIND)
 # ================================
-  docker-backend:
+docker-backend:
   stage: docker
   image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
     - |
-        docker build \
-          -t rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA \
-          -f backend/Dockerfile \
-          backend/
+      docker build \
+        -t rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA \
+        -f backend/Dockerfile \
+        backend/
     - docker push rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA
     - docker tag rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA rubberduck808/tripwire-backend:latest
     - docker push rubberduck808/tripwire-backend:latest
@@ -305,22 +316,28 @@ sonarqube-frontend:
     - if: '$CI_COMMIT_BRANCH == "main"'
 
 # ================================
-# Docker frontend build + push
+# Docker frontend build + push (WITH DIND)
 # ================================
-  docker-frontend:
+docker-frontend:
   stage: docker
   image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
     - |
-        docker build \
-          --build-arg VITE_API_URL="$VITE_API_URL" \
-          --build-arg VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" \
-          -t rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA \
-          -f frontend/Dockerfile \
-          frontend/
+      docker build \
+        --build-arg VITE_API_URL="$VITE_API_URL" \
+        --build-arg VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" \
+        -t rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA \
+        -f frontend/Dockerfile \
+        frontend/
     - docker push rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA
     - docker tag rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA rubberduck808/tripwire-frontend:latest
     - docker push rubberduck808/tripwire-frontend:latest
@@ -334,44 +351,43 @@ sonarqube-frontend:
 # ================================
 # Deploy BACKEND to Cloud Run
 # ================================
-  deploy-backend:
+deploy-backend:
   stage: deploy
   image: google/cloud-sdk:latest
   needs:
     - docker-backend
   before_script:
     - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
-    - gcloud config set project $GCP_PROJECT
+    - gcloud config set project "$GCP_PROJECT"
   script:
     - |
-        gcloud run deploy tripwire-backend \
-          --image docker.io/rubberduck808/tripwire-backend:latest \
-          --region "$GCP_REGION" \
-          --platform managed \
-          --allow-unauthenticated \
-          --port 8080
+      gcloud run deploy tripwire-backend \
+        --image docker.io/rubberduck808/tripwire-backend:latest \
+        --region "$GCP_REGION" \
+        --platform managed \
+        --allow-unauthenticated \
+        --port 8080
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
 
 # ================================
 # Deploy FRONTEND to Cloud Run
 # ================================
-  deploy-frontend:
+deploy-frontend:
   stage: deploy
   image: google/cloud-sdk:latest
   needs:
     - docker-frontend
   before_script:
     - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
-    - gcloud config set project $GCP_PROJECT
+    - gcloud config set project "$GCP_PROJECT"
   script:
     - |
-        gcloud run deploy tripwire-frontend \
-          --image docker.io/rubberduck808/tripwire-frontend:latest \
-          --region "$GCP_REGION" \
-          --platform managed \
-          --allow-unauthenticated \
-          --port 80
+      gcloud run deploy tripwire-frontend \
+        --image docker.io/rubberduck808/tripwire-frontend:latest \
+        --region "$GCP_REGION" \
+        --platform managed \
+        --allow-unauthenticated \
+        --port 80
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-
