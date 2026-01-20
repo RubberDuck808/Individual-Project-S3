@@ -221,6 +221,7 @@ frontend-e2e:
   script:
     - echo "Checking frontend directory..."
     - pwd
+    - echo "Frontend directory contents:"
     - ls -la frontend/ | head -20 || echo "Frontend directory not found"
     - echo "Verifying package.json exists..."
     - test -f frontend/package.json && echo "✓ package.json found" || (echo "✗ package.json NOT found" && ls -la frontend/ | head -10)
@@ -228,11 +229,28 @@ frontend-e2e:
       docker run --rm \
         -e CYPRESS_BASE_URL="$CYPRESS_BASE_URL" \
         -e CYPRESS_API_URL="$CYPRESS_API_URL" \
-        -v "$(pwd)/frontend:/e2e" \
+        --mount type=bind,source="$(pwd)/frontend",target=/e2e \
         -w /e2e \
         --entrypoint="" \
         cypress/included:13.15.0 \
-        /bin/bash -c "echo 'Contents of /e2e:'; ls -la /e2e/ | head -10; echo ''; test -f /e2e/package.json && (echo '✓ package.json found' && npm install && npx cypress run --headless --browser chrome) || (echo '✗ package.json NOT found in /e2e' && exit 1)"
+        sh -c "
+          echo '=== Verifying mount ===';
+          ls -la /e2e/ | head -15;
+          echo '';
+          if [ ! -f /e2e/package.json ]; then
+            echo 'ERROR: package.json not found in /e2e';
+            echo 'Files in /e2e:';
+            find /e2e -maxdepth 1;
+            exit 1;
+          fi;
+          echo '✓ package.json found';
+          echo '';
+          echo '=== Running npm install ===';
+          npm install;
+          echo '';
+          echo '=== Running Cypress ===';
+          npx cypress run --headless --browser chrome
+        "
   after_script:
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml logs --no-color || true
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
