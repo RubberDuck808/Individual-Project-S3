@@ -220,7 +220,8 @@ frontend-e2e:
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml up -d --build
     - |
       echo "Waiting for backend to be healthy..."
-      for i in {1..30}; do
+      i=1
+      while [ $i -le 30 ]; do
         if curl -fsS http://localhost:8081/actuator/health >/dev/null 2>&1; then
           echo "✓ Backend is ready!"
           break
@@ -232,10 +233,12 @@ frontend-e2e:
         fi
         echo "Attempt $i/30: waiting for backend..."
         sleep 2
+        i=$((i + 1))
       done
     - |
       echo "Waiting for frontend to be ready..."
-      for i in {1..30}; do
+      i=1
+      while [ $i -le 30 ]; do
         if curl -fsS http://localhost:5174 >/dev/null 2>&1; then
           echo "✓ Frontend is ready!"
           break
@@ -247,6 +250,7 @@ frontend-e2e:
         fi
         echo "Attempt $i/30: waiting for frontend..."
         sleep 2
+        i=$((i + 1))
       done
   script:
     - echo "Checking frontend directory..."
@@ -256,25 +260,38 @@ frontend-e2e:
     - echo "Verifying package.json exists..."
     - test -f frontend/package.json && echo "✓ package.json found" || (echo "✗ package.json NOT found" && ls -la frontend/ | head -10)
     - |
+      FRONTEND_DIR="$(pwd)/frontend"
+      echo "Mounting frontend directory from: $FRONTEND_DIR"
+      echo "Verifying source directory exists..."
+      ls -la "$FRONTEND_DIR" | head -10 || echo "ERROR: Frontend directory not found at $FRONTEND_DIR"
       docker run --rm \
         --network host \
         -e CYPRESS_BASE_URL="$CYPRESS_BASE_URL" \
         -e CYPRESS_API_URL="$CYPRESS_API_URL" \
-        --mount type=bind,source="$(pwd)/frontend",target=/e2e \
+        --mount type=bind,source="$FRONTEND_DIR",target=/e2e,readonly=false \
         -w /e2e \
         --entrypoint="" \
         cypress/included:15.9.0 \
         sh -c "
           echo '=== Verifying mount ===';
-          ls -la /e2e/ | head -15;
+          echo 'Current directory:';
+          pwd;
           echo '';
-          if [ ! -f /e2e/package.json ]; then
+          echo 'Contents of /e2e:';
+          ls -la /e2e/ | head -20;
+          echo '';
+          echo 'Looking for package.json...';
+          if [ -f /e2e/package.json ]; then
+            echo '✓ package.json found';
+            cat /e2e/package.json | head -5;
+          else
             echo 'ERROR: package.json not found in /e2e';
-            echo 'Files in /e2e:';
+            echo 'All files in /e2e:';
             find /e2e -maxdepth 1;
+            echo 'All files recursively (first 20):';
+            find /e2e -type f | head -20;
             exit 1;
           fi;
-          echo '✓ package.json found';
           echo '';
           echo '=== Running npm install ===';
           npm install;
