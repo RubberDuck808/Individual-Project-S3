@@ -114,8 +114,9 @@ frontend-e2e:
 
   variables:
     COMPOSE_PROJECT_NAME: "e2e-${CI_PIPELINE_ID}"
-    CYPRESS_baseUrl: "http://host.docker.internal:5174"
+
     CYPRESS_BASE_URL: "http://host.docker.internal:5174"
+    CYPRESS_API_URL: "http://host.docker.internal:8081"
 
     POSTGRES_DB: testdb
     POSTGRES_USER: test
@@ -124,21 +125,27 @@ frontend-e2e:
     SPRING_PROFILES_ACTIVE: "test"
     SPRING_FLYWAY_ENABLED: "true"
     SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
+
     VITE_MAPBOX_TOKEN: "test"
     VITE_API_URL: "http://host.docker.internal:8081"
 
   before_script:
     - apt-get update
     - apt-get install -y docker.io docker-compose-plugin curl
+
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml down -v --remove-orphans || true
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml up -d --build
+
+    - echo "Waiting for backend..."
     - until curl -fsS http://host.docker.internal:8081/actuator/health >/dev/null; do sleep 2; done
+    - echo "Waiting for frontend..."
     - until curl -fsS http://host.docker.internal:5174 >/dev/null; do sleep 2; done
 
   script:
     - cd frontend
     - npm ci
-    - npx cypress run
+    - npx cypress verify
+    - npx cypress run --headless --browser chrome
 
   after_script:
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml down -v --remove-orphans || true
@@ -150,11 +157,6 @@ frontend-e2e:
       - frontend/cypress/screenshots/
       - frontend/cypress/videos/
     expire_in: 1 week
-
-  needs:
-    - frontend-build
-    - backend-build
-    - frontend-test
 
 # ================================
 # SONARQUBE BACKEND ANALYSIS

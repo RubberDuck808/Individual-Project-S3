@@ -6,7 +6,7 @@ export default defineConfig({
   e2e: {
     // Use environment variable for base URL, default to local dev server
     // For e2e tests with test DB, use: http://localhost:5174
-    baseUrl: process.env.CYPRESS_BASE_URL || "http://localhost:5173",
+    baseUrl: process.env.CYPRESS_BASE_URL || process.env.CYPRESS_baseUrl || "http://localhost:5173",
     viewportWidth: 1280,
     viewportHeight: 720,
     video: false,
