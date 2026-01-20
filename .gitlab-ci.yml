@@ -107,6 +107,41 @@ frontend-test:
     - frontend-build
 
 # ================================
+# Docker Diagnostic Job - Test Docker Access (for debugging)
+# ================================
+docker-diagnostic:
+  stage: test
+  image: docker:24
+  variables:
+    # Force socket-based Docker (no DinD). Prevents inherited DOCKER_HOST=tcp://docker:2375.
+    DOCKER_HOST: "unix:///var/run/docker.sock"
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - echo "=== Docker Diagnostic ==="
+    - echo "Checking Docker installation..."
+    - docker --version
+    - docker compose version || echo "docker compose not available"
+    - echo ""
+    - echo "Checking Docker socket access..."
+    - ls -la /var/run/docker.sock 2>&1 || echo "Docker socket not found at /var/run/docker.sock"
+    - echo ""
+    - echo "Testing Docker daemon connection..."
+    - docker info 2>&1 || echo "Cannot connect to Docker daemon"
+    - echo ""
+    - echo "Testing docker compose..."
+    - docker compose version 2>&1 || echo "docker compose failed"
+    - echo ""
+    - echo "Checking environment..."
+    - env | grep -i docker || echo "No DOCKER_* environment variables found"
+  allow_failure: true
+  rules:
+    - if: '$CI_DEBUG_TRACE == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+    - if: '$CI_COMMIT_BRANCH == "development"'
+      when: manual
+
+# ================================
 # Frontend E2E Tests (Cypress) - Option B (docker job + cypress container)
 # ================================
 frontend-e2e:
@@ -114,14 +149,17 @@ frontend-e2e:
   image: docker:24
   variables:
     COMPOSE_PROJECT_NAME: "e2e-${CI_PIPELINE_ID}"
+    # Force socket-based Docker (no DinD). Prevents inherited DOCKER_HOST=tcp://docker:2375.
+    DOCKER_HOST: "unix:///var/run/docker.sock"
+    DOCKER_TLS_CERTDIR: ""
     CYPRESS_BASE_URL: "http://host.docker.internal:5174"
     CYPRESS_API_URL: "http://host.docker.internal:8081"
     VITE_API_URL: "http://host.docker.internal:8081"
     VITE_MAPBOX_TOKEN: "test"
   before_script:
     - apk add --no-cache docker-cli-compose curl
-    - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml down -v --remove-orphans || true
-    - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml up -d --build
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml up -d --build
     - until curl -fsS http://host.docker.internal:8081/actuator/health >/dev/null; do sleep 2; done
     - until curl -fsS http://host.docker.internal:5174 >/dev/null; do sleep 2; done
   script:
@@ -134,8 +172,8 @@ frontend-e2e:
         cypress/included:13.15.0 \
         sh -lc "npm ci && npx cypress run --headless --browser chrome"
   after_script:
-    - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml logs --no-color || true
-    - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml down -v --remove-orphans || true
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml logs --no-color || true
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
   artifacts:
     when: always
     paths:
