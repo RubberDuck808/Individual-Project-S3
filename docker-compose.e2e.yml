@@ -1,34 +1,26 @@
-version: '3.9'
+version: "3.9"
 
 services:
-  # Test PostgreSQL Database
-  postgres-e2e:
+  postgres:
     image: postgres:16
-    container_name: e2e-postgres
     environment:
       POSTGRES_DB: testdb
       POSTGRES_USER: test
       POSTGRES_PASSWORD: test
     ports:
-      - "5433:5432"  # Different port to avoid conflicts
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U test -d testdb"]
       interval: 2s
       timeout: 5s
       retries: 10
-    volumes:
-      - e2e_postgres_data:/var/lib/postgresql/data
-    networks:
-      - e2e-network
 
-  # Backend for E2E tests (connected to test DB)
-  backend-e2e:
+  backend:
     build: ./backend
-    container_name: e2e-backend
     ports:
-      - "8081:8080"  # Different port to avoid conflicts
+      - "8081:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-e2e:5432/testdb
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/testdb
       SPRING_DATASOURCE_USERNAME: test
       SPRING_DATASOURCE_PASSWORD: test
       SPRING_PROFILES_ACTIVE: test
@@ -38,10 +30,8 @@ services:
       PORT: 8080
       MAPBOX_TOKEN: ${MAPBOX_TOKEN:-test}
     depends_on:
-      postgres-e2e:
+      postgres:
         condition: service_healthy
-    networks:
-      - e2e-network
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 5s
@@ -49,26 +39,14 @@ services:
       retries: 10
       start_period: 30s
 
-  # Frontend for E2E tests (connected to test backend)
-  frontend-e2e:
+  frontend:
     build:
       context: ./frontend
       args:
         VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN:-test}
-        VITE_API_URL: http://backend-e2e:8080
-    container_name: e2e-frontend
+        VITE_API_URL: http://backend:8080
     ports:
-      - "5174:80"  # Different port to avoid conflicts
+      - "5174:80"
     depends_on:
-      backend-e2e:
-        condition: service_started
-    networks:
-      - e2e-network
-
-volumes:
-  e2e_postgres_data:
-    name: individual-project-s3_e2e_postgres_data
-
-networks:
-  e2e-network:
-    driver: bridge
+      backend:
+        condition: service_healthy

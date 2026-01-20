@@ -6,14 +6,10 @@ stages:
   - deploy
 
 variables:
-  # Default for jobs that use docker:dind
-  DOCKER_HOST: tcp://docker:2375
-  DOCKER_TLS_CERTDIR: ""
-
   GCP_REGION: europe-west4
   GCP_PROJECT: tripwire-477820
 
-  # SonarQube server
+  # SonarQube server (on your PC)
   SONAR_HOST_URL: "http://host.docker.internal:9000"
 
 cache:
@@ -56,11 +52,9 @@ frontend-build:
 backend-test:
   stage: test
   image: gradle:8.9-jdk21
-
   services:
     - name: postgres:16
       alias: postgres
-
   variables:
     JWT_SECRET: "ci-test-secret-key-must-be-at-least-256-bits-long-for-hmac-sha-algorithms-1234567890"
     SPRING_PROFILES_ACTIVE: "test"
@@ -75,13 +69,11 @@ backend-test:
 
     SPRING_FLYWAY_ENABLED: "true"
     SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
-
   script:
     - cd backend
     - apt-get update && apt-get install -y postgresql-client
     - until pg_isready -h postgres -p 5432 -U "$POSTGRES_USER"; do echo "waiting for postgres..."; sleep 1; done
     - ./gradlew test jacocoTestReport
-
   artifacts:
     when: always
     reports:
@@ -92,7 +84,6 @@ backend-test:
       - backend/build/classes/
       - backend/build/reports/tests/
     expire_in: 1 week
-
   needs:
     - backend-build
 
@@ -115,19 +106,17 @@ frontend-test:
     - frontend-build
 
 # ================================
-# Frontend E2E Tests (Cypress) - WITH DIND
+# Frontend E2E Tests (Cypress) - NO DIND
 # ================================
 frontend-e2e:
   stage: test
-  image: cypress/browsers:node-22.11.0-chrome-131.0.6778.85-1-ff-132.0.1-edge-131.0.2779.51-1
-  services:
-    - name: docker:24-dind
-      alias: docker
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
 
-    # Test DB + app config used inside containers
+  # Use a tag that exists (your old Edge/ff tag did not)
+  image: cypress/browsers:node-22.11.0-chrome-131.0.6778.85-1-ff-132.0.2
+
+  variables:
+    COMPOSE_PROJECT_NAME: "e2e-${CI_PIPELINE_ID}"
+
     POSTGRES_DB: testdb
     POSTGRES_USER: test
     POSTGRES_PASSWORD: test
@@ -137,54 +126,31 @@ frontend-e2e:
     SPRING_FLYWAY_ENABLED: "true"
     SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
 
-    # Cypress config
-    CYPRESS_BASE_URL: "http://localhost:5174"
-    CYPRESS_API_URL: "http://localhost:8081"
-    VITE_API_URL: "http://localhost:8081"
+    # Provide both styles to be safe (depends how your cypress.config reads it)
+    CYPRESS_baseUrl: "http://host.docker.internal:5174"
+    CYPRESS_BASE_URL: "http://host.docker.internal:5174"
+    CYPRESS_API_URL: "http://host.docker.internal:8081"
+
     VITE_MAPBOX_TOKEN: "test"
+    VITE_API_URL: "http://host.docker.internal:8081"
 
   before_script:
-    - apt-get update && apt-get install -y curl
+    - apt-get update
+    - apt-get install -y docker.io docker-compose-plugin curl
 
-    # Build backend image
-    - echo "Building backend image..."
-    - docker build -t backend-e2e:test -f backend/Dockerfile backend/
+    # clean slate (in case previous run left things)
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml down -v --remove-orphans || true
 
-    # Build frontend image
-    - echo "Building frontend image..."
-    - docker build --build-arg VITE_API_URL="http://backend-e2e:8080" --build-arg VITE_MAPBOX_TOKEN="test" -t frontend-e2e:test -f frontend/Dockerfile frontend/
+    # start stack
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml up -d --build
 
-    # Create network
-    - docker network create e2e-network || true
-
-    # Start postgres
-    - docker rm -f postgres-e2e backend-e2e frontend-e2e || true
-    - docker run -d --name postgres-e2e --network e2e-network -e POSTGRES_DB=$POSTGRES_DB -e POSTGRES_USER=$POSTGRES_USER -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD postgres:16
-
-    # Start backend (internal port 8080; expose to job on 8081)
-    - docker run -d --name backend-e2e --network e2e-network -p 8081:8080
-      -e SPRING_DATASOURCE_URL="jdbc:postgresql://postgres-e2e:5432/$POSTGRES_DB"
-      -e SPRING_DATASOURCE_USERNAME=$POSTGRES_USER
-      -e SPRING_DATASOURCE_PASSWORD=$POSTGRES_PASSWORD
-      -e SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE
-      -e SPRING_FLYWAY_ENABLED=$SPRING_FLYWAY_ENABLED
-      -e SPRING_JPA_HIBERNATE_DDL_AUTO=$SPRING_JPA_HIBERNATE_DDL_AUTO
-      -e JWT_SECRET="$JWT_SECRET"
-      backend-e2e:test
-
-    # Start frontend (expose to job on 5174)
-    - docker run -d --name frontend-e2e --network e2e-network -p 5174:80
-      -e VITE_API_URL="http://backend-e2e:8080"
-      -e VITE_MAPBOX_TOKEN="test"
-      frontend-e2e:test
-
-    # Wait for services
+    # wait backend + frontend
     - echo "Waiting for backend..."
-    - until curl -f http://localhost:8081/actuator/health; do sleep 2; done
+    - until curl -fsS http://host.docker.internal:8081/actuator/health >/dev/null; do sleep 2; done
     - echo "Waiting for frontend..."
-    - until curl -f http://localhost:5174; do sleep 2; done
+    - until curl -fsS http://host.docker.internal:5174 >/dev/null; do sleep 2; done
 
-    # Install Cypress deps in repo (tests live in frontend/)
+    # install FE deps once (tests live in frontend/)
     - cd frontend
     - npm ci
     - cd ..
@@ -194,11 +160,8 @@ frontend-e2e:
     - npm run test:e2e:test
 
   after_script:
-    - docker logs backend-e2e || true
-    - docker logs frontend-e2e || true
-    - docker logs postgres-e2e || true
-    - docker rm -f postgres-e2e backend-e2e frontend-e2e || true
-    - docker network rm e2e-network || true
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml logs --no-color || true
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml down -v --remove-orphans || true
 
   artifacts:
     when: always
@@ -238,8 +201,6 @@ sonarqube-backend:
       if [ ! -f "build/reports/jacoco/test/jacocoTestReport.xml" ]; then
         echo "ERROR: JaCoCo report not found. Ensure backend-test completed successfully."
         exit 1
-      else
-        echo "JaCoCo report found."
       fi
     - |
       ./gradlew sonar \
@@ -285,17 +246,11 @@ sonarqube-frontend:
     - if: '$CI_COMMIT_BRANCH'
 
 # ================================
-# Docker backend build + push (WITH DIND)
+# Docker backend build + push (NO DIND)
 # ================================
 docker-backend:
   stage: docker
   image: docker:24
-  services:
-    - name: docker:24-dind
-      alias: docker
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
@@ -316,17 +271,11 @@ docker-backend:
     - if: '$CI_COMMIT_BRANCH == "main"'
 
 # ================================
-# Docker frontend build + push (WITH DIND)
+# Docker frontend build + push (NO DIND)
 # ================================
 docker-frontend:
   stage: docker
   image: docker:24
-  services:
-    - name: docker:24-dind
-      alias: docker
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
