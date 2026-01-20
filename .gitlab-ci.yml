@@ -9,7 +9,7 @@ variables:
   GCP_REGION: europe-west4
   GCP_PROJECT: tripwire-477820
 
-  # SonarQube server (on your PC)
+  # SonarQube server (running on your PC)
   SONAR_HOST_URL: "http://host.docker.internal:9000"
 
 cache:
@@ -102,57 +102,40 @@ frontend-test:
     paths:
       - frontend/coverage/
       - frontend/coverage/lcov.info
+    expire_in: 1 week
   needs:
     - frontend-build
 
 # ================================
-# Frontend E2E Tests (Cypress) - NO DIND
+# Frontend E2E Tests (Cypress) - Option B (docker job + cypress container)
 # ================================
 frontend-e2e:
   stage: test
-
-  image:
-    name: cypress/included:13.15.0
-    entrypoint: [""]
-
+  image: docker:24
   variables:
     COMPOSE_PROJECT_NAME: "e2e-${CI_PIPELINE_ID}"
-
     CYPRESS_BASE_URL: "http://host.docker.internal:5174"
     CYPRESS_API_URL: "http://host.docker.internal:8081"
-
-    POSTGRES_DB: testdb
-    POSTGRES_USER: test
-    POSTGRES_PASSWORD: test
-    JWT_SECRET: "ci-test-secret-key-must-be-at-least-256-bits-long-for-hmac-sha-algorithms-1234567890"
-    SPRING_PROFILES_ACTIVE: "test"
-    SPRING_FLYWAY_ENABLED: "true"
-    SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
-
-    VITE_MAPBOX_TOKEN: "test"
     VITE_API_URL: "http://host.docker.internal:8081"
-
+    VITE_MAPBOX_TOKEN: "test"
   before_script:
-    - apt-get update
-    - apt-get install -y docker.io docker-compose-plugin curl
-
+    - apk add --no-cache docker-cli-compose curl
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml down -v --remove-orphans || true
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml up -d --build
-
-    - echo "Waiting for backend..."
     - until curl -fsS http://host.docker.internal:8081/actuator/health >/dev/null; do sleep 2; done
-    - echo "Waiting for frontend..."
     - until curl -fsS http://host.docker.internal:5174 >/dev/null; do sleep 2; done
-
   script:
-    - cd frontend
-    - npm ci
-    - npx cypress verify
-    - npx cypress run --headless --browser chrome
-
+    - |
+      docker run --rm \
+        -e CYPRESS_BASE_URL="$CYPRESS_BASE_URL" \
+        -e CYPRESS_API_URL="$CYPRESS_API_URL" \
+        -v "$CI_PROJECT_DIR/frontend:/e2e" \
+        -w /e2e \
+        cypress/included:13.15.0 \
+        sh -lc "npm ci && npx cypress run --headless --browser chrome"
   after_script:
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml logs --no-color || true
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml down -v --remove-orphans || true
-
   artifacts:
     when: always
     paths:
@@ -160,12 +143,10 @@ frontend-e2e:
       - frontend/cypress/screenshots/
       - frontend/cypress/videos/
     expire_in: 1 week
-
   needs:
     - backend-build
     - frontend-build
     - frontend-test
-
 
 # ================================
 # SONARQUBE BACKEND ANALYSIS
@@ -235,7 +216,7 @@ sonarqube-frontend:
     - if: '$CI_COMMIT_BRANCH'
 
 # ================================
-# Docker backend build + push (NO DIND)
+# Docker backend build + push (NO DIND) - gated by E2E
 # ================================
 docker-backend:
   stage: docker
@@ -256,11 +237,12 @@ docker-backend:
     - backend-build
     - backend-test
     - sonarqube-backend
+    - frontend-e2e
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
 
 # ================================
-# Docker frontend build + push (NO DIND)
+# Docker frontend build + push (NO DIND) - gated by E2E
 # ================================
 docker-frontend:
   stage: docker
@@ -283,6 +265,7 @@ docker-frontend:
     - frontend-build
     - frontend-test
     - sonarqube-frontend
+    - frontend-e2e
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
 
