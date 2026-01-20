@@ -170,7 +170,7 @@ frontend-e2e:
         -v "$CI_PROJECT_DIR/frontend:/e2e" \
         -w /e2e \
         cypress/included:13.15.0 \
-        sh -lc "npm ci && npx cypress run --headless --browser chrome"
+        sh -c "npm ci && npx cypress run --headless --browser chrome"
   after_script:
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml logs --no-color || true
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
