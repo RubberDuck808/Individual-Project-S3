@@ -110,57 +110,37 @@ frontend-test:
 # ================================
 frontend-e2e:
   stage: test
-
-  # Use a tag that exists (your old Edge/ff tag did not)
-  image: cypress/browsers:node-22.11.0-chrome-131.0.6778.85-1-ff-132.0.2
+  image: cypress/included:13.15.0
 
   variables:
     COMPOSE_PROJECT_NAME: "e2e-${CI_PIPELINE_ID}"
+    CYPRESS_baseUrl: "http://host.docker.internal:5174"
+    CYPRESS_BASE_URL: "http://host.docker.internal:5174"
 
     POSTGRES_DB: testdb
     POSTGRES_USER: test
     POSTGRES_PASSWORD: test
     JWT_SECRET: "ci-test-secret-key-must-be-at-least-256-bits-long-for-hmac-sha-algorithms-1234567890"
-
     SPRING_PROFILES_ACTIVE: "test"
     SPRING_FLYWAY_ENABLED: "true"
     SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
-
-    # Provide both styles to be safe (depends how your cypress.config reads it)
-    CYPRESS_baseUrl: "http://host.docker.internal:5174"
-    CYPRESS_BASE_URL: "http://host.docker.internal:5174"
-    CYPRESS_API_URL: "http://host.docker.internal:8081"
-
     VITE_MAPBOX_TOKEN: "test"
     VITE_API_URL: "http://host.docker.internal:8081"
 
   before_script:
     - apt-get update
     - apt-get install -y docker.io docker-compose-plugin curl
-
-    # clean slate (in case previous run left things)
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml down -v --remove-orphans || true
-
-    # start stack
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml up -d --build
-
-    # wait backend + frontend
-    - echo "Waiting for backend..."
     - until curl -fsS http://host.docker.internal:8081/actuator/health >/dev/null; do sleep 2; done
-    - echo "Waiting for frontend..."
     - until curl -fsS http://host.docker.internal:5174 >/dev/null; do sleep 2; done
-
-    # install FE deps once (tests live in frontend/)
-    - cd frontend
-    - npm ci
-    - cd ..
 
   script:
     - cd frontend
-    - npm run test:e2e:test
+    - npm ci
+    - npx cypress run
 
   after_script:
-    - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml logs --no-color || true
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f compose.e2e.yml down -v --remove-orphans || true
 
   artifacts:
@@ -169,8 +149,6 @@ frontend-e2e:
       - frontend/cypress/results/
       - frontend/cypress/screenshots/
       - frontend/cypress/videos/
-    reports:
-      junit: frontend/cypress/results/*.xml
     expire_in: 1 week
 
   needs:
