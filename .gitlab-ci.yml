@@ -110,7 +110,10 @@ frontend-test:
 # ================================
 frontend-e2e:
   stage: test
-  image: cypress/included:13.15.0
+
+  image:
+    name: cypress/included:13.15.0
+    entrypoint: [""]
 
   variables:
     COMPOSE_PROJECT_NAME: "e2e-${CI_PIPELINE_ID}"
@@ -157,6 +160,12 @@ frontend-e2e:
       - frontend/cypress/screenshots/
       - frontend/cypress/videos/
     expire_in: 1 week
+
+  needs:
+    - backend-build
+    - frontend-build
+    - frontend-test
+
 
 # ================================
 # SONARQUBE BACKEND ANALYSIS
