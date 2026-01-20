@@ -11,6 +11,13 @@ variables:
 
   # SonarQube server (running on your PC)
   SONAR_HOST_URL: "http://host.docker.internal:9000"
+  
+  # Pipeline type: "auto" (default), "frontend", "backend", or "all"
+  # - auto: run only the jobs affected by changed files (frontend/backend/all as needed)
+  # - frontend/backend/all: force a pipeline "mode" manually
+  # Set via GitLab UI: CI/CD → Variables → Add variable → PIPELINE_TYPE
+  # Or via pipeline trigger: Variables → PIPELINE_TYPE = auto|frontend|backend|all
+  PIPELINE_TYPE: "auto"
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
@@ -23,6 +30,15 @@ cache:
 backend-build:
   stage: build
   image: gradle:8.9-jdk21
+  rules:
+    - if: '$PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend"'
+    - if: '$PIPELINE_TYPE == "auto"'
+      changes:
+        - backend/**/*
+        - backend/Dockerfile
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   script:
     - cd backend
     - ./gradlew clean build -x test
@@ -37,6 +53,16 @@ backend-build:
 frontend-build:
   stage: build
   image: node:22
+  rules:
+    - if: '$PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend"'
+    - if: '$PIPELINE_TYPE == "auto"'
+      changes:
+        - frontend/**/*
+        - frontend/Dockerfile
+        - frontend/nginx.conf
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   script:
     - cd frontend
     - npm ci
@@ -52,6 +78,15 @@ frontend-build:
 backend-test:
   stage: test
   image: gradle:8.9-jdk21
+  rules:
+    - if: '$PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend"'
+    - if: '$PIPELINE_TYPE == "auto"'
+      changes:
+        - backend/**/*
+        - backend/Dockerfile
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   services:
     - name: postgres:16
       alias: postgres
@@ -93,6 +128,16 @@ backend-test:
 frontend-test:
   stage: test
   image: node:22
+  rules:
+    - if: '$PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend"'
+    - if: '$PIPELINE_TYPE == "auto"'
+      changes:
+        - frontend/**/*
+        - frontend/Dockerfile
+        - frontend/nginx.conf
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   script:
     - cd frontend
     - npm ci
@@ -147,6 +192,17 @@ docker-diagnostic:
 frontend-e2e:
   stage: test
   image: docker:24
+  rules:
+    - if: '$PIPELINE_TYPE == "all"'
+    - if: '$PIPELINE_TYPE == "auto"'
+      changes:
+        - frontend/**/*
+        - backend/**/*
+        - docker-compose.e2e.yml
+        - backend/Dockerfile
+        - frontend/Dockerfile
+        - .gitlab-ci.yml
+    - when: never
   variables:
     COMPOSE_PROJECT_NAME: "e2e-${CI_PIPELINE_ID}"
     # Force socket-based Docker (no DinD). Prevents inherited DOCKER_HOST=tcp://docker:2375.
@@ -163,15 +219,20 @@ frontend-e2e:
     - until curl -fsS http://host.docker.internal:8081/actuator/health >/dev/null; do sleep 2; done
     - until curl -fsS http://host.docker.internal:5174 >/dev/null; do sleep 2; done
   script:
+    - echo "Checking frontend directory..."
+    - pwd
+    - ls -la frontend/ | head -20 || echo "Frontend directory not found"
+    - echo "Verifying package.json exists..."
+    - test -f frontend/package.json && echo "✓ package.json found" || (echo "✗ package.json NOT found" && ls -la frontend/ | head -10)
     - |
       docker run --rm \
         -e CYPRESS_BASE_URL="$CYPRESS_BASE_URL" \
         -e CYPRESS_API_URL="$CYPRESS_API_URL" \
-        -v "$CI_PROJECT_DIR/frontend:/e2e" \
+        -v "$(pwd)/frontend:/e2e" \
         -w /e2e \
         --entrypoint="" \
         cypress/included:13.15.0 \
-        /bin/bash -c "npm install && npx cypress run --headless --browser chrome"
+        /bin/bash -c "echo 'Contents of /e2e:'; ls -la /e2e/ | head -10; echo ''; test -f /e2e/package.json && (echo '✓ package.json found' && npm install && npx cypress run --headless --browser chrome) || (echo '✗ package.json NOT found in /e2e' && exit 1)"
   after_script:
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml logs --no-color || true
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
@@ -193,6 +254,20 @@ frontend-e2e:
 sonarqube-backend:
   stage: sonar
   image: gradle:8.9-jdk21
+  rules:
+    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend") && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend") && $CI_COMMIT_BRANCH'
+    - if: '$PIPELINE_TYPE == "auto" && $CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - backend/**/*
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - if: '$PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH'
+      changes:
+        - backend/**/*
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
     GIT_DEPTH: "0"
@@ -223,9 +298,6 @@ sonarqube-backend:
   needs:
     - backend-test
     - backend-build
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH'
   allow_failure: false
 
 # ================================
@@ -235,6 +307,20 @@ sonarqube-frontend:
   stage: sonar
   image: node:22
   allow_failure: true
+  rules:
+    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend") && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend") && $CI_COMMIT_BRANCH'
+    - if: '$PIPELINE_TYPE == "auto" && $CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - frontend/**/*
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - if: '$PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH'
+      changes:
+        - frontend/**/*
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
     GIT_DEPTH: "0"
@@ -250,9 +336,6 @@ sonarqube-frontend:
     - SONAR_TOKEN=$SONAR_TOKEN SONAR_HOST_URL=$SONAR_HOST_URL npm run sonar
   needs:
     - frontend-test
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH'
 
 # ================================
 # Docker backend build + push (NO DIND) - gated by E2E
@@ -260,6 +343,15 @@ sonarqube-frontend:
 docker-backend:
   stage: docker
   image: docker:24
+  rules:
+    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend") && $CI_COMMIT_BRANCH == "main"'
+    - if: '$PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH == "main"'
+      changes:
+        - backend/**/*
+        - backend/Dockerfile
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
@@ -273,12 +365,14 @@ docker-backend:
     - docker tag rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA rubberduck808/tripwire-backend:latest
     - docker push rubberduck808/tripwire-backend:latest
   needs:
-    - backend-build
-    - backend-test
-    - sonarqube-backend
-    - frontend-e2e
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - job: backend-build
+      optional: false
+    - job: backend-test
+      optional: false
+    - job: sonarqube-backend
+      optional: false
+    - job: frontend-e2e
+      optional: true
 
 # ================================
 # Docker frontend build + push (NO DIND) - gated by E2E
@@ -286,6 +380,16 @@ docker-backend:
 docker-frontend:
   stage: docker
   image: docker:24
+  rules:
+    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend") && $CI_COMMIT_BRANCH == "main"'
+    - if: '$PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH == "main"'
+      changes:
+        - frontend/**/*
+        - frontend/Dockerfile
+        - frontend/nginx.conf
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   before_script:
     - docker info
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
@@ -301,12 +405,14 @@ docker-frontend:
     - docker tag rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA rubberduck808/tripwire-frontend:latest
     - docker push rubberduck808/tripwire-frontend:latest
   needs:
-    - frontend-build
-    - frontend-test
-    - sonarqube-frontend
-    - frontend-e2e
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - job: frontend-build
+      optional: false
+    - job: frontend-test
+      optional: false
+    - job: sonarqube-frontend
+      optional: false
+    - job: frontend-e2e
+      optional: true
 
 # ================================
 # Deploy BACKEND to Cloud Run
@@ -314,6 +420,15 @@ docker-frontend:
 deploy-backend:
   stage: deploy
   image: google/cloud-sdk:latest
+  rules:
+    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend") && $CI_COMMIT_BRANCH == "main"'
+    - if: '$PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH == "main"'
+      changes:
+        - backend/**/*
+        - backend/Dockerfile
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   needs:
     - docker-backend
   before_script:
@@ -327,8 +442,6 @@ deploy-backend:
         --platform managed \
         --allow-unauthenticated \
         --port 8080
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
 
 # ================================
 # Deploy FRONTEND to Cloud Run
@@ -336,6 +449,16 @@ deploy-backend:
 deploy-frontend:
   stage: deploy
   image: google/cloud-sdk:latest
+  rules:
+    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend") && $CI_COMMIT_BRANCH == "main"'
+    - if: '$PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH == "main"'
+      changes:
+        - frontend/**/*
+        - frontend/Dockerfile
+        - frontend/nginx.conf
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   needs:
     - docker-frontend
   before_script:
@@ -349,5 +472,3 @@ deploy-frontend:
         --platform managed \
         --allow-unauthenticated \
         --port 80
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
