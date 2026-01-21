@@ -38,7 +38,8 @@ test('report flow: user creates report, another user votes', async ({ page, requ
   });
   expect(registerUser1.ok(), `User 1 registration should succeed: ${await registerUser1.text()}`).toBeTruthy();
   const user1Data = await registerUser1.json();
-  expect(user1Data.role?.name || user1Data.role, 'User 1 should have USER role').toBe('USER');
+  // Backend returns role as `roleName` on UserDTO
+  expect(user1Data.roleName, 'User 1 should have USER role').toBe('USER');
 
   // Register User 2 (voter)
   const registerUser2 = await request.post(`${apiBase}/api/users/register`, {
@@ -51,7 +52,8 @@ test('report flow: user creates report, another user votes', async ({ page, requ
   });
   expect(registerUser2.ok(), `User 2 registration should succeed: ${await registerUser2.text()}`).toBeTruthy();
   const user2Data = await registerUser2.json();
-  expect(user2Data.role?.name || user2Data.role, 'User 2 should have USER role').toBe('USER');
+  // Backend returns role as `roleName` on UserDTO
+  expect(user2Data.roleName, 'User 2 should have USER role').toBe('USER');
 
   // Verify statistics rows exist (they should be created at registration)
   const token1Initial = await getToken(apiBase, user1Email, user1Password, request);
