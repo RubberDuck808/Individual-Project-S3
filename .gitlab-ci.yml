@@ -256,13 +256,12 @@ frontend-e2e:
       done
   script:
     - |
-      # IMPORTANT: With socket-based Docker, bind-mounting paths from inside the job container
-      # often mounts the *runner host* path (not the job container path). Use volumes-from to
-      # mount the same build volume into the test container reliably.
-      echo "Running Playwright e2e (volumes-from: $HOSTNAME, network: ${COMPOSE_PROJECT_NAME}_default)"
+      # With socket-based Docker, bind-mount the project directory directly
+      # The CI_PROJECT_DIR is accessible from the runner host
+      echo "Running Playwright e2e (network: ${COMPOSE_PROJECT_NAME}_default)"
       docker run --rm \
         --network "${COMPOSE_PROJECT_NAME}_default" \
-        --volumes-from "$HOSTNAME" \
+        -v "$CI_PROJECT_DIR:$CI_PROJECT_DIR" \
         -e PLAYWRIGHT_BASE_URL="$PLAYWRIGHT_BASE_URL" \
         -e VITE_API_URL="$VITE_API_URL" \
         -e VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" \
