@@ -12,6 +12,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
             .setAllowedOrigins(
+                // CI / docker-compose e2e
+                "http://frontend",
                 "http://localhost:5173",
                 "http://localhost:5174",
                 "https://tripwire-frontend-166064655547.europe-west4.run.app"

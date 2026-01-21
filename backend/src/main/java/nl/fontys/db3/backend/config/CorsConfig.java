@@ -16,6 +16,8 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOrigins(List.of(
+            // CI / docker-compose e2e (frontend served by nginx on port 80, host is "frontend" on the compose network)
+            "http://frontend",
             "http://localhost:5173",
             "http://localhost:5174",
             "https://tripwire-frontend-166064655547.europe-west4.run.app"
