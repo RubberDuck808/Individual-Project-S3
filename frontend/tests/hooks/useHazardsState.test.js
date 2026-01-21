@@ -19,21 +19,26 @@ describe('useHazardsState', () => {
   });
 
   it('should initialize with empty hazards array', () => {
+    // Arrange
     getAllHazards.mockResolvedValue([]);
 
+    // Act
     const { result } = renderHook(() => useHazardsState({ enabled: false }));
 
+    // Assert
     expect(result.current.hazards).toEqual([]);
     expect(result.current.selectedHazard).toBeNull();
   });
 
   it('should fetch hazards when enabled', async () => {
+    // Arrange
     const mockHazards = [
       { id: 1, latitude: 52.0, longitude: 5.0, status: 'OPEN' },
       { id: 2, latitude: 52.1, longitude: 5.1, status: 'VERIFIED' },
     ];
     getAllHazards.mockResolvedValue(mockHazards);
 
+    // Act
     const { result } = renderHook(() =>
       useHazardsState({
         location: { lat: 52.0, lng: 5.0 },
@@ -45,18 +50,22 @@ describe('useHazardsState', () => {
       expect(getAllHazards).toHaveBeenCalled();
     });
 
+    // Assert
     await waitFor(() => {
       expect(result.current.hazards.length).toBeGreaterThan(0);
     });
   });
 
   it('should not fetch hazards when disabled', () => {
+    // Arrange & Act
     renderHook(() => useHazardsState({ enabled: false }));
 
+    // Assert
     expect(getAllHazards).not.toHaveBeenCalled();
   });
 
   it('should filter out expired hazards', async () => {
+    // Arrange
     const mockHazards = [
       {
         id: 1,
@@ -75,6 +84,7 @@ describe('useHazardsState', () => {
     ];
     getAllHazards.mockResolvedValue(mockHazards);
 
+    // Act
     const { result } = renderHook(() =>
       useHazardsState({
         location: { lat: 52.0, lng: 5.0 },
@@ -82,12 +92,14 @@ describe('useHazardsState', () => {
       })
     );
 
+    // Assert
     await waitFor(() => {
       expect(result.current.hazards.length).toBeGreaterThan(0);
     });
   });
 
   it('should select nearest hazard within open distance', async () => {
+    // Arrange
     const mockHazards = [
       {
         id: 1,
@@ -100,6 +112,7 @@ describe('useHazardsState', () => {
     ];
     getAllHazards.mockResolvedValue(mockHazards);
 
+    // Act
     const { result } = renderHook(() =>
       useHazardsState({
         location: { lat: 52.0001, lng: 5.0001 }, // Very close
@@ -113,12 +126,14 @@ describe('useHazardsState', () => {
       expect(getAllHazards).toHaveBeenCalled();
     });
 
+    // Assert
     await waitFor(() => {
       expect(result.current.hazards.length).toBeGreaterThan(0);
     }, { timeout: 5000 });
   });
 
   it('should not select hazard from current user', async () => {
+    // Arrange
     const mockHazards = [
       {
         id: 1,
@@ -132,6 +147,7 @@ describe('useHazardsState', () => {
     ];
     getAllHazards.mockResolvedValue(mockHazards);
 
+    // Act
     const { result } = renderHook(() =>
       useHazardsState({
         location: { lat: 52.0001, lng: 5.0001 },
@@ -145,15 +161,17 @@ describe('useHazardsState', () => {
       expect(getAllHazards).toHaveBeenCalled();
     });
 
+    // Assert - Hazard should be in the list but not selected for voting
     await waitFor(() => {
-      // Hazard should be in the list but not selected for voting
       expect(result.current.hazards.length).toBeGreaterThan(0);
     }, { timeout: 5000 });
   });
 
   it('should provide closeVotePanel function', () => {
+    // Arrange & Act
     const { result } = renderHook(() => useHazardsState({ enabled: false }));
 
+    // Assert
     expect(typeof result.current.closeVotePanel).toBe('function');
   });
 });

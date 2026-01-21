@@ -14,11 +14,14 @@ describe('adminApi', () => {
 
   describe('getAdminStatistics', () => {
     it('should fetch admin statistics', async () => {
+      // Arrange
       const mockStats = { totalUsers: 100, totalDevices: 50 };
       auth.authFetch.mockResolvedValue(mockStats);
 
+      // Act
       const result = await adminApi.getAdminStatistics();
 
+      // Assert
       expect(auth.authFetch).toHaveBeenCalledWith('/api/admin/statistics');
       expect(result).toEqual(mockStats);
     });
@@ -26,32 +29,41 @@ describe('adminApi', () => {
 
   describe('getAllUsers', () => {
     it('should fetch all users with default pagination', async () => {
+      // Arrange
       const mockUsers = [{ id: 1, username: 'user1' }];
       auth.authFetch.mockResolvedValue(mockUsers);
 
+      // Act
       const result = await adminApi.getAllUsers();
 
+      // Assert
       expect(auth.authFetch).toHaveBeenCalledWith('/api/admin/users?page=0&size=20');
       expect(result).toEqual(mockUsers);
     });
 
     it('should fetch all users with custom pagination', async () => {
+      // Arrange
       const mockUsers = [{ id: 1, username: 'user1' }];
       auth.authFetch.mockResolvedValue(mockUsers);
 
+      // Act
       await adminApi.getAllUsers(1, 10);
 
+      // Assert
       expect(auth.authFetch).toHaveBeenCalledWith('/api/admin/users?page=1&size=10');
     });
   });
 
   describe('getUserById', () => {
     it('should fetch user by ID', async () => {
+      // Arrange
       const mockUser = { id: 1, username: 'user1' };
       auth.authFetch.mockResolvedValue(mockUser);
 
+      // Act
       const result = await adminApi.getUserById(1);
 
+      // Assert
       expect(auth.authFetch).toHaveBeenCalledWith('/api/admin/users/1');
       expect(result).toEqual(mockUser);
     });
@@ -59,11 +71,14 @@ describe('adminApi', () => {
 
   describe('updateUserRole', () => {
     it('should update user role', async () => {
+      // Arrange
       const mockResponse = { success: true };
       auth.authFetch.mockResolvedValue(mockResponse);
 
+      // Act
       const result = await adminApi.updateUserRole(1, 'ADMIN');
 
+      // Assert
       expect(auth.authFetch).toHaveBeenCalledWith('/api/admin/users/1/role?roleName=ADMIN', {
         method: 'PUT',
       });
@@ -73,10 +88,13 @@ describe('adminApi', () => {
 
   describe('deactivateUser', () => {
     it('should deactivate user', async () => {
+      // Arrange
       auth.authFetch.mockResolvedValue(null);
 
+      // Act
       await adminApi.deactivateUser(1);
 
+      // Assert
       expect(auth.authFetch).toHaveBeenCalledWith('/api/admin/users/1', {
         method: 'DELETE',
       });

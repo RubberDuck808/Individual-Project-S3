@@ -2,6 +2,7 @@
 .pio/
 *.env
 
+
 # Build artifacts
 compile_commands.json
 

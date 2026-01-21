@@ -41,6 +41,13 @@ Thumbs.db
 
 hardware/src/secrets.h
 
+# Secrets files and directories
+secrets/
+secrets
+**/secrets/
+**/secrets
+**/*secrets*
+
 hardware/.pio/
 hardware/.pio/*
 

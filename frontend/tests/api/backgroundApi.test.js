@@ -14,11 +14,14 @@ describe('backgroundApi', () => {
 
   describe('fetchBackgrounds', () => {
     it('should fetch backgrounds', async () => {
+      // Arrange
       const mockBackgrounds = [{ name: 'bg1' }, { name: 'bg2' }];
       auth.authFetch.mockResolvedValue(mockBackgrounds);
 
+      // Act
       const result = await backgroundApi.fetchBackgrounds();
 
+      // Assert
       expect(auth.authFetch).toHaveBeenCalledWith('/api/backgrounds');
       expect(result).toEqual(mockBackgrounds);
     });
@@ -26,11 +29,14 @@ describe('backgroundApi', () => {
 
   describe('changeMyBackground', () => {
     it('should change user background', async () => {
+      // Arrange
       const mockResponse = { success: true };
       auth.authFetch.mockResolvedValue(mockResponse);
 
+      // Act
       const result = await backgroundApi.changeMyBackground('new-background');
 
+      // Assert
       expect(auth.authFetch).toHaveBeenCalledWith('/api/users/me/background', {
         method: 'PUT',
         body: JSON.stringify({ backgroundName: 'new-background' }),

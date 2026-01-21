@@ -25,8 +25,10 @@ describe('ProtectedRoute', () => {
   });
 
   it('should show loading spinner while fetching user', async () => {
+    // Arrange
     fetchCurrentUser.mockImplementation(() => new Promise(() => {})); // Never resolves
 
+    // Act
     render(
       <MemoryRouter initialEntries={['/test']}>
         <Routes>
@@ -37,7 +39,7 @@ describe('ProtectedRoute', () => {
       </MemoryRouter>
     );
 
-    // Wait for component to mount and start loading
+    // Assert - Wait for component to mount and start loading
     await waitFor(() => {
       expect(fetchCurrentUser).toHaveBeenCalled();
     }, { timeout: 1000 });
@@ -47,9 +49,11 @@ describe('ProtectedRoute', () => {
   });
 
   it('should render protected content when user is authenticated', async () => {
+    // Arrange
     const mockUser = { id: 1, username: 'testuser', roleName: 'USER' };
     fetchCurrentUser.mockResolvedValue(mockUser);
 
+    // Act
     render(
       <MemoryRouter initialEntries={['/test']}>
         <Routes>
@@ -64,14 +68,17 @@ describe('ProtectedRoute', () => {
       expect(fetchCurrentUser).toHaveBeenCalled();
     });
 
+    // Assert
     await waitFor(() => {
       expect(screen.getByText('Protected Content')).toBeInTheDocument();
     }, { timeout: 3000 });
   });
 
   it('should redirect to login when user is not authenticated', async () => {
+    // Arrange
     fetchCurrentUser.mockRejectedValue(new Error('Not authenticated'));
 
+    // Act
     render(
       <MemoryRouter initialEntries={['/test']}>
         <Routes>
@@ -87,15 +94,18 @@ describe('ProtectedRoute', () => {
       expect(fetchCurrentUser).toHaveBeenCalled();
     });
 
+    // Assert
     await waitFor(() => {
       expect(screen.getByText('Public Content')).toBeInTheDocument();
     }, { timeout: 3000 });
   });
 
   it('should allow access when user role matches required role', async () => {
+    // Arrange
     const mockAdmin = { id: 1, username: 'admin', roleName: 'ADMIN' };
     fetchCurrentUser.mockResolvedValue(mockAdmin);
 
+    // Act
     render(
       <MemoryRouter initialEntries={['/admin']}>
         <Routes>
@@ -110,15 +120,18 @@ describe('ProtectedRoute', () => {
       expect(fetchCurrentUser).toHaveBeenCalled();
     });
 
+    // Assert
     await waitFor(() => {
       expect(screen.getByText('Protected Content')).toBeInTheDocument();
     }, { timeout: 3000 });
   });
 
   it('should redirect when user role does not match required role', async () => {
+    // Arrange
     const mockUser = { id: 1, username: 'user', roleName: 'USER' };
     fetchCurrentUser.mockResolvedValue(mockUser);
 
+    // Act
     render(
       <MemoryRouter initialEntries={['/admin']}>
         <Routes>
@@ -134,15 +147,18 @@ describe('ProtectedRoute', () => {
       expect(fetchCurrentUser).toHaveBeenCalled();
     });
 
+    // Assert
     await waitFor(() => {
       expect(screen.getByText('Public Content')).toBeInTheDocument();
     }, { timeout: 3000 });
   });
 
   it('should handle role comparison case-insensitively', async () => {
+    // Arrange
     const mockAdmin = { id: 1, username: 'admin', roleName: 'admin' };
     fetchCurrentUser.mockResolvedValue(mockAdmin);
 
+    // Act
     render(
       <MemoryRouter initialEntries={['/admin']}>
         <Routes>
@@ -157,6 +173,7 @@ describe('ProtectedRoute', () => {
       expect(fetchCurrentUser).toHaveBeenCalled();
     });
 
+    // Assert
     await waitFor(() => {
       expect(screen.getByText('Protected Content')).toBeInTheDocument();
     }, { timeout: 3000 });

@@ -14,11 +14,14 @@ describe('deviceApi', () => {
 
   describe('registerDevice', () => {
     it('should register a device', async () => {
+      // Arrange
       const mockDevice = { deviceId: 'ESP32-ABC123', apiKey: 'key123' };
       auth.authFetch.mockResolvedValue(mockDevice);
 
+      // Act
       const result = await deviceApi.registerDevice('ESP32-ABC123', 'Test device');
 
+      // Assert
       expect(auth.authFetch).toHaveBeenCalledWith('/api/devices/register', {
         method: 'POST',
         body: JSON.stringify({
@@ -30,11 +33,14 @@ describe('deviceApi', () => {
     });
 
     it('should register device without description', async () => {
+      // Arrange
       const mockDevice = { deviceId: 'ESP32-ABC123', apiKey: 'key123' };
       auth.authFetch.mockResolvedValue(mockDevice);
 
+      // Act
       await deviceApi.registerDevice('ESP32-ABC123');
 
+      // Assert
       expect(auth.authFetch).toHaveBeenCalledWith('/api/devices/register', {
         method: 'POST',
         body: JSON.stringify({
@@ -45,6 +51,7 @@ describe('deviceApi', () => {
     });
 
     it('should throw error when deviceId is missing', async () => {
+      // Act & Assert
       await expect(deviceApi.registerDevice()).rejects.toThrow('deviceId is required');
     });
   });

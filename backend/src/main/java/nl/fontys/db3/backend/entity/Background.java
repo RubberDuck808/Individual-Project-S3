@@ -14,6 +14,7 @@ import lombok.experimental.SuperBuilder;
 )
 @Getter
 @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @SuperBuilder
 public class Background extends BaseImageAsset {
     // All fields inherited from BaseImageAsset:
