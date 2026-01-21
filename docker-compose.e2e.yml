@@ -7,8 +7,8 @@ services:
       POSTGRES_DB: testdb
       POSTGRES_USER: test
       POSTGRES_PASSWORD: test
-    ports:
-      - "5433:5432"
+    # Port mapping only for local testing (CI doesn't need it - containers communicate via docker network)
+    # Uncomment for local: ports: - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U test -d testdb"]
       interval: 2s

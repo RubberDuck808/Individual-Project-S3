@@ -214,6 +214,8 @@ frontend-e2e:
     VITE_MAPBOX_TOKEN: "test"
   before_script:
     - apk add --no-cache docker-cli-compose curl
+    # Ensure VITE_API_URL is explicitly set (override any global CI variable)
+    - export VITE_API_URL="http://backend:8080"
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml up -d --build
     - |
