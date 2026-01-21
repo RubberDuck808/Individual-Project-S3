@@ -11,16 +11,6 @@ variables:
 
   # SonarQube server (running on your PC)
   SONAR_HOST_URL: "http://host.docker.internal:9000"
-  
-  # Pipeline type: "auto" (default), "frontend", "backend", or "all"
-  # - auto: run only the jobs affected by changed files (frontend/backend/all as needed)
-  # - frontend/backend/all: force a pipeline "mode" manually
-  # Set via GitLab UI: CI/CD → Variables → Add variable → PIPELINE_TYPE
-  # Or via pipeline trigger: Variables → PIPELINE_TYPE = auto|frontend|backend|all
-  PIPELINE_TYPE: "auto"
-  # Set RUN_TESTS=false to skip unit tests and sonar stages (faster iteration)
-  # Set RUN_TESTS=true or leave unset to run full pipeline
-  RUN_TESTS: "true"
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
@@ -34,9 +24,7 @@ backend-build:
   stage: build
   image: gradle:8.9-jdk21
   rules:
-    - if: '$PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend"'
-    - if: '$PIPELINE_TYPE == "auto"'
-      changes:
+    - changes:
         - backend/**/*
         - backend/Dockerfile
         - docker-compose*.yml
@@ -60,9 +48,7 @@ frontend-build:
   stage: build
   image: node:22
   rules:
-    - if: '$PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend"'
-    - if: '$PIPELINE_TYPE == "auto"'
-      changes:
+    - changes:
         - frontend/**/*
         - frontend/Dockerfile
         - frontend/nginx.conf
@@ -88,9 +74,7 @@ backend-test:
   stage: test
   image: gradle:8.9-jdk21
   rules:
-    - if: '$RUN_TESTS != "false" && ($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend")'
-    - if: '$RUN_TESTS != "false" && $PIPELINE_TYPE == "auto"'
-      changes:
+    - changes:
         - backend/**/*
         - backend/Dockerfile
         - docker-compose*.yml
@@ -138,9 +122,7 @@ frontend-test:
   stage: test
   image: node:22
   rules:
-    - if: '$RUN_TESTS != "false" && ($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend")'
-    - if: '$RUN_TESTS != "false" && $PIPELINE_TYPE == "auto"'
-      changes:
+    - changes:
         - frontend/**/*
         - frontend/Dockerfile
         - frontend/nginx.conf
@@ -161,41 +143,6 @@ frontend-test:
     - frontend-build
 
 # ================================
-# Docker Diagnostic Job - Test Docker Access (for debugging)
-# ================================
-docker-diagnostic:
-  stage: test
-  image: docker:24
-  variables:
-    # Force socket-based Docker (no DinD). Prevents inherited DOCKER_HOST=tcp://docker:2375.
-    DOCKER_HOST: "unix:///var/run/docker.sock"
-    DOCKER_TLS_CERTDIR: ""
-  script:
-    - echo "=== Docker Diagnostic ==="
-    - echo "Checking Docker installation..."
-    - docker --version
-    - docker compose version || echo "docker compose not available"
-    - echo ""
-    - echo "Checking Docker socket access..."
-    - ls -la /var/run/docker.sock 2>&1 || echo "Docker socket not found at /var/run/docker.sock"
-    - echo ""
-    - echo "Testing Docker daemon connection..."
-    - docker info 2>&1 || echo "Cannot connect to Docker daemon"
-    - echo ""
-    - echo "Testing docker compose..."
-    - docker compose version 2>&1 || echo "docker compose failed"
-    - echo ""
-    - echo "Checking environment..."
-    - env | grep -i docker || echo "No DOCKER_* environment variables found"
-  allow_failure: true
-  rules:
-    - if: '$CI_DEBUG_TRACE == "true"'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: manual
-    - if: '$CI_COMMIT_BRANCH == "development"'
-      when: manual
-
-# ================================
 # Frontend E2E Tests (Playwright)
 # ================================
 frontend-e2e:
@@ -207,9 +154,7 @@ frontend-e2e:
       alias: docker
       command: ["--host=tcp://0.0.0.0:2375", "--tls=false"]
   rules:
-    - if: '$PIPELINE_TYPE == "all"'
-    - if: '$PIPELINE_TYPE == "auto"'
-      changes:
+    - changes:
         - frontend/**/*
         - backend/**/*
         - docker-compose.e2e.yml
@@ -227,215 +172,55 @@ frontend-e2e:
     VITE_API_URL: "http://backend:8080"
     VITE_MAPBOX_TOKEN: "test"
   before_script:
-    - |
-      echo "=========================================="
-      echo "=== E2E JOB START - DEBUGGING MODE ==="
-      echo "=========================================="
-      echo "Job ID: $CI_JOB_ID"
-      echo "Pipeline ID: $CI_PIPELINE_ID"
-      echo "Project Name: $COMPOSE_PROJECT_NAME"
-      echo ""
-      echo "=== Environment Variables ==="
-      echo "CI_PROJECT_DIR: $CI_PROJECT_DIR"
-      echo "DOCKER_HOST: $DOCKER_HOST"
-      echo "PLAYWRIGHT_BASE_URL: $PLAYWRIGHT_BASE_URL"
-      echo "VITE_API_URL: $VITE_API_URL"
-      echo "VITE_MAPBOX_TOKEN: $VITE_MAPBOX_TOKEN"
-      echo ""
-      echo "=== Current Directory ==="
-      pwd
-      echo ""
-      echo "=== Directory Contents ==="
-      ls -la
-      echo ""
-      echo "=== Frontend Directory ==="
-      ls -la frontend/ || echo "frontend/ not found"
-      echo ""
-      echo "=== Backend Directory ==="
-      ls -la backend/ || echo "backend/ not found"
     - apk add --no-cache docker-cli-compose curl
-    # Ensure VITE_API_URL is explicitly set (override any global CI variable)
     - export VITE_API_URL="http://backend:8080"
     - |
-      echo "=== Docker Installation Check ==="
-      docker --version
-      docker compose version
-    # Wait for DinD to be ready
-    - |
-      echo ""
-      echo "=== Waiting for DinD daemon ==="
-      echo "DOCKER_HOST: $DOCKER_HOST"
+      # Wait for DinD daemon
       i=1
       while [ $i -le 30 ]; do
-        echo "Attempt $i/30: Testing DinD connection..."
         if docker info >/dev/null 2>&1; then
-          echo "✓ DinD is ready!"
-          echo ""
-          echo "=== Docker Info ==="
-          docker info
-          echo ""
-          echo "=== Docker Networks ==="
-          docker network ls
-          echo ""
-          echo "=== Docker Containers ==="
-          docker ps -a
           break
         fi
         if [ $i -eq 30 ]; then
-          echo "ERROR: DinD failed to start after 60 seconds"
-          echo "Checking DinD service container..."
-          docker ps -a | grep dind || echo "No dind container found"
           exit 1
         fi
         sleep 2
         i=$((i + 1))
       done
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml up -d --build
     - |
-      echo ""
-      echo "=== Cleaning up previous compose ==="
-      docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
-      echo "Cleanup complete"
-    - |
-      echo ""
-      echo "=== Starting docker-compose services ==="
-      echo "Project name: $COMPOSE_PROJECT_NAME"
-      echo "Compose file: docker-compose.e2e.yml"
-      docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml up -d --build
-      echo ""
-      echo "=== Compose services started ==="
-      docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml ps
-      echo ""
-      echo "=== Compose networks ==="
-      docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml network ls || docker network ls | grep "$COMPOSE_PROJECT_NAME"
-    - |
-      echo ""
-      echo "=== Waiting for backend to be healthy ==="
+      # Wait for backend
       NETWORK_NAME="${COMPOSE_PROJECT_NAME}_default"
-      echo "Network: $NETWORK_NAME"
-      echo "Backend URL: http://backend:8080/actuator/health"
       i=1
       while [ $i -le 30 ]; do
-        echo "Attempt $i/30: Checking backend health..."
-        echo "  - Backend container status:"
-        docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml ps backend || docker ps | grep backend
-        echo "  - Testing health endpoint..."
         if docker run --rm --network "$NETWORK_NAME" curlimages/curl:8.11.1 \
-          -fsS http://backend:8080/actuator/health 2>&1; then
-          echo ""
-          echo "✓ Backend is ready!"
-          echo "Backend health check response:"
-          docker run --rm --network "$NETWORK_NAME" curlimages/curl:8.11.1 \
-            -fsS http://backend:8080/actuator/health
+          -fsS http://backend:8080/actuator/health >/dev/null 2>&1; then
           break
         fi
         if [ $i -eq 30 ]; then
-          echo ""
-          echo "ERROR: Backend failed to start after 60 seconds"
-          echo "=== Backend logs ==="
-          docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml logs backend
-          echo ""
-          echo "=== Backend container inspect ==="
-          docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml ps backend
           exit 1
         fi
         sleep 2
         i=$((i + 1))
       done
     - |
-      echo ""
-      echo "=== Waiting for frontend to be ready ==="
+      # Wait for frontend
       NETWORK_NAME="${COMPOSE_PROJECT_NAME}_default"
-      echo "Network: $NETWORK_NAME"
-      echo "Frontend URL: http://frontend"
       i=1
       while [ $i -le 30 ]; do
-        echo "Attempt $i/30: Checking frontend..."
-        echo "  - Frontend container status:"
-        docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml ps frontend || docker ps | grep frontend
-        echo "  - Testing frontend endpoint..."
         if docker run --rm --network "$NETWORK_NAME" curlimages/curl:8.11.1 \
           -fsS http://frontend >/dev/null 2>&1; then
-          echo ""
-          echo "✓ Frontend is ready!"
-          echo "Frontend response (first 200 chars):"
-          docker run --rm --network "$NETWORK_NAME" curlimages/curl:8.11.1 \
-            -fsS http://frontend | head -c 200
-          echo ""
           break
         fi
         if [ $i -eq 30 ]; then
-          echo ""
-          echo "ERROR: Frontend failed to start after 60 seconds"
-          echo "=== Frontend logs ==="
-          docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml logs frontend
-          echo ""
-          echo "=== Frontend container inspect ==="
-          docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml ps frontend
           exit 1
         fi
         sleep 2
         i=$((i + 1))
       done
-    - |
-      echo ""
-      echo "=== Final Compose Status ==="
-      docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml ps
-      echo ""
-      echo "=== All Docker Containers ==="
-      docker ps -a
-      echo ""
-      echo "=== All Docker Networks ==="
-      docker network ls
   script:
     - |
-      # DinD: bind mounts refer to THIS job container filesystem, so CI_PROJECT_DIR works as expected.
-      set -eu
-      
-      echo ""
-      echo "=========================================="
-      echo "=== RUNNING PLAYWRIGHT E2E TESTS ==="
-      echo "=========================================="
-      echo ""
-      echo "=== Pre-flight Checks ==="
-      echo "CI_PROJECT_DIR: $CI_PROJECT_DIR"
-      echo "Network: ${COMPOSE_PROJECT_NAME}_default"
-      echo ""
-      echo "=== Verifying project directory ==="
-      echo "Project root exists:"
-      ls -la "$CI_PROJECT_DIR" | head -10
-      echo ""
-      echo "Frontend directory exists:"
-      ls -la "$CI_PROJECT_DIR/frontend" | head -20
-      echo ""
-      echo "=== Checking frontend/package.json ==="
-      if [ -f "$CI_PROJECT_DIR/frontend/package.json" ]; then
-        echo "✓ package.json found"
-        cat "$CI_PROJECT_DIR/frontend/package.json" | head -20
-      else
-        echo "✗ ERROR: package.json NOT FOUND at $CI_PROJECT_DIR/frontend/package.json"
-        echo "Full path contents:"
-        find "$CI_PROJECT_DIR" -name "package.json" 2>/dev/null || echo "No package.json found anywhere"
-        exit 1
-      fi
-      echo ""
-      echo "=== Network connectivity test ==="
-      echo "Testing backend from job container:"
-      docker run --rm --network "${COMPOSE_PROJECT_NAME}_default" curlimages/curl:8.11.1 \
-        -fsS http://backend:8080/actuator/health || echo "Backend not reachable"
-      echo ""
-      echo "Testing frontend from job container:"
-      docker run --rm --network "${COMPOSE_PROJECT_NAME}_default" curlimages/curl:8.11.1 \
-        -fsS http://frontend | head -c 100 || echo "Frontend not reachable"
-      echo ""
-      echo ""
-      echo "=== Starting Playwright container ==="
-      echo "Mount point: $CI_PROJECT_DIR -> $CI_PROJECT_DIR"
-      echo "Working directory: $CI_PROJECT_DIR/frontend"
-      echo "Environment:"
-      echo "  PLAYWRIGHT_BASE_URL=$PLAYWRIGHT_BASE_URL"
-      echo "  VITE_API_URL=$VITE_API_URL"
-      echo "  VITE_MAPBOX_TOKEN=$VITE_MAPBOX_TOKEN"
-      echo ""
       docker run --rm \
         --network "${COMPOSE_PROJECT_NAME}_default" \
         -v "${CI_PROJECT_DIR}:${CI_PROJECT_DIR}" \
@@ -445,70 +230,9 @@ frontend-e2e:
         -w "${CI_PROJECT_DIR}/frontend" \
         --shm-size=2g \
         mcr.microsoft.com/playwright:v1.50.0-jammy \
-        sh -lc "
-          echo '=== Inside Playwright Container ==='
-          echo 'Working directory:'
-          pwd
-          echo ''
-          echo 'Directory contents:'
-          ls -la
-          echo ''
-          echo 'Checking package.json:'
-          if [ -f package.json ]; then
-            echo '✓ package.json found'
-            head -20 package.json
-          else
-            echo '✗ ERROR: package.json NOT FOUND'
-            echo 'Current directory contents:'
-            ls -la
-            echo 'Parent directory:'
-            ls -la ..
-            exit 1
-          fi
-          echo ''
-          echo 'Environment variables:'
-          env | grep -E '(PLAYWRIGHT|VITE)' || echo 'No VITE/PLAYWRIGHT vars found'
-          echo ''
-          echo '=== Running npm ci ==='
-          npm ci
-          echo ''
-          echo '=== Installing Playwright browsers ==='
-          npx playwright install --with-deps chromium
-          echo ''
-          echo '=== Running Playwright tests ==='
-          npx playwright test
-        "
+        sh -lc "npm ci && npx playwright install --with-deps chromium && npx playwright test"
   after_script:
-    - |
-      echo ""
-      echo "=========================================="
-      echo "=== AFTER SCRIPT - COLLECTING LOGS ==="
-      echo "=========================================="
-      echo ""
-      echo "=== Compose Services Status ==="
-      docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml ps || true
-      echo ""
-      echo "=== Backend Logs ==="
-      docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml logs --tail=100 backend || true
-      echo ""
-      echo "=== Frontend Logs ==="
-      docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml logs --tail=100 frontend || true
-      echo ""
-      echo "=== Postgres Logs ==="
-      docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml logs --tail=50 postgres || true
-      echo ""
-      echo "=== All Compose Logs (last 50 lines) ==="
-      docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml logs --tail=50 --no-color || true
-      echo ""
-      echo "=== Docker Container List ==="
-      docker ps -a || true
-      echo ""
-      echo "=== Docker Network List ==="
-      docker network ls || true
-      echo ""
-      echo "=== Cleaning up ==="
-      docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
-      echo "Cleanup complete"
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
   artifacts:
     when: always
     reports:
@@ -529,14 +253,12 @@ sonarqube-backend:
   stage: sonar
   image: gradle:8.9-jdk21
   rules:
-    - if: '$RUN_TESTS != "false" && ($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend") && $CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$RUN_TESTS != "false" && ($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend") && $CI_COMMIT_BRANCH'
-    - if: '$RUN_TESTS != "false" && $PIPELINE_TYPE == "auto" && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - backend/**/*
         - docker-compose*.yml
         - .gitlab-ci.yml
-    - if: '$RUN_TESTS != "false" && $PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH'
       changes:
         - backend/**/*
         - docker-compose*.yml
@@ -582,14 +304,12 @@ sonarqube-frontend:
   image: node:22
   allow_failure: true
   rules:
-    - if: '$RUN_TESTS != "false" && ($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend") && $CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$RUN_TESTS != "false" && ($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend") && $CI_COMMIT_BRANCH'
-    - if: '$RUN_TESTS != "false" && $PIPELINE_TYPE == "auto" && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - frontend/**/*
         - docker-compose*.yml
         - .gitlab-ci.yml
-    - if: '$RUN_TESTS != "false" && $PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH'
       changes:
         - frontend/**/*
         - docker-compose*.yml
@@ -617,9 +337,15 @@ sonarqube-frontend:
 docker-backend:
   stage: docker
   image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+      command: ["--host=tcp://0.0.0.0:2375", "--tls=false"]
+  variables:
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
   rules:
-    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend") && $CI_COMMIT_BRANCH == "main"'
-    - if: '$PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - backend/**/*
         - backend/Dockerfile
@@ -627,7 +353,18 @@ docker-backend:
         - .gitlab-ci.yml
     - when: never
   before_script:
-    - docker info
+    - |
+      i=1
+      while [ $i -le 30 ]; do
+        if docker info >/dev/null 2>&1; then
+          break
+        fi
+        if [ $i -eq 30 ]; then
+          exit 1
+        fi
+        sleep 2
+        i=$((i + 1))
+      done
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
     - |
@@ -654,9 +391,15 @@ docker-backend:
 docker-frontend:
   stage: docker
   image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+      command: ["--host=tcp://0.0.0.0:2375", "--tls=false"]
+  variables:
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
   rules:
-    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend") && $CI_COMMIT_BRANCH == "main"'
-    - if: '$PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - frontend/**/*
         - frontend/Dockerfile
@@ -665,7 +408,18 @@ docker-frontend:
         - .gitlab-ci.yml
     - when: never
   before_script:
-    - docker info
+    - |
+      i=1
+      while [ $i -le 30 ]; do
+        if docker info >/dev/null 2>&1; then
+          break
+        fi
+        if [ $i -eq 30 ]; then
+          exit 1
+        fi
+        sleep 2
+        i=$((i + 1))
+      done
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
     - |
@@ -695,8 +449,7 @@ deploy-backend:
   stage: deploy
   image: google/cloud-sdk:latest
   rules:
-    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend") && $CI_COMMIT_BRANCH == "main"'
-    - if: '$PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - backend/**/*
         - backend/Dockerfile
@@ -724,8 +477,7 @@ deploy-frontend:
   stage: deploy
   image: google/cloud-sdk:latest
   rules:
-    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend") && $CI_COMMIT_BRANCH == "main"'
-    - if: '$PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
         - frontend/**/*
         - frontend/Dockerfile
