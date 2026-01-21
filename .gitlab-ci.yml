@@ -8,8 +8,6 @@ stages:
 variables:
   GCP_REGION: europe-west4
   GCP_PROJECT: tripwire-477820
-
-  # SonarQube server (running on your PC)
   SONAR_HOST_URL: "http://host.docker.internal:9000"
 
 cache:
@@ -171,10 +169,8 @@ frontend-e2e:
     - when: never
   variables:
     COMPOSE_PROJECT_NAME: "e2e-${CI_PIPELINE_ID}"
-    # DinD: talk to the docker service container
     DOCKER_HOST: "tcp://docker:2375"
     DOCKER_TLS_CERTDIR: ""
-    # Playwright config reads this as baseURL; we run Playwright on the docker-compose network.
     PLAYWRIGHT_BASE_URL: "http://frontend"
     VITE_API_URL: "http://backend:8080"
     VITE_MAPBOX_TOKEN: "test"
@@ -251,7 +247,6 @@ frontend-e2e:
   needs:
     - backend-build
     - frontend-build
-    # Note: frontend-test removed for faster iteration - e2e doesn't need it
 
 # ================================
 # SONARQUBE BACKEND ANALYSIS
