@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    # CI NOTE:
+    # Do NOT publish ports in CI. With socket-based Docker, published ports bind on the runner host
+    # and will conflict between pipelines or with other services.
+    #
+    # For local testing, use docker-compose.e2e.local.yml (ports are published there).
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d testdb"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/testdb
+      SPRING_DATASOURCE_USERNAME: test
+      SPRING_DATASOURCE_PASSWORD: test
+      SPRING_PROFILES_ACTIVE: test
+      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      JWT_SECRET: "ci-test-secret-key-must-be-at-least-256-bits-long-for-hmac-sha-algorithms-1234567890"
+      PORT: 8080
+      MAPBOX_TOKEN: ${MAPBOX_TOKEN:-test}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN:-test}
+        # For CI (Playwright runs on the docker-compose network): http://backend:8080
+        # For local runs (browser on host): export VITE_API_URL=http://localhost:8081 before building
+        VITE_API_URL: ${VITE_API_URL:-http://backend:8080}
+    depends_on:
+      backend:
+        condition: service_healthy

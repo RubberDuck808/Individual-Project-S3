@@ -78,17 +78,8 @@ public class HazardService {
     @Transactional
     public HazardReport verifyHazard(Long id) {
         log.info("Verifying hazard - hazardId: {}", id);
-        if (id == null) {
-            log.warn("Hazard verification failed - hazard ID is null");
-            throw new IllegalArgumentException("Hazard ID cannot be null");
-        }
-
-        HazardReport hazard = hazardRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Hazard verification failed - hazard not found: hazardId: {}", id);
-                    return new IllegalArgumentException(HAZARD_NOT_FOUND);
-                });
-
+        HazardReport hazard = findHazardById(id, "verification");
+        
         if (hazard.getStatus() == HazardStatus.RESOLVED ||
                 hazard.getStatus() == HazardStatus.REJECTED) {
             log.warn("Hazard verification failed - cannot verify resolved/rejected hazard: hazardId: {}, status: {}", 
@@ -96,65 +87,60 @@ public class HazardService {
             throw new IllegalStateException("Cannot verify a resolved/rejected hazard.");
         }
 
-        hazard.updateStatus(HazardStatus.VERIFIED);
-        HazardReport saved = hazardRepository.save(hazard);
-        wsPublisher.upsert(hazardMapper.toDTO(saved));
-
-        log.info("Hazard verified successfully - hazardId: {}", id);
-        return saved;
+        return updateHazardStatus(hazard, HazardStatus.VERIFIED, id, "verified");
     }
 
     @Transactional
     public HazardReport resolveHazard(Long id) {
         log.info("Resolving hazard - hazardId: {}", id);
-        if (id == null) {
-            log.warn("Hazard resolution failed - hazard ID is null");
-            throw new IllegalArgumentException("Hazard ID cannot be null");
-        }
-
-        HazardReport hazard = hazardRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Hazard resolution failed - hazard not found: hazardId: {}", id);
-                    return new IllegalArgumentException(HAZARD_NOT_FOUND);
-                });
-
+        HazardReport hazard = findHazardById(id, "resolution");
+        
         if (hazard.getStatus() == HazardStatus.RESOLVED) {
             log.warn("Hazard resolution failed - already resolved: hazardId: {}", id);
             throw new IllegalStateException("Hazard already resolved.");
         }
 
-        hazard.updateStatus(HazardStatus.RESOLVED);
-        HazardReport saved = hazardRepository.save(hazard);
-        wsPublisher.upsert(hazardMapper.toDTO(saved));
-
-        log.info("Hazard resolved successfully - hazardId: {}", id);
-        return saved;
+        return updateHazardStatus(hazard, HazardStatus.RESOLVED, id, "resolved");
     }
 
     @Transactional
     public HazardReport rejectHazard(Long id) {
         log.info("Rejecting hazard - hazardId: {}", id);
-        if (id == null) {
-            log.warn("Hazard rejection failed - hazard ID is null");
-            throw new IllegalArgumentException("Hazard ID cannot be null");
-        }
-
-        HazardReport hazard = hazardRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Hazard rejection failed - hazard not found: hazardId: {}", id);
-                    return new IllegalArgumentException(HAZARD_NOT_FOUND);
-                });
-
+        HazardReport hazard = findHazardById(id, "rejection");
+        
         if (hazard.getStatus() == HazardStatus.RESOLVED) {
             log.warn("Hazard rejection failed - resolved hazards cannot be rejected: hazardId: {}", id);
             throw new IllegalStateException("Resolved hazards cannot be rejected.");
         }
 
-        hazard.updateStatus(HazardStatus.REJECTED);
+        return updateHazardStatus(hazard, HazardStatus.REJECTED, id, "rejected");
+    }
+
+    /**
+     * Helper method to find hazard by ID with validation
+     */
+    private HazardReport findHazardById(Long id, String operation) {
+        if (id == null) {
+            log.warn("Hazard {} failed - hazard ID is null", operation);
+            throw new IllegalArgumentException("Hazard ID cannot be null");
+        }
+
+        return hazardRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Hazard {} failed - hazard not found: hazardId: {}", operation, id);
+                    return new IllegalArgumentException(HAZARD_NOT_FOUND);
+                });
+    }
+
+    /**
+     * Helper method to update hazard status and publish WebSocket event
+     */
+    private HazardReport updateHazardStatus(HazardReport hazard, HazardStatus newStatus, Long id, String action) {
+        hazard.updateStatus(newStatus);
         HazardReport saved = hazardRepository.save(hazard);
         wsPublisher.upsert(hazardMapper.toDTO(saved));
-
-        log.info("Hazard rejected successfully - hazardId: {}", id);
+        
+        log.info("Hazard {} successfully - hazardId: {}", action, id);
         return saved;
     }
 

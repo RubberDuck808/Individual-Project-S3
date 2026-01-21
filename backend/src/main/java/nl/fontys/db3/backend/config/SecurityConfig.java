@@ -46,6 +46,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
+                // Actuator health endpoint for Docker health checks
+                .requestMatchers("/actuator/health").permitAll()
                 // Public endpoints - user profiles, hazards, vote counts, friendships
                 .requestMatchers(HttpMethod.GET, "/api/users/{username}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/hazards/open").permitAll()
@@ -58,8 +60,6 @@ public class SecurityConfig {
                 // Telemetry endpoints require device API key (handled by filter)
                 .requestMatchers("/api/telemetry/live", "/api/telemetry/history").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/telemetry/live/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/telemetry/history/**").authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/telemetry/device/**").authenticated()
                 // Admin endpoints require ADMIN role
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()

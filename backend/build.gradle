@@ -98,6 +98,10 @@ sonar {
         property "sonar.qualitygate.wait", false
         property "sonar.skipCompile", "true"
 
+        // Include test files in analysis
+        property "sonar.tests", "src/test/java"
+        property "sonar.test.inclusions", "**/*Test.java,**/*IT.java"
+
         // link JaCoCo XML report
         property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
         property "sonar.exclusions", "src/test/java/nl/fontys/db3/backend/BackendApplicationTests.java"

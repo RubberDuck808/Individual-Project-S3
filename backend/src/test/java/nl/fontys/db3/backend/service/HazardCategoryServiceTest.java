@@ -4,13 +4,9 @@ import nl.fontys.db3.backend.dto.HazardCategoryDTO;
 import nl.fontys.db3.backend.entity.HazardCategory;
 import nl.fontys.db3.backend.mapper.HazardCategoryMapper;
 import nl.fontys.db3.backend.repository.HazardCategoryRepository;
-
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
-
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -19,99 +15,196 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class HazardCategoryServiceTest {
 
-    @Mock private HazardCategoryRepository categoryRepository;
-    @Mock private HazardCategoryMapper categoryMapper;
+    @Mock
+    private HazardCategoryRepository categoryRepository;
+
+    @Mock
+    private HazardCategoryMapper categoryMapper;
 
     @InjectMocks
-    private HazardCategoryService service;
+    private HazardCategoryService categoryService;
+
+    private HazardCategory activeCategory;
+    private HazardCategory inactiveCategory;
+    private HazardCategoryDTO activeCategoryDTO;
+    private HazardCategoryDTO inactiveCategoryDTO;
+
+    @BeforeEach
+    void setUp() {
+        activeCategory = HazardCategory.builder()
+                .id(1L)
+                .name("Pothole")
+                .iconPath("/icons/pothole.png")
+                .active(true)
+                .build();
+
+        inactiveCategory = HazardCategory.builder()
+                .id(2L)
+                .name("Construction")
+                .iconPath("/icons/construction.png")
+                .active(false)
+                .build();
+
+        activeCategoryDTO = new HazardCategoryDTO(
+                1L,
+                "Pothole",
+                "/icons/pothole.png",
+                true
+        );
+
+        inactiveCategoryDTO = new HazardCategoryDTO(
+                2L,
+                "Construction",
+                "/icons/construction.png",
+                false
+        );
+    }
 
     @Test
-    void getActiveCategories_filtersActive() {
-        HazardCategory active1 = mock(HazardCategory.class);
-        when(active1.isActive()).thenReturn(true);
+    void getAllCategories_success() {
+        List<HazardCategory> categories = List.of(activeCategory, inactiveCategory);
+        List<HazardCategoryDTO> categoryDTOs = List.of(activeCategoryDTO, inactiveCategoryDTO);
 
-        HazardCategory active2 = mock(HazardCategory.class);
-        when(active2.isActive()).thenReturn(true);
+        when(categoryRepository.findAll()).thenReturn(categories);
+        when(categoryMapper.toDTOList(categories)).thenReturn(categoryDTOs);
 
-        HazardCategory inactive = mock(HazardCategory.class);
-        when(inactive.isActive()).thenReturn(false);
+        List<HazardCategoryDTO> result = categoryService.getAllCategories();
 
-        List<HazardCategory> all = List.of(active1, inactive, active2);
-        when(categoryRepository.findAll()).thenReturn(all);
-
-        HazardCategoryDTO dto1 = mock(HazardCategoryDTO.class);
-        HazardCategoryDTO dto2 = mock(HazardCategoryDTO.class);
-        when(categoryMapper.toDTO(active1)).thenReturn(dto1);
-        when(categoryMapper.toDTO(active2)).thenReturn(dto2);
-
-        List<HazardCategoryDTO> result = service.getActiveCategories();
-
+        assertNotNull(result);
         assertEquals(2, result.size());
-        assertTrue(result.contains(dto1));
-        assertTrue(result.contains(dto2));
-        verify(categoryMapper, never()).toDTO(inactive);
+        verify(categoryRepository).findAll();
+        verify(categoryMapper).toDTOList(categories);
     }
 
     @Test
-    void getCategoryById_nullId_throws() {
-        assertThrows(IllegalArgumentException.class, () -> service.getCategoryById(null));
-        verifyNoInteractions(categoryRepository);
+    void getActiveCategories_success() {
+        List<HazardCategory> allCategories = List.of(activeCategory, inactiveCategory);
+
+        when(categoryRepository.findAll()).thenReturn(allCategories);
+        when(categoryMapper.toDTO(activeCategory)).thenReturn(activeCategoryDTO);
+
+        List<HazardCategoryDTO> result = categoryService.getActiveCategories();
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Pothole", result.get(0).name());
+        assertTrue(result.get(0).active());
+        verify(categoryRepository).findAll();
+        verify(categoryMapper).toDTO(activeCategory);
+        verify(categoryMapper, never()).toDTO(inactiveCategory);
     }
 
     @Test
-    void getCategoryById_notFound_throws() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
+    void getActiveCategories_noActiveCategories() {
+        List<HazardCategory> allCategories = List.of(inactiveCategory);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.getCategoryById(1L));
+        when(categoryRepository.findAll()).thenReturn(allCategories);
 
-        assertEquals("Category not found: 1", ex.getMessage());
+        List<HazardCategoryDTO> result = categoryService.getActiveCategories();
+
+        assertNotNull(result);
+        assertEquals(0, result.size());
+        verify(categoryRepository).findAll();
+        verify(categoryMapper, never()).toDTO(any());
+    }
+
+    @Test
+    void getCategoryById_success() {
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(activeCategory));
+
+        HazardCategory result = categoryService.getCategoryById(1L);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("Pothole", result.getName());
         verify(categoryRepository).findById(1L);
     }
 
     @Test
-    void getCategoryById_success_returnsCategory() {
-        HazardCategory category = mock(HazardCategory.class);
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+    void getCategoryById_nullId() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            categoryService.getCategoryById(null);
+        });
 
-        HazardCategory result = service.getCategoryById(1L);
-
-        assertSame(category, result);
-        verify(categoryRepository).findById(1L);
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {"   ", "\t", "\n"})
-    void getCategoryByName_invalidName_throws(String name) {
-        assertThrows(IllegalArgumentException.class, () -> service.getCategoryByName(name));
-        verifyNoInteractions(categoryRepository);
+        assertEquals("Category ID cannot be null", exception.getMessage());
+        verify(categoryRepository, never()).findById(any());
     }
 
     @Test
-    void getCategoryByName_notFound_throws() {
-        when(categoryRepository.findAll()).thenReturn(List.of());
+    void getCategoryById_notFound() {
+        when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> service.getCategoryByName("Unknown"));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            categoryService.getCategoryById(999L);
+        });
 
-        assertEquals("Category not found: Unknown", ex.getMessage());
+        assertEquals("Category not found: 999", exception.getMessage());
+        verify(categoryRepository).findById(999L);
     }
 
     @Test
-    void getCategoryByName_success_caseInsensitive() {
-        HazardCategory category = mock(HazardCategory.class);
-        when(category.getName()).thenReturn("Pothole");
+    void getCategoryByName_success() {
+        List<HazardCategory> categories = List.of(activeCategory, inactiveCategory);
 
-        when(categoryRepository.findAll()).thenReturn(List.of(category));
+        when(categoryRepository.findAll()).thenReturn(categories);
 
-        HazardCategory result = service.getCategoryByName("pothole");
+        HazardCategory result = categoryService.getCategoryByName("Pothole");
 
-        assertSame(category, result);
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("Pothole", result.getName());
+        verify(categoryRepository).findAll();
+    }
+
+    @Test
+    void getCategoryByName_caseInsensitive() {
+        List<HazardCategory> categories = List.of(activeCategory);
+
+        when(categoryRepository.findAll()).thenReturn(categories);
+
+        HazardCategory result = categoryService.getCategoryByName("pothole");
+
+        assertNotNull(result);
+        assertEquals("Pothole", result.getName());
+    }
+
+    @Test
+    void getCategoryByName_nullName() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            categoryService.getCategoryByName(null);
+        });
+
+        assertEquals("Category name cannot be null or blank", exception.getMessage());
+        verify(categoryRepository, never()).findAll();
+    }
+
+    @Test
+    void getCategoryByName_blankName() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            categoryService.getCategoryByName("   ");
+        });
+
+        assertEquals("Category name cannot be null or blank", exception.getMessage());
+        verify(categoryRepository, never()).findAll();
+    }
+
+    @Test
+    void getCategoryByName_notFound() {
+        List<HazardCategory> categories = List.of(activeCategory);
+
+        when(categoryRepository.findAll()).thenReturn(categories);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            categoryService.getCategoryByName("Nonexistent");
+        });
+
+        assertEquals("Category not found: Nonexistent", exception.getMessage());
+        verify(categoryRepository).findAll();
     }
 }

@@ -59,13 +59,14 @@ class VoteRepositoryIT {
             hazardReportRepository.deleteAll();
             userRepository.deleteAll();
             hazardCategoryRepository.deleteAll();
-            roleRepository.deleteAll();
+            // Don't delete roles - migration V4__Seed_roles.sql creates them
         } catch (Exception ignored) {
             // Tables may not exist yet
         }
 
-        Role role = Role.builder().name("USER").build();
-        roleRepository.save(role);
+        // Use existing USER role from migration
+        Role role = roleRepository.findByName("USER")
+                .orElseGet(() -> roleRepository.save(Role.builder().name("USER").build()));
 
         user1 = User.builder()
                 .username("voter1")

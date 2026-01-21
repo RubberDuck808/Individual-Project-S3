@@ -6,13 +6,8 @@ stages:
   - deploy
 
 variables:
-  DOCKER_HOST: tcp://host.docker.internal:2375
-  DOCKER_TLS_CERTDIR: ""
-
   GCP_REGION: europe-west4
   GCP_PROJECT: tripwire-477820
-
-  # SonarQube server
   SONAR_HOST_URL: "http://host.docker.internal:9000"
 
 cache:
@@ -26,6 +21,16 @@ cache:
 backend-build:
   stage: build
   image: gradle:8.9-jdk21
+  rules:
+    - changes:
+        - backend/**/*
+        - backend/Dockerfile
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+        # Also run if frontend changes (needed for e2e tests)
+        - frontend/**/*
+        - frontend/Dockerfile
+    - when: never
   script:
     - cd backend
     - ./gradlew clean build -x test
@@ -40,6 +45,17 @@ backend-build:
 frontend-build:
   stage: build
   image: node:22
+  rules:
+    - changes:
+        - frontend/**/*
+        - frontend/Dockerfile
+        - frontend/nginx.conf
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+        # Also run if backend changes (needed for e2e tests)
+        - backend/**/*
+        - backend/Dockerfile
+    - when: never
   script:
     - cd frontend
     - npm ci
@@ -50,16 +66,21 @@ frontend-build:
     expire_in: 1 week
 
 # ================================
-# Backend tests + JaCoCo coverage 
+# Backend tests + JaCoCo coverage
 # ================================
 backend-test:
   stage: test
   image: gradle:8.9-jdk21
-
+  rules:
+    - changes:
+        - backend/**/*
+        - backend/Dockerfile
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   services:
     - name: postgres:16
       alias: postgres
-
   variables:
     JWT_SECRET: "ci-test-secret-key-must-be-at-least-256-bits-long-for-hmac-sha-algorithms-1234567890"
     SPRING_PROFILES_ACTIVE: "test"
@@ -74,69 +95,208 @@ backend-test:
 
     SPRING_FLYWAY_ENABLED: "true"
     SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
-
   script:
     - cd backend
     - apt-get update && apt-get install -y postgresql-client
     - until pg_isready -h postgres -p 5432 -U "$POSTGRES_USER"; do echo "waiting for postgres..."; sleep 1; done
     - ./gradlew test jacocoTestReport
-
   artifacts:
     when: always
     reports:
       junit: backend/build/test-results/test/*.xml
     paths:
       - backend/build/reports/jacoco/
-
+      - backend/build/test-results/
+      - backend/build/classes/
+      - backend/build/reports/tests/
+    expire_in: 1 week
   needs:
     - backend-build
 
 # ================================
-# Frontend tests + Coverage 
+# Frontend Unit Tests + Coverage
 # ================================
 frontend-test:
   stage: test
   image: node:22
-  allow_failure: true
+  rules:
+    - changes:
+        - frontend/**/*
+        - frontend/Dockerfile
+        - frontend/nginx.conf
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+        # Also run when backend changes (keeps unit tests aligned with E2E runs)
+        - backend/**/*
+        - backend/Dockerfile
+    - when: never
   script:
     - cd frontend
     - npm ci
+    - mkdir -p test-results
     - npm run test:coverage
   artifacts:
     when: always
+    reports:
+      junit: frontend/test-results/junit.xml
     paths:
       - frontend/coverage/
       - frontend/coverage/lcov.info
+      - frontend/test-results/junit.xml
+    expire_in: 1 week
   needs:
     - frontend-build
 
 # ================================
-# SONARQUBE BACKEND ANALYSIS 
+# Frontend E2E Tests (Playwright)
+# ================================
+frontend-e2e:
+  stage: test
+  image: docker:24
+  services:
+    # Docker-in-Docker daemon (requires runner.docker.privileged=true on the runner)
+    - name: docker:24-dind
+      alias: docker
+      command: ["--host=tcp://0.0.0.0:2375", "--tls=false"]
+  rules:
+    - changes:
+        - frontend/**/*
+        - backend/**/*
+        - docker-compose.e2e.yml
+        - backend/Dockerfile
+        - frontend/Dockerfile
+        - .gitlab-ci.yml
+    - when: never
+  variables:
+    COMPOSE_PROJECT_NAME: "e2e-${CI_PIPELINE_ID}"
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
+    PLAYWRIGHT_BASE_URL: "http://frontend"
+    VITE_API_URL: "http://backend:8080"
+    VITE_MAPBOX_TOKEN: "test"
+  before_script:
+    - apk add --no-cache docker-cli-compose curl
+    - export VITE_API_URL="http://backend:8080"
+    - |
+      # Wait for DinD daemon
+      i=1
+      while [ $i -le 30 ]; do
+        if docker info >/dev/null 2>&1; then
+          break
+        fi
+        if [ $i -eq 30 ]; then
+          exit 1
+        fi
+        sleep 2
+        i=$((i + 1))
+      done
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml up -d --build
+    - |
+      # Wait for backend
+      NETWORK_NAME="${COMPOSE_PROJECT_NAME}_default"
+      i=1
+      while [ $i -le 30 ]; do
+        if docker run --rm --network "$NETWORK_NAME" curlimages/curl:8.11.1 \
+          -fsS http://backend:8080/actuator/health >/dev/null 2>&1; then
+          break
+        fi
+        if [ $i -eq 30 ]; then
+          exit 1
+        fi
+        sleep 2
+        i=$((i + 1))
+      done
+    - |
+      # Wait for frontend
+      NETWORK_NAME="${COMPOSE_PROJECT_NAME}_default"
+      i=1
+      while [ $i -le 30 ]; do
+        if docker run --rm --network "$NETWORK_NAME" curlimages/curl:8.11.1 \
+          -fsS http://frontend >/dev/null 2>&1; then
+          break
+        fi
+        if [ $i -eq 30 ]; then
+          exit 1
+        fi
+        sleep 2
+        i=$((i + 1))
+      done
+  script:
+    - |
+      docker run --rm \
+        --network "${COMPOSE_PROJECT_NAME}_default" \
+        -v "${CI_PROJECT_DIR}:${CI_PROJECT_DIR}" \
+        -e PLAYWRIGHT_BASE_URL="$PLAYWRIGHT_BASE_URL" \
+        -e VITE_API_URL="$VITE_API_URL" \
+        -e VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" \
+        -w "${CI_PROJECT_DIR}/frontend" \
+        --shm-size=2g \
+        mcr.microsoft.com/playwright:v1.50.0-jammy \
+        sh -lc "npm ci && npx playwright install --with-deps chromium && npx playwright test"
+  after_script:
+    - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
+  artifacts:
+    when: always
+    reports:
+      junit: frontend/test-results/junit.xml
+    paths:
+      - frontend/test-results/
+      - frontend/playwright-report/
+    expire_in: 1 week
+  needs:
+    - backend-build
+    - frontend-build
+
+# ================================
+# SONARQUBE BACKEND ANALYSIS
 # ================================
 sonarqube-backend:
   stage: sonar
   image: gradle:8.9-jdk21
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - backend/**/*
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - if: '$CI_COMMIT_BRANCH'
+      changes:
+        - backend/**/*
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
     GIT_DEPTH: "0"
+    JWT_SECRET: "ci-test-secret-key-must-be-at-least-256-bits-long-for-hmac-sha-algorithms-1234567890"
+    SPRING_PROFILES_ACTIVE: "test"
   cache:
     key: "sonar-cache-$CI_COMMIT_REF_SLUG"
     policy: pull-push
     paths:
       - "${SONAR_USER_HOME}/cache"
+      - backend/.gradle/
   script:
     - cd backend
     - |
-        ./gradlew sonar \
-          -Dsonar.host.url="$SONAR_HOST_URL" \
-          -Dsonar.token="$SONAR_TOKEN" \
-          -Dsonar.qualitygate.wait=true \
-          -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+      if [ ! -f "build/reports/jacoco/test/jacocoTestReport.xml" ]; then
+        echo "ERROR: JaCoCo report not found. Ensure backend-test completed successfully."
+        exit 1
+      fi
+    - |
+      ./gradlew sonar \
+        -Dsonar.host.url="$SONAR_HOST_URL" \
+        -Dsonar.token="$SONAR_TOKEN" \
+        -Dsonar.qualitygate.wait=false \
+        -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml \
+        -Dsonar.tests=src/test/java \
+        -Dsonar.test.inclusions="**/*Test.java,**/*IT.java" \
+        -Dsonar.exclusions="src/test/java/nl/fontys/db3/backend/BackendApplicationTests.java"
   needs:
     - backend-test
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH'
+    - backend-build
+  allow_failure: false
 
 # ================================
 # SONARQUBE FRONTEND ANALYSIS
@@ -145,6 +305,18 @@ sonarqube-frontend:
   stage: sonar
   image: node:22
   allow_failure: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - frontend/**/*
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - if: '$CI_COMMIT_BRANCH'
+      changes:
+        - frontend/**/*
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
     GIT_DEPTH: "0"
@@ -160,61 +332,117 @@ sonarqube-frontend:
     - SONAR_TOKEN=$SONAR_TOKEN SONAR_HOST_URL=$SONAR_HOST_URL npm run sonar
   needs:
     - frontend-test
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH'
 
 # ================================
-# Docker backend build + push
+# Docker backend build + push (NO DIND) - gated by E2E
 # ================================
 docker-backend:
   stage: docker
   image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+      command: ["--host=tcp://0.0.0.0:2375", "--tls=false"]
+  variables:
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - backend/**/*
+        - backend/Dockerfile
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   before_script:
-    - docker info
+    - |
+      i=1
+      while [ $i -le 30 ]; do
+        if docker info >/dev/null 2>&1; then
+          break
+        fi
+        if [ $i -eq 30 ]; then
+          exit 1
+        fi
+        sleep 2
+        i=$((i + 1))
+      done
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
     - |
-        docker build \
-          -t rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA \
-          -f backend/Dockerfile \
-          backend/
+      docker build \
+        -t rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA \
+        -f backend/Dockerfile \
+        backend/
     - docker push rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA
     - docker tag rubberduck808/tripwire-backend:$CI_COMMIT_SHORT_SHA rubberduck808/tripwire-backend:latest
     - docker push rubberduck808/tripwire-backend:latest
   needs:
-    - backend-build
-    - backend-test
-    - sonarqube-backend
-  only:
-    - main
+    - job: backend-build
+      optional: false
+    - job: backend-test
+      optional: false
+    - job: sonarqube-backend
+      optional: false
+    - job: frontend-e2e
+      optional: true
 
 # ================================
-# Docker frontend build + push
+# Docker frontend build + push (NO DIND) - gated by E2E
 # ================================
 docker-frontend:
   stage: docker
   image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+      command: ["--host=tcp://0.0.0.0:2375", "--tls=false"]
+  variables:
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - frontend/**/*
+        - frontend/Dockerfile
+        - frontend/nginx.conf
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   before_script:
-    - docker info
+    - |
+      i=1
+      while [ $i -le 30 ]; do
+        if docker info >/dev/null 2>&1; then
+          break
+        fi
+        if [ $i -eq 30 ]; then
+          exit 1
+        fi
+        sleep 2
+        i=$((i + 1))
+      done
     - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
   script:
     - |
-        docker build \
-          --build-arg VITE_API_URL="$VITE_API_URL" \
-          --build-arg VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" \
-          -t rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA \
-          -f frontend/Dockerfile \
-          frontend/
+      docker build \
+        --build-arg VITE_API_URL="$VITE_API_URL" \
+        --build-arg VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" \
+        -t rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA \
+        -f frontend/Dockerfile \
+        frontend/
     - docker push rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA
     - docker tag rubberduck808/tripwire-frontend:$CI_COMMIT_SHORT_SHA rubberduck808/tripwire-frontend:latest
     - docker push rubberduck808/tripwire-frontend:latest
   needs:
-    - frontend-build
-    - frontend-test
-    - sonarqube-frontend
-  only:
-    - main
+    - job: frontend-build
+      optional: false
+    - job: frontend-test
+      optional: false
+    - job: sonarqube-frontend
+      optional: false
+    - job: frontend-e2e
+      optional: true
 
 # ================================
 # Deploy BACKEND to Cloud Run
@@ -222,21 +450,27 @@ docker-frontend:
 deploy-backend:
   stage: deploy
   image: google/cloud-sdk:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - backend/**/*
+        - backend/Dockerfile
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   needs:
     - docker-backend
   before_script:
     - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
-    - gcloud config set project $GCP_PROJECT
+    - gcloud config set project "$GCP_PROJECT"
   script:
     - |
-        gcloud run deploy tripwire-backend \
-          --image docker.io/rubberduck808/tripwire-backend:latest \
-          --region "$GCP_REGION" \
-          --platform managed \
-          --allow-unauthenticated \
-          --port 8080
-  only:
-    - main
+      gcloud run deploy tripwire-backend \
+        --image docker.io/rubberduck808/tripwire-backend:latest \
+        --region "$GCP_REGION" \
+        --platform managed \
+        --allow-unauthenticated \
+        --port 8080
 
 # ================================
 # Deploy FRONTEND to Cloud Run
@@ -244,19 +478,25 @@ deploy-backend:
 deploy-frontend:
   stage: deploy
   image: google/cloud-sdk:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - frontend/**/*
+        - frontend/Dockerfile
+        - frontend/nginx.conf
+        - docker-compose*.yml
+        - .gitlab-ci.yml
+    - when: never
   needs:
     - docker-frontend
   before_script:
     - echo "$GCP_SA_KEY" | gcloud auth activate-service-account --key-file=-
-    - gcloud config set project $GCP_PROJECT
+    - gcloud config set project "$GCP_PROJECT"
   script:
     - |
-        gcloud run deploy tripwire-frontend \
-          --image docker.io/rubberduck808/tripwire-frontend:latest \
-          --region "$GCP_REGION" \
-          --platform managed \
-          --allow-unauthenticated \
-          --port 80
-  only:
-    - main
-
+      gcloud run deploy tripwire-frontend \
+        --image docker.io/rubberduck808/tripwire-frontend:latest \
+        --region "$GCP_REGION" \
+        --platform managed \
+        --allow-unauthenticated \
+        --port 80

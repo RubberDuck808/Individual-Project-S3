@@ -12,6 +12,11 @@ RUN ./gradlew clean bootJar --no-daemon
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
+# Install wget for health checks
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends wget && \
+    rm -rf /var/lib/apt/lists/*
+
 # Copy the jar from the build stage
 COPY --from=build /workspace/build/libs/*.jar app.jar
 

@@ -25,4 +25,15 @@ dist-ssr
 *.sw?
 
 .env
+cypress.env.json
 
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# SonarQube
+.scannerwork/
+.sonar/

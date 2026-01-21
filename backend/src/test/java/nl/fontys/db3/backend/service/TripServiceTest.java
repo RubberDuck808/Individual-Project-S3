@@ -2,147 +2,342 @@ package nl.fontys.db3.backend.service;
 
 import nl.fontys.db3.backend.dto.TripCompleteRequestDTO;
 import nl.fontys.db3.backend.dto.TripDTO;
+import nl.fontys.db3.backend.entity.Role;
 import nl.fontys.db3.backend.entity.Trip;
 import nl.fontys.db3.backend.entity.User;
 import nl.fontys.db3.backend.mapper.TripMapper;
 import nl.fontys.db3.backend.repository.TripRepository;
 import nl.fontys.db3.backend.repository.UserRepository;
-
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class TripServiceTest {
 
-    @Mock private TripRepository tripRepo;
-    @Mock private UserRepository userRepo;
-    @Mock private StatisticsService statisticsService;
-    @Mock private TripMapper tripMapper;
+    @Mock
+    private TripRepository tripRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private StatisticsService statisticsService;
+
+    @Mock
+    private TripMapper tripMapper;
 
     @InjectMocks
-    private TripService service;
+    private TripService tripService;
+
+    private User testUser;
+    private TripCompleteRequestDTO validDto;
+
+    @BeforeEach
+    void setUp() {
+        Role userRole = Role.builder().id(1L).name("USER").build();
+        testUser = User.builder()
+                .id(1L)
+                .username("tripper")
+                .email("tripper@test.com")
+                .name("Trip User")
+                .password("encoded")
+                .role(userRole)
+                .build();
+
+        validDto = TripCompleteRequestDTO.builder()
+                .startLat(51.4416)
+                .startLng(5.4697)
+                .endLat(51.4500)
+                .endLng(5.4800)
+                .distanceKm(5.0)
+                .startedAt(OffsetDateTime.now().minusHours(1))
+                .endedAt(OffsetDateTime.now())
+                .build();
+    }
 
     @Test
-    void completeSoloTrip_success_savesTrip_incrementsStats_andReturnsDto() {
-        String email = "user@test.com";
+    void completeSoloTrip_success() {
+        // Given
+        TripDTO tripDTO = TripDTO.builder()
+                .id(1L)
+                .userId(testUser.getId())
+                .convoyId(null)
+                .startLat(validDto.getStartLat())
+                .startLng(validDto.getStartLng())
+                .endLat(validDto.getEndLat())
+                .endLng(validDto.getEndLng())
+                .distanceKm(validDto.getDistanceKm())
+                .startedAt(validDto.getStartedAt())
+                .endedAt(validDto.getEndedAt())
+                .build();
 
-        TripCompleteRequestDTO dto = mock(TripCompleteRequestDTO.class);
-        when(dto.getStartLat()).thenReturn(51.44);
-        when(dto.getStartLng()).thenReturn(5.48);
-        when(dto.getEndLat()).thenReturn(51.45);
-        when(dto.getEndLng()).thenReturn(5.49);
-        when(dto.getDistanceKm()).thenReturn(12.5);
+        when(userRepository.findByEmail("tripper@test.com")).thenReturn(Optional.of(testUser));
+        when(tripRepository.save(any(Trip.class))).thenAnswer(invocation -> {
+            Trip t = invocation.getArgument(0);
+            t.setId(1L);
+            return t;
+        });
+        when(tripMapper.toDTO(any(Trip.class))).thenReturn(tripDTO);
 
-        OffsetDateTime startedAt = OffsetDateTime.of(2026, 1, 1, 10, 0, 0, 0, ZoneOffset.UTC);
-        OffsetDateTime endedAt = OffsetDateTime.of(2026, 1, 1, 11, 0, 0, 0, ZoneOffset.UTC);
-        when(dto.getStartedAt()).thenReturn(startedAt);
-        when(dto.getEndedAt()).thenReturn(endedAt);
+        // When
+        TripDTO result = tripService.completeSoloTrip("tripper@test.com", validDto);
 
-        User user = mock(User.class);
-        when(user.getId()).thenReturn(7L);
-        when(userRepo.findByEmail(email)).thenReturn(Optional.of(user));
-
-        ArgumentCaptor<Trip> tripCaptor = ArgumentCaptor.forClass(Trip.class);
-        when(tripRepo.save(tripCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
-
-        TripDTO mappedDto = mock(TripDTO.class);
-        when(tripMapper.toDTO(any(Trip.class))).thenReturn(mappedDto);
-
-        TripDTO result = service.completeSoloTrip(email, dto);
-
+        // Then
         assertNotNull(result);
-        assertSame(mappedDto, result);
-
-        Trip savedTrip = tripCaptor.getValue();
-        assertNotNull(savedTrip);
-        assertSame(user, savedTrip.getUser());
-        assertNull(savedTrip.getConvoyId());
-
-        assertEquals(51.44, savedTrip.getStartLat());
-        assertEquals(5.48, savedTrip.getStartLng());
-        assertEquals(51.45, savedTrip.getEndLat());
-        assertEquals(5.49, savedTrip.getEndLng());
-        assertEquals(12.5, savedTrip.getDistanceKm());
-        assertEquals(startedAt, savedTrip.getStartedAt());
-        assertEquals(endedAt, savedTrip.getEndedAt());
-
-        verify(statisticsService).incrementTripsAndDistance(7L, 12.5);
+        assertEquals(1L, result.getId());
+        verify(userRepository).findByEmail("tripper@test.com");
+        verify(tripRepository).save(any(Trip.class));
+        verify(statisticsService).incrementTripsAndDistance(testUser.getId(), validDto.getDistanceKm());
         verify(tripMapper).toDTO(any(Trip.class));
     }
 
     @Test
-    void completeSoloTrip_nullBody_throws() {
-        assertThrows(IllegalArgumentException.class,
-                () -> service.completeSoloTrip("user@test.com", null));
-
-        verifyNoInteractions(userRepo, tripRepo, statisticsService, tripMapper);
+    void completeSoloTrip_nullDto() {
+        // When/Then
+        assertThrows(IllegalArgumentException.class, () -> {
+            tripService.completeSoloTrip("tripper@test.com", null);
+        });
+        verify(userRepository, never()).findByEmail(anyString());
+        verify(tripRepository, never()).save(any());
     }
 
     @Test
-    void completeSoloTrip_negativeDistance_throws() {
-        TripCompleteRequestDTO dto = mock(TripCompleteRequestDTO.class);
-        when(dto.getStartLat()).thenReturn(1.0);
-        when(dto.getStartLng()).thenReturn(1.0);
-        when(dto.getEndLat()).thenReturn(1.0);
-        when(dto.getEndLng()).thenReturn(1.0);
-        when(dto.getDistanceKm()).thenReturn(-0.1);
+    void completeSoloTrip_nullStartLat() {
+        // Given
+        TripCompleteRequestDTO dto = TripCompleteRequestDTO.builder()
+                .startLat(null)
+                .startLng(validDto.getStartLng())
+                .endLat(validDto.getEndLat())
+                .endLng(validDto.getEndLng())
+                .distanceKm(validDto.getDistanceKm())
+                .startedAt(validDto.getStartedAt())
+                .endedAt(validDto.getEndedAt())
+                .build();
 
-        assertThrows(IllegalArgumentException.class,
-                () -> service.completeSoloTrip("user@test.com", dto));
-
-        verifyNoInteractions(userRepo, tripRepo, statisticsService, tripMapper);
+        // When/Then
+        assertThrows(IllegalArgumentException.class, () -> {
+            tripService.completeSoloTrip("tripper@test.com", dto);
+        });
+        verify(tripRepository, never()).save(any());
     }
 
     @Test
-    void completeSoloTrip_endedAtBeforeStartedAt_throws() {
-        TripCompleteRequestDTO dto = mock(TripCompleteRequestDTO.class);
-        when(dto.getStartLat()).thenReturn(1.0);
-        when(dto.getStartLng()).thenReturn(1.0);
-        when(dto.getEndLat()).thenReturn(1.0);
-        when(dto.getEndLng()).thenReturn(1.0);
-        when(dto.getDistanceKm()).thenReturn(1.0);
+    void completeSoloTrip_nullStartLng() {
+        // Given
+        TripCompleteRequestDTO dto = TripCompleteRequestDTO.builder()
+                .startLat(validDto.getStartLat())
+                .startLng(null)
+                .endLat(validDto.getEndLat())
+                .endLng(validDto.getEndLng())
+                .distanceKm(validDto.getDistanceKm())
+                .startedAt(validDto.getStartedAt())
+                .endedAt(validDto.getEndedAt())
+                .build();
 
-        OffsetDateTime started = OffsetDateTime.of(2026, 1, 1, 10, 0, 0, 0, ZoneOffset.UTC);
-        OffsetDateTime ended = OffsetDateTime.of(2026, 1, 1, 9, 59, 0, 0, ZoneOffset.UTC);
-        when(dto.getStartedAt()).thenReturn(started);
-        when(dto.getEndedAt()).thenReturn(ended);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> service.completeSoloTrip("user@test.com", dto));
-
-        verifyNoInteractions(userRepo, tripRepo, statisticsService, tripMapper);
+        // When/Then
+        assertThrows(IllegalArgumentException.class, () -> {
+            tripService.completeSoloTrip("tripper@test.com", dto);
+        });
     }
 
     @Test
-    void completeSoloTrip_userNotFound_throws() {
-        TripCompleteRequestDTO dto = mock(TripCompleteRequestDTO.class);
-        when(dto.getStartLat()).thenReturn(1.0);
-        when(dto.getStartLng()).thenReturn(1.0);
-        when(dto.getEndLat()).thenReturn(1.0);
-        when(dto.getEndLng()).thenReturn(1.0);
-        when(dto.getDistanceKm()).thenReturn(1.0);
-        when(dto.getStartedAt()).thenReturn(OffsetDateTime.of(2026, 1, 1, 10, 0, 0, 0, ZoneOffset.UTC));
-        when(dto.getEndedAt()).thenReturn(OffsetDateTime.of(2026, 1, 1, 11, 0, 0, 0, ZoneOffset.UTC));
+    void completeSoloTrip_nullEndLat() {
+        // Given
+        TripCompleteRequestDTO dto = TripCompleteRequestDTO.builder()
+                .startLat(validDto.getStartLat())
+                .startLng(validDto.getStartLng())
+                .endLat(null)
+                .endLng(validDto.getEndLng())
+                .distanceKm(validDto.getDistanceKm())
+                .startedAt(validDto.getStartedAt())
+                .endedAt(validDto.getEndedAt())
+                .build();
 
-        when(userRepo.findByEmail("user@test.com")).thenReturn(Optional.empty());
+        // When/Then
+        assertThrows(IllegalArgumentException.class, () -> {
+            tripService.completeSoloTrip("tripper@test.com", dto);
+        });
+    }
 
-        assertThrows(IllegalArgumentException.class,
-                () -> service.completeSoloTrip("user@test.com", dto));
+    @Test
+    void completeSoloTrip_nullEndLng() {
+        // Given
+        TripCompleteRequestDTO dto = TripCompleteRequestDTO.builder()
+                .startLat(validDto.getStartLat())
+                .startLng(validDto.getStartLng())
+                .endLat(validDto.getEndLat())
+                .endLng(null)
+                .distanceKm(validDto.getDistanceKm())
+                .startedAt(validDto.getStartedAt())
+                .endedAt(validDto.getEndedAt())
+                .build();
 
-        verify(tripRepo, never()).save(any());
+        // When/Then
+        assertThrows(IllegalArgumentException.class, () -> {
+            tripService.completeSoloTrip("tripper@test.com", dto);
+        });
+    }
+
+    @Test
+    void completeSoloTrip_nullDistanceKm() {
+        // Given
+        TripCompleteRequestDTO dto = TripCompleteRequestDTO.builder()
+                .startLat(validDto.getStartLat())
+                .startLng(validDto.getStartLng())
+                .endLat(validDto.getEndLat())
+                .endLng(validDto.getEndLng())
+                .distanceKm(null)
+                .startedAt(validDto.getStartedAt())
+                .endedAt(validDto.getEndedAt())
+                .build();
+
+        // When/Then
+        assertThrows(IllegalArgumentException.class, () -> {
+            tripService.completeSoloTrip("tripper@test.com", dto);
+        });
+    }
+
+    @Test
+    void completeSoloTrip_negativeDistanceKm() {
+        // Given
+        TripCompleteRequestDTO dto = TripCompleteRequestDTO.builder()
+                .startLat(validDto.getStartLat())
+                .startLng(validDto.getStartLng())
+                .endLat(validDto.getEndLat())
+                .endLng(validDto.getEndLng())
+                .distanceKm(-5.0)
+                .startedAt(validDto.getStartedAt())
+                .endedAt(validDto.getEndedAt())
+                .build();
+
+        // When/Then
+        assertThrows(IllegalArgumentException.class, () -> {
+            tripService.completeSoloTrip("tripper@test.com", dto);
+        });
+        verify(tripRepository, never()).save(any());
+        verify(statisticsService, never()).incrementTripsAndDistance(anyLong(), anyDouble());
+    }
+
+    @Test
+    void completeSoloTrip_zeroDistanceKm() {
+        // Given
+        TripCompleteRequestDTO dto = TripCompleteRequestDTO.builder()
+                .startLat(validDto.getStartLat())
+                .startLng(validDto.getStartLng())
+                .endLat(validDto.getEndLat())
+                .endLng(validDto.getEndLng())
+                .distanceKm(0.0)
+                .startedAt(validDto.getStartedAt())
+                .endedAt(validDto.getEndedAt())
+                .build();
+        TripDTO tripDTO = TripDTO.builder()
+                .id(1L)
+                .userId(testUser.getId())
+                .convoyId(null)
+                .startLat(dto.getStartLat())
+                .startLng(dto.getStartLng())
+                .endLat(dto.getEndLat())
+                .endLng(dto.getEndLng())
+                .distanceKm(dto.getDistanceKm())
+                .startedAt(dto.getStartedAt())
+                .endedAt(dto.getEndedAt())
+                .build();
+
+        when(userRepository.findByEmail("tripper@test.com")).thenReturn(Optional.of(testUser));
+        when(tripRepository.save(any(Trip.class))).thenAnswer(invocation -> {
+            Trip t = invocation.getArgument(0);
+            t.setId(1L);
+            return t;
+        });
+        when(tripMapper.toDTO(any(Trip.class))).thenReturn(tripDTO);
+
+        // When - zero distance should be allowed (boundary value)
+        TripDTO result = tripService.completeSoloTrip("tripper@test.com", dto);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(0.0, result.getDistanceKm());
+    }
+
+    @Test
+    void completeSoloTrip_nullStartedAt() {
+        // Given
+        TripCompleteRequestDTO dto = TripCompleteRequestDTO.builder()
+                .startLat(validDto.getStartLat())
+                .startLng(validDto.getStartLng())
+                .endLat(validDto.getEndLat())
+                .endLng(validDto.getEndLng())
+                .distanceKm(validDto.getDistanceKm())
+                .startedAt(null)
+                .endedAt(validDto.getEndedAt())
+                .build();
+
+        // When/Then
+        assertThrows(IllegalArgumentException.class, () -> {
+            tripService.completeSoloTrip("tripper@test.com", dto);
+        });
+    }
+
+    @Test
+    void completeSoloTrip_nullEndedAt() {
+        // Given
+        TripCompleteRequestDTO dto = TripCompleteRequestDTO.builder()
+                .startLat(validDto.getStartLat())
+                .startLng(validDto.getStartLng())
+                .endLat(validDto.getEndLat())
+                .endLng(validDto.getEndLng())
+                .distanceKm(validDto.getDistanceKm())
+                .startedAt(validDto.getStartedAt())
+                .endedAt(null)
+                .build();
+
+        // When/Then
+        assertThrows(IllegalArgumentException.class, () -> {
+            tripService.completeSoloTrip("tripper@test.com", dto);
+        });
+    }
+
+    @Test
+    void completeSoloTrip_endedAtBeforeStartedAt() {
+        // Given
+        OffsetDateTime now = OffsetDateTime.now();
+        TripCompleteRequestDTO dto = TripCompleteRequestDTO.builder()
+                .startLat(validDto.getStartLat())
+                .startLng(validDto.getStartLng())
+                .endLat(validDto.getEndLat())
+                .endLng(validDto.getEndLng())
+                .distanceKm(validDto.getDistanceKm())
+                .startedAt(now)
+                .endedAt(now.minusHours(1))
+                .build();
+
+        // When/Then
+        assertThrows(IllegalArgumentException.class, () -> {
+            tripService.completeSoloTrip("tripper@test.com", dto);
+        });
+    }
+
+    @Test
+    void completeSoloTrip_userNotFound() {
+        // Given
+        when(userRepository.findByEmail("nonexistent@test.com")).thenReturn(Optional.empty());
+
+        // When/Then
+        assertThrows(IllegalArgumentException.class, () -> {
+            tripService.completeSoloTrip("nonexistent@test.com", validDto);
+        });
+        verify(tripRepository, never()).save(any());
         verify(statisticsService, never()).incrementTripsAndDistance(anyLong(), anyDouble());
     }
 }

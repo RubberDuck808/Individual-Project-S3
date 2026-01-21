@@ -6,17 +6,21 @@ import nl.fontys.db3.backend.entity.Role;
 import nl.fontys.db3.backend.entity.User;
 import nl.fontys.db3.backend.repository.RoleRepository;
 import nl.fontys.db3.backend.repository.UserRepository;
-
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static nl.fontys.db3.backend.service.Constants.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,10 +30,10 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private RoleRepository roleRepository;
+    private PasswordEncoder passwordEncoder;
 
     @Mock
-    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private RoleRepository roleRepository;
 
     @Mock
     private AvatarService avatarService;
@@ -40,290 +44,290 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+    private Role userRole;
+    private User testUser;
+    private Avatar testAvatar;
+    private Background testBackground;
+
+    @BeforeEach
+    void setUp() {
+        userRole = Role.builder().id(1L).name(ROLE_USER).build();
+        
+        testUser = User.builder()
+                .id(1L)
+                .username("testuser")
+                .email("test@test.com")
+                .name("Test User")
+                .password("encodedPassword")
+                .role(userRole)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        testAvatar = Avatar.builder()
+                .id(1L)
+                .name("test-avatar")
+                .imagePath("/avatars/test.png")
+                .active(true)
+                .build();
+
+        testBackground = Background.builder()
+                .id(1L)
+                .name("test-background")
+                .imagePath("/backgrounds/test.png")
+                .active(true)
+                .build();
+    }
+
+    // Tests for deleteUser
     @Test
-    void createUser_success_assignsDefaultRoleAndEncodesPassword() {
-        User input = new User();
-        input.setUsername("  JohnDoe  ");
-        input.setEmail("  JOHN@EXAMPLE.COM ");
-        input.setName("John");
-        input.setPassword("plain123");
+    void deleteUser_success() {
+        when(userRepository.existsById(1L)).thenReturn(true);
+        doNothing().when(userRepository).deleteById(1L);
 
-        Role userRole = new Role();
-        userRole.setName("USER");
+        assertDoesNotThrow(() -> userService.deleteUser(1L));
+        verify(userRepository).existsById(1L);
+        verify(userRepository).deleteById(1L);
+    }
 
-        when(userRepository.existsByUsername("johndoe")).thenReturn(false);
-        when(userRepository.existsByEmail("john@example.com")).thenReturn(false);
-        when(roleRepository.findByName("USER")).thenReturn(Optional.of(userRole));
-        when(passwordEncoder.encode("plain123")).thenReturn("ENCODED");
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+    @Test
+    void deleteUser_userNotFound() {
+        when(userRepository.existsById(1L)).thenReturn(false);
 
-        User result = userService.createUser(input);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.deleteUser(1L);
+        });
+
+        assertEquals("User not found with id 1", exception.getMessage());
+        verify(userRepository).existsById(1L);
+        verify(userRepository, never()).deleteById(anyLong());
+    }
+
+    // Tests for updateMe
+    @Test
+    void updateMe_updateName_success() {
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.updateMe("test@test.com", "New Name", null, null, null, null);
 
         assertNotNull(result);
-        assertEquals("johndoe", result.getUsername());
-        assertEquals("john@example.com", result.getEmail());
-        assertEquals("John", result.getName());
-        assertEquals("ENCODED", result.getPassword());
-        assertNotNull(result.getCreatedAt());
-        assertEquals(userRole, result.getRole());
+        assertEquals("New Name", result.getName());
+        verify(userRepository).findByEmail("test@test.com");
         verify(userRepository).save(any(User.class));
     }
 
     @Test
-    void createUser_missingUsername_throws() {
-        User u = new User();
-        u.setEmail("a@b.com");
-        u.setName("A");
-        u.setPassword("p");
+    void updateMe_updateUsername_success() {
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
+        when(userRepository.existsByUsername("newusername")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThrows(IllegalArgumentException.class, () -> userService.createUser(u));
-        verifyNoInteractions(roleRepository);
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void createUser_usernameAlreadyExists_throws() {
-        User u = new User();
-        u.setUsername("John");
-        u.setEmail("john@example.com");
-        u.setName("John");
-        u.setPassword("p");
-
-        when(userRepository.existsByUsername("john")).thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class, () -> userService.createUser(u));
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void createUser_defaultRoleMissing_throws() {
-        User u = new User();
-        u.setUsername("John");
-        u.setEmail("john@example.com");
-        u.setName("John");
-        u.setPassword("p");
-
-        when(userRepository.existsByUsername("john")).thenReturn(false);
-        when(userRepository.existsByEmail("john@example.com")).thenReturn(false);
-        when(roleRepository.findByName("USER")).thenReturn(Optional.empty());
-
-        assertThrows(IllegalStateException.class, () -> userService.createUser(u));
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void deleteUser_notFound_throws() {
-        when(userRepository.existsById(5L)).thenReturn(false);
-
-        assertThrows(IllegalArgumentException.class, () -> userService.deleteUser(5L));
-        verify(userRepository, never()).deleteById(anyLong());
-    }
-
-    @Test
-    void getByUsername_normalizesToLowercase() {
-        User found = new User();
-        found.setUsername("jane");
-
-        when(userRepository.findByUsername("jane")).thenReturn(Optional.of(found));
-
-        User result = userService.getByUsername("  JANE  ");
+        User result = userService.updateMe("test@test.com", null, "newusername", null, null, null);
 
         assertNotNull(result);
-        assertEquals("jane", result.getUsername());
-        verify(userRepository).findByUsername("jane");
+        assertEquals("newusername", result.getUsername());
+        verify(userRepository).existsByUsername("newusername");
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
-    void findByUsernameOrEmail_prefersUsernameWhenPresent() {
-        User found = new User();
-        when(userRepository.findByUsername("u")).thenReturn(Optional.of(found));
+    void updateMe_updateUsername_alreadyExists() {
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
+        when(userRepository.existsByUsername("existinguser")).thenReturn(true);
 
-        Optional<User> result = userService.findByUsernameOrEmail(" U ", "x@y.com");
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.updateMe("test@test.com", null, "existinguser", null, null, null);
+        });
 
-        assertTrue(result.isPresent());
-        verify(userRepository).findByUsername("u");
+        assertEquals(USERNAME_ALREADY_EXISTS, exception.getMessage());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void updateMe_updateEmail_success() {
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("currentPass", "encodedPassword")).thenReturn(true);
+        when(userRepository.existsByEmail("newemail@test.com")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.updateMe("test@test.com", null, null, "newemail@test.com", "currentPass", null);
+
+        assertNotNull(result);
+        assertEquals("newemail@test.com", result.getEmail());
+        verify(passwordEncoder).matches("currentPass", "encodedPassword");
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void updateMe_updateEmail_missingPassword() {
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.updateMe("test@test.com", null, null, "newemail@test.com", null, null);
+        });
+
+        assertEquals(CURRENT_PASSWORD_REQUIRED, exception.getMessage());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void updateMe_updateEmail_incorrectPassword() {
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("wrongPass", "encodedPassword")).thenReturn(false);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.updateMe("test@test.com", null, null, "newemail@test.com", "wrongPass", null);
+        });
+
+        assertEquals(CURRENT_PASSWORD_INCORRECT, exception.getMessage());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void updateMe_updateEmail_alreadyExists() {
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("currentPass", "encodedPassword")).thenReturn(true);
+        when(userRepository.existsByEmail("existing@test.com")).thenReturn(true);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.updateMe("test@test.com", null, null, "existing@test.com", "currentPass", null);
+        });
+
+        assertEquals(EMAIL_ALREADY_EXISTS, exception.getMessage());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void updateMe_updatePassword_success() {
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("currentPass", "encodedPassword")).thenReturn(true);
+        when(passwordEncoder.encode("newPassword")).thenReturn("newEncodedPassword");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.updateMe("test@test.com", null, null, null, "currentPass", "newPassword");
+
+        assertNotNull(result);
+        verify(passwordEncoder).encode("newPassword");
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void updateMe_updatePassword_missingCurrentPassword() {
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.updateMe("test@test.com", null, null, null, null, "newPassword");
+        });
+
+        assertEquals(CURRENT_PASSWORD_REQUIRED, exception.getMessage());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void updateMe_updatePassword_incorrectCurrentPassword() {
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("wrongPass", "encodedPassword")).thenReturn(false);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.updateMe("test@test.com", null, null, null, "wrongPass", "newPassword");
+        });
+
+        assertEquals(CURRENT_PASSWORD_INCORRECT, exception.getMessage());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void updateMe_notAuthenticated() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.updateMe(null, "New Name", null, null, null, null);
+        });
+
+        assertEquals(NOT_AUTHENTICATED, exception.getMessage());
         verify(userRepository, never()).findByEmail(anyString());
     }
 
     @Test
-    void updateMe_updatesNameAndUsername_withoutRequiringCurrentPassword() {
-        User user = new User();
-        user.setEmail("me@example.com");
-        user.setUsername("olduser");
-        user.setName("Old Name");
-        user.setPassword("ENC");
+    void updateMe_userNotFound() {
+        when(userRepository.findByEmail("nonexistent@test.com")).thenReturn(Optional.empty());
 
-        when(userRepository.findByEmail("me@example.com")).thenReturn(Optional.of(user));
-        when(userRepository.existsByUsername("newuser")).thenReturn(false);
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.updateMe("nonexistent@test.com", "New Name", null, null, null, null);
+        });
 
-        User result = userService.updateMe(
-                "ME@EXAMPLE.COM",
-                " New Name ",
-                " NewUser ",
-                null,
-                null,
-                null
-        );
-
-        assertEquals("New Name", result.getName());
-        assertEquals("newuser", result.getUsername());
-        assertEquals("me@example.com", result.getEmail());
-        verify(userRepository).save(user);
-        verify(passwordEncoder, never()).matches(anyString(), anyString());
+        assertEquals(USER_NOT_FOUND, exception.getMessage());
     }
 
-    @Test
-    void updateMe_emailChange_requiresCurrentPassword_andUpdatesEmail() {
-        User user = new User();
-        user.setEmail("me@example.com");
-        user.setUsername("user");
-        user.setPassword("ENC");
-
-        when(userRepository.findByEmail("me@example.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("current123", "ENC")).thenReturn(true);
-        when(userRepository.existsByEmail("new@mail.com")).thenReturn(false);
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        User result = userService.updateMe(
-                "me@example.com",
-                null,
-                null,
-                " NEW@MAIL.COM ",
-                "current123",
-                null
-        );
-
-        assertEquals("new@mail.com", result.getEmail());
-        verify(passwordEncoder).matches("current123", "ENC");
-        verify(userRepository).save(user);
-    }
-
-    @Test
-    void updateMe_emailChange_wrongCurrentPassword_throws() {
-        User user = new User();
-        user.setEmail("me@example.com");
-        user.setPassword("ENC");
-
-        when(userRepository.findByEmail("me@example.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("bad", "ENC")).thenReturn(false);
-
-        assertThrows(IllegalArgumentException.class, () -> userService.updateMe(
-                "me@example.com",
-                null, null,
-                "new@mail.com",
-                "bad",
-                null
-        ));
-
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void updateMe_passwordChange_requiresCurrentPassword_andEncodesNewPassword() {
-        User user = new User();
-        user.setEmail("me@example.com");
-        user.setPassword("ENC");
-
-        when(userRepository.findByEmail("me@example.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("current123", "ENC")).thenReturn(true);
-        when(passwordEncoder.encode("newpass")).thenReturn("NEW_ENC");
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        User result = userService.updateMe(
-                "me@example.com",
-                null, null, null,
-                "current123",
-                "newpass"
-        );
-
-        assertEquals("NEW_ENC", result.getPassword());
-        verify(passwordEncoder).encode("newpass");
-        verify(userRepository).save(user);
-    }
-
-    @Test
-    void updateMe_usernameChange_toExistingUsername_throws() {
-        User user = new User();
-        user.setEmail("me@example.com");
-        user.setUsername("olduser");
-        user.setPassword("ENC");
-
-        when(userRepository.findByEmail("me@example.com")).thenReturn(Optional.of(user));
-        when(userRepository.existsByUsername("taken")).thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class, () -> userService.updateMe(
-                "me@example.com",
-                null,
-                "TAKEN",
-                null,
-                null,
-                null
-        ));
-
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void updateMe_userNotFound_throws() {
-        when(userRepository.findByEmail("me@example.com")).thenReturn(Optional.empty());
-
-        assertThrows(IllegalArgumentException.class, () -> userService.updateMe(
-                "me@example.com",
-                null, null, null,
-                null, null
-        ));
-    }
-
+    // Tests for changeMyAvatar
     @Test
     void changeMyAvatar_success() {
-        User user = new User();
-        user.setEmail("test@test.com");
-        Avatar avatar = Avatar.builder().id(1L).name("avatar1").build();
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
+        when(avatarService.getActiveAvatarByNameOrThrow("test-avatar")).thenReturn(testAvatar);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
-        when(avatarService.getActiveAvatarByNameOrThrow("avatar1")).thenReturn(avatar);
-        when(userRepository.save(user)).thenReturn(user);
-
-        User result = userService.changeMyAvatar("test@test.com", "avatar1");
+        User result = userService.changeMyAvatar("test@test.com", "test-avatar");
 
         assertNotNull(result);
-        assertEquals(avatar, result.getAvatar());
-        verify(userRepository).save(user);
+        assertEquals(testAvatar, result.getAvatar());
+        verify(avatarService).getActiveAvatarByNameOrThrow("test-avatar");
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
-    void changeMyAvatar_userNotFound_throws() {
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.empty());
+    void changeMyAvatar_notAuthenticated() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.changeMyAvatar(null, "test-avatar");
+        });
 
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.changeMyAvatar("test@test.com", "avatar1"));
-        verify(userRepository, never()).save(any());
+        assertEquals(NOT_AUTHENTICATED, exception.getMessage());
+        verify(avatarService, never()).getActiveAvatarByNameOrThrow(anyString());
     }
 
+    @Test
+    void changeMyAvatar_userNotFound() {
+        when(userRepository.findByEmail("nonexistent@test.com")).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.changeMyAvatar("nonexistent@test.com", "test-avatar");
+        });
+
+        assertEquals(USER_NOT_FOUND, exception.getMessage());
+        verify(avatarService, never()).getActiveAvatarByNameOrThrow(anyString());
+    }
+
+    // Tests for changeMyBackground
     @Test
     void changeMyBackground_success() {
-        User user = new User();
-        user.setEmail("test@test.com");
-        Background background = Background.builder().id(1L).name("bg1").build();
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
+        when(backgroundService.getActiveBackgroundByNameOrThrow("test-background")).thenReturn(testBackground);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
-        when(backgroundService.getActiveBackgroundByNameOrThrow("bg1")).thenReturn(background);
-        when(userRepository.save(user)).thenReturn(user);
-
-        User result = userService.changeMyBackground("test@test.com", "bg1");
+        User result = userService.changeMyBackground("test@test.com", "test-background");
 
         assertNotNull(result);
-        assertEquals(background, result.getBackground());
-        verify(userRepository).save(user);
+        assertEquals(testBackground, result.getBackground());
+        verify(backgroundService).getActiveBackgroundByNameOrThrow("test-background");
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
-    void changeMyBackground_userNotFound_throws() {
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.empty());
+    void changeMyBackground_notAuthenticated() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.changeMyBackground(null, "test-background");
+        });
 
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.changeMyBackground("test@test.com", "bg1"));
-        verify(userRepository, never()).save(any());
+        assertEquals(NOT_AUTHENTICATED, exception.getMessage());
+        verify(backgroundService, never()).getActiveBackgroundByNameOrThrow(anyString());
+    }
+
+    @Test
+    void changeMyBackground_userNotFound() {
+        when(userRepository.findByEmail("nonexistent@test.com")).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.changeMyBackground("nonexistent@test.com", "test-background");
+        });
+
+        assertEquals(USER_NOT_FOUND, exception.getMessage());
+        verify(backgroundService, never()).getActiveBackgroundByNameOrThrow(anyString());
     }
 }

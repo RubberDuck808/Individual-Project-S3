@@ -2,5 +2,5 @@ projectKey=I548789_individual-project-s3_0ed3868f-3af8-4e41-a583-5ab0e0896d70:fr
 serverUrl=http://localhost:9000
 serverVersion=26.1.0.118079
 dashboardUrl=http://localhost:9000/dashboard?id=I548789_individual-project-s3_0ed3868f-3af8-4e41-a583-5ab0e0896d70%3Afrontend
-ceTaskId=1d35b8d0-eb3f-4f24-8e58-426f3411cadb
-ceTaskUrl=http://localhost:9000/api/ce/task?id=1d35b8d0-eb3f-4f24-8e58-426f3411cadb
+ceTaskId=29cad8b4-18f2-41b1-b9b1-97808cbc0d9c
+ceTaskUrl=http://localhost:9000/api/ce/task?id=29cad8b4-18f2-41b1-b9b1-97808cbc0d9c

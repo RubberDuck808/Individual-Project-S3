@@ -1,2 +1,12 @@
-.pio
-src/secrets.h
+# PlatformIO
+.pio/
+*.env
+
+
+# Build artifacts
+compile_commands.json
+
+# Node.js (if any leftover from SonarQube)
+node_modules/
+package-lock.json
+package.json

@@ -27,35 +27,29 @@ class RoleRepositoryIT {
 
     @BeforeEach
     void setUp() {
-        try {
-            roleRepository.deleteAll();
-        } catch (Exception ignored) {
-            // Tables may not exist yet
-        }
+        // Migration V4__Seed_roles.sql already creates USER and ADMIN roles
+        // Tests should work with existing roles, not delete them
     }
 
     @Test
     void saveAndFindById() {
+        // Use existing USER role from migration, or create a test role with unique name
         Role role = Role.builder()
-                .name("USER")
+                .name("TEST_ROLE")
                 .build();
 
         Role saved = roleRepository.save(role);
         assertNotNull(saved.getId());
 
         Role found = roleRepository.findById(saved.getId()).orElseThrow();
-        assertEquals("USER", found.getName());
+        assertEquals("TEST_ROLE", found.getName());
     }
 
     @Test
     void findByName() {
-        Role role = Role.builder()
-                .name("ADMIN")
-                .build();
-        roleRepository.save(role);
-
+        // Use existing ADMIN role from migration
         Optional<Role> found = roleRepository.findByName("ADMIN");
-        assertTrue(found.isPresent());
+        assertTrue(found.isPresent(), "ADMIN role should exist from migration");
         assertEquals("ADMIN", found.get().getName());
     }
 
@@ -67,16 +61,12 @@ class RoleRepositoryIT {
 
     @Test
     void findAll() {
-        Role role1 = Role.builder()
-                .name("USER")
-                .build();
-        roleRepository.save(role1);
-
-        Role role2 = Role.builder()
-                .name("ADMIN")
-                .build();
-        roleRepository.save(role2);
-
-        assertEquals(2, roleRepository.findAll().size());
+        // Migration creates USER and ADMIN, so we should have at least 2 roles
+        long count = roleRepository.findAll().size();
+        assertTrue(count >= 2, "Should have at least USER and ADMIN roles from migration");
+        
+        // Verify both roles exist
+        assertTrue(roleRepository.findByName("USER").isPresent());
+        assertTrue(roleRepository.findByName("ADMIN").isPresent());
     }
 }

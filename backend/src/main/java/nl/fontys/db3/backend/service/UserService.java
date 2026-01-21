@@ -27,6 +27,7 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final AvatarService avatarService;
     private final BackgroundService backgroundService;
+    private final StatisticsService statisticsService;
 
 
 
@@ -35,13 +36,15 @@ public class UserService {
             PasswordEncoder passwordEncoder,
             RoleRepository roleRepository,
             AvatarService avatarService,
-            BackgroundService backgroundService
+            BackgroundService backgroundService,
+            StatisticsService statisticsService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.avatarService = avatarService;
         this.backgroundService = backgroundService;
+        this.statisticsService = statisticsService;
     }
 
 
@@ -99,6 +102,10 @@ public class UserService {
         user.setRole(userRole);
 
         User saved = userRepository.save(user);
+        
+        // Ensure statistics row exists for the new user
+        statisticsService.ensureStatsRow(saved);
+        
         log.info("User created successfully - userId: {}, username: {}, email: {}", 
                 saved.getId(), saved.getUsername(), saved.getEmail());
         return saved;

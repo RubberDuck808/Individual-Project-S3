@@ -41,9 +41,29 @@ Thumbs.db
 
 hardware/src/secrets.h
 
+# Secrets files and directories
+secrets/
+secrets
+**/secrets/
+**/secrets
+**/*secrets*
+
 hardware/.pio/
 hardware/.pio/*
 
 hardware/.vscode/
 *.md
 *.tex
+
+
+cypress/results/
+cypress/screenshots/
+cypress/videos/
+.scannerwork/
+**/.scannerwork/
+
+# Backend logs
+backend/logs/
+backend/**/*.log
+
+
