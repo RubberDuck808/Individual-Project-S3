@@ -11,12 +11,9 @@
     "sonar": "node sonarConfig.cjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "cypress run",
-    "test:e2e:open": "cypress open",
-    "test:e2e:headed": "cypress run --headed",
-    "test:e2e:test": "CYPRESS_BASE_URL=http://localhost:5174 CYPRESS_API_URL=http://localhost:8081 cypress run",
-    "test:e2e:local": "CYPRESS_BASE_URL=http://localhost:5173 CYPRESS_API_URL=http://localhost:8080 cypress run",
-    "test:e2e:auto": "node -e \"const {execSync} = require('child_process'); execSync('pwsh -File ../scripts/run-e2e-automated.ps1', {stdio: 'inherit'})\""
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
@@ -49,7 +46,7 @@
     "@vitejs/plugin-react": "^5.0.3",
     "@vitest/coverage-v8": "^4.0.15",
     "autoprefixer": "^10.4.21",
-    "cypress": "^15.9.0",
+    "@playwright/test": "^1.50.0",
     "dotenv": "^17.2.3",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",

@@ -187,7 +187,7 @@ docker-diagnostic:
       when: manual
 
 # ================================
-# Frontend E2E Tests (Cypress) - Option B (docker job + cypress container)
+# Frontend E2E Tests (Playwright)
 # ================================
 frontend-e2e:
   stage: test
@@ -208,21 +208,20 @@ frontend-e2e:
     # Force socket-based Docker (no DinD). Prevents inherited DOCKER_HOST=tcp://docker:2375.
     DOCKER_HOST: "unix:///var/run/docker.sock"
     DOCKER_TLS_CERTDIR: ""
-    # Use localhost instead of host.docker.internal for better Linux runner compatibility
-    # Services are accessible via host network or docker network
-    CYPRESS_BASE_URL: "http://localhost:5174"
-    CYPRESS_API_URL: "http://localhost:8081"
-    VITE_API_URL: "http://localhost:8081"
+    # Playwright config reads this as baseURL; we run Playwright on the docker-compose network.
+    PLAYWRIGHT_BASE_URL: "http://frontend"
+    VITE_API_URL: "http://backend:8080"
     VITE_MAPBOX_TOKEN: "test"
   before_script:
     - apk add --no-cache docker-cli-compose curl
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml up -d --build
     - |
-      echo "Waiting for backend to be healthy..."
+      echo "Waiting for backend to be healthy (docker network)..."
       i=1
       while [ $i -le 30 ]; do
-        if curl -fsS http://localhost:8081/actuator/health >/dev/null 2>&1; then
+        if docker run --rm --network "${COMPOSE_PROJECT_NAME}_default" curlimages/curl:8.11.1 \
+          -fsS http://backend:8080/actuator/health >/dev/null 2>&1; then
           echo "✓ Backend is ready!"
           break
         fi
@@ -236,10 +235,11 @@ frontend-e2e:
         i=$((i + 1))
       done
     - |
-      echo "Waiting for frontend to be ready..."
+      echo "Waiting for frontend to be ready (docker network)..."
       i=1
       while [ $i -le 30 ]; do
-        if curl -fsS http://localhost:5174 >/dev/null 2>&1; then
+        if docker run --rm --network "${COMPOSE_PROJECT_NAME}_default" curlimages/curl:8.11.1 \
+          -fsS http://frontend >/dev/null 2>&1; then
           echo "✓ Frontend is ready!"
           break
         fi
@@ -253,63 +253,31 @@ frontend-e2e:
         i=$((i + 1))
       done
   script:
-    - echo "Checking frontend directory..."
-    - pwd
-    - echo "Frontend directory contents:"
-    - ls -la frontend/ | head -20 || echo "Frontend directory not found"
-    - echo "Verifying package.json exists..."
-    - test -f frontend/package.json && echo "✓ package.json found" || (echo "✗ package.json NOT found" && ls -la frontend/ | head -10)
     - |
-      FRONTEND_DIR="$(pwd)/frontend"
-      echo "Mounting frontend directory from: $FRONTEND_DIR"
-      echo "Verifying source directory exists..."
-      ls -la "$FRONTEND_DIR" | head -10 || echo "ERROR: Frontend directory not found at $FRONTEND_DIR"
+      # IMPORTANT: With socket-based Docker, bind-mounting paths from inside the job container
+      # often mounts the *runner host* path (not the job container path). Use volumes-from to
+      # mount the same build volume into the test container reliably.
+      echo "Running Playwright e2e (volumes-from: $HOSTNAME, network: ${COMPOSE_PROJECT_NAME}_default)"
       docker run --rm \
-        --network host \
-        -e CYPRESS_BASE_URL="$CYPRESS_BASE_URL" \
-        -e CYPRESS_API_URL="$CYPRESS_API_URL" \
-        --mount type=bind,source="$FRONTEND_DIR",target=/e2e,readonly=false \
-        -w /e2e \
-        --entrypoint="" \
-        cypress/included:15.9.0 \
-        sh -c "
-          echo '=== Verifying mount ===';
-          echo 'Current directory:';
-          pwd;
-          echo '';
-          echo 'Contents of /e2e:';
-          ls -la /e2e/ | head -20;
-          echo '';
-          echo 'Looking for package.json...';
-          if [ -f /e2e/package.json ]; then
-            echo '✓ package.json found';
-            cat /e2e/package.json | head -5;
-          else
-            echo 'ERROR: package.json not found in /e2e';
-            echo 'All files in /e2e:';
-            find /e2e -maxdepth 1;
-            echo 'All files recursively (first 20):';
-            find /e2e -type f | head -20;
-            exit 1;
-          fi;
-          echo '';
-          echo '=== Running npm install ===';
-          npm install;
-          echo '';
-          echo '=== Running Cypress ===';
-          npx cypress run --headless --browser chrome
-        "
+        --network "${COMPOSE_PROJECT_NAME}_default" \
+        --volumes-from "$HOSTNAME" \
+        -e PLAYWRIGHT_BASE_URL="$PLAYWRIGHT_BASE_URL" \
+        -e VITE_API_URL="$VITE_API_URL" \
+        -e VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" \
+        -w "$CI_PROJECT_DIR/frontend" \
+        --shm-size=2g \
+        mcr.microsoft.com/playwright:v1.50.0-jammy \
+        sh -lc "npm ci && npx playwright test"
   after_script:
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml logs --no-color || true
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
   artifacts:
     when: always
     reports:
-      junit: frontend/cypress/results/*.xml
+      junit: frontend/test-results/junit.xml
     paths:
-      - frontend/cypress/results/
-      - frontend/cypress/screenshots/
-      - frontend/cypress/videos/
+      - frontend/test-results/
+      - frontend/playwright-report/
     expire_in: 1 week
   needs:
     - backend-build

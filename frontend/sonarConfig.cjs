@@ -21,16 +21,13 @@ scanner(
       'sonar.projectName': 'Individual-Project-S3 (Frontend)',
       'sonar.token': sonarToken,
       'sonar.sources': 'src',
-      'sonar.tests': 'tests,cypress/e2e',
-      'sonar.test.inclusions': '**/*.test.jsx,**/*.spec.jsx,**/*.test.js,**/*.spec.js,**/*.cy.js',
-      'sonar.exclusions': 'coverage/**,node_modules/**,cypress/fixtures/**,cypress/support/**',
+      'sonar.tests': 'tests,e2e',
+      'sonar.test.inclusions': '**/*.test.jsx,**/*.spec.jsx,**/*.test.js,**/*.spec.js,**/*.spec.e2e.js,**/*.spec.e2e.ts,**/*.spec.ts',
+      'sonar.exclusions': 'coverage/**,node_modules/**,playwright-report/**,test-results/**',
       'sonar.javascript.lcov.reportPaths': 'coverage/lcov.info',
       'sonar.sourceEncoding': 'UTF-8',
       'sonar.qualitygate.wait': false,
-      'sonar.coverage.exclusions': '**/*.test.jsx,**/*.spec.jsx,**/*.test.js,**/*.spec.js,**/*.cy.js',
-      // Note: E2E test execution reports are generated but not included in scan due to XML format compatibility
-      // Cypress generates individual XML files per spec which may need to be combined for SonarQube
-      // Test files are still included in analysis via sonar.test.inclusions
+      'sonar.coverage.exclusions': '**/*.test.jsx,**/*.spec.jsx,**/*.test.js,**/*.spec.js,**/*.spec.ts,**/*.spec.e2e.*',
     },
   },
   () => {

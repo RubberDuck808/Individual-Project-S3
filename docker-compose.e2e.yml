@@ -44,7 +44,9 @@ services:
       context: ./frontend
       args:
         VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN:-test}
-        VITE_API_URL: http://backend:8080
+        # For CI (Playwright runs on the docker-compose network): http://backend:8080
+        # For local runs (browser on host): export VITE_API_URL=http://localhost:8081 before building
+        VITE_API_URL: ${VITE_API_URL:-http://backend:8080}
     ports:
       - "5174:80"
     depends_on:

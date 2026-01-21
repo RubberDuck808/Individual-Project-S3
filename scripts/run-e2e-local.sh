@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script to run e2e tests locally with test database
-# This starts the test environment and runs Cypress tests
+# This starts the test environment and runs Playwright tests
 
 set -e
 
@@ -39,12 +39,11 @@ echo "Test environment is ready!"
 echo "Backend: http://localhost:8081"
 echo "Frontend: http://localhost:5174"
 echo ""
-echo "Running Cypress tests..."
+echo "Running Playwright tests..."
 
-# Run Cypress tests
+# Run Playwright tests
 cd frontend
-CYPRESS_BASE_URL="http://localhost:5174" \
-CYPRESS_API_URL="http://localhost:8081" \
+PLAYWRIGHT_BASE_URL="http://localhost:5174" \
 npm run test:e2e
 
 TEST_EXIT_CODE=$?
