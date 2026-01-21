@@ -18,6 +18,9 @@ variables:
   # Set via GitLab UI: CI/CD → Variables → Add variable → PIPELINE_TYPE
   # Or via pipeline trigger: Variables → PIPELINE_TYPE = auto|frontend|backend|all
   PIPELINE_TYPE: "auto"
+  # Set RUN_TESTS=false to skip unit tests and sonar stages (faster iteration)
+  # Set RUN_TESTS=true or leave unset to run full pipeline
+  RUN_TESTS: "true"
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
@@ -79,8 +82,8 @@ backend-test:
   stage: test
   image: gradle:8.9-jdk21
   rules:
-    - if: '$PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend"'
-    - if: '$PIPELINE_TYPE == "auto"'
+    - if: '$RUN_TESTS != "false" && ($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend")'
+    - if: '$RUN_TESTS != "false" && $PIPELINE_TYPE == "auto"'
       changes:
         - backend/**/*
         - backend/Dockerfile
@@ -129,8 +132,8 @@ frontend-test:
   stage: test
   image: node:22
   rules:
-    - if: '$PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend"'
-    - if: '$PIPELINE_TYPE == "auto"'
+    - if: '$RUN_TESTS != "false" && ($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend")'
+    - if: '$RUN_TESTS != "false" && $PIPELINE_TYPE == "auto"'
       changes:
         - frontend/**/*
         - frontend/Dockerfile
@@ -256,19 +259,32 @@ frontend-e2e:
       done
   script:
     - |
-      # With socket-based Docker, bind-mount the project directory directly
-      # The CI_PROJECT_DIR is accessible from the runner host
+      # With socket-based Docker, ensure we're in project root and use pwd for actual path
+      cd "$CI_PROJECT_DIR" || cd "$(pwd)"
+      PROJECT_ROOT="$(pwd)"
+      echo "Project root: $PROJECT_ROOT"
+      echo "Verifying frontend files exist..."
+      if [ ! -f "frontend/package.json" ]; then
+        echo "ERROR: frontend/package.json not found"
+        echo "Current directory: $(pwd)"
+        ls -la
+        ls -la frontend/ 2>&1 || echo "frontend/ directory does not exist"
+        exit 1
+      fi
+      
       echo "Running Playwright e2e (network: ${COMPOSE_PROJECT_NAME}_default)"
+      # Mount the project directory - with socket-based Docker, this should work
+      # as GitLab CI mounts the project from runner host into job container
       docker run --rm \
         --network "${COMPOSE_PROJECT_NAME}_default" \
-        -v "$CI_PROJECT_DIR:$CI_PROJECT_DIR" \
+        -v "$PROJECT_ROOT:$PROJECT_ROOT" \
         -e PLAYWRIGHT_BASE_URL="$PLAYWRIGHT_BASE_URL" \
         -e VITE_API_URL="$VITE_API_URL" \
         -e VITE_MAPBOX_TOKEN="$VITE_MAPBOX_TOKEN" \
-        -w "$CI_PROJECT_DIR/frontend" \
+        -w "$PROJECT_ROOT/frontend" \
         --shm-size=2g \
         mcr.microsoft.com/playwright:v1.50.0-jammy \
-        sh -lc "npm ci && npx playwright test"
+        sh -lc "echo 'Working directory:' && pwd && echo 'Files:' && ls -la && echo 'Running npm ci...' && npm ci && echo 'Running tests...' && npx playwright test"
   after_script:
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml logs --no-color || true
     - docker compose -p "$COMPOSE_PROJECT_NAME" -f docker-compose.e2e.yml down -v --remove-orphans || true
@@ -283,7 +299,7 @@ frontend-e2e:
   needs:
     - backend-build
     - frontend-build
-    - frontend-test
+    # Note: frontend-test removed for faster iteration - e2e doesn't need it
 
 # ================================
 # SONARQUBE BACKEND ANALYSIS
@@ -292,14 +308,14 @@ sonarqube-backend:
   stage: sonar
   image: gradle:8.9-jdk21
   rules:
-    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend") && $CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend") && $CI_COMMIT_BRANCH'
-    - if: '$PIPELINE_TYPE == "auto" && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$RUN_TESTS != "false" && ($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend") && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$RUN_TESTS != "false" && ($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "backend") && $CI_COMMIT_BRANCH'
+    - if: '$RUN_TESTS != "false" && $PIPELINE_TYPE == "auto" && $CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - backend/**/*
         - docker-compose*.yml
         - .gitlab-ci.yml
-    - if: '$PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH'
+    - if: '$RUN_TESTS != "false" && $PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH'
       changes:
         - backend/**/*
         - docker-compose*.yml
@@ -345,14 +361,14 @@ sonarqube-frontend:
   image: node:22
   allow_failure: true
   rules:
-    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend") && $CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend") && $CI_COMMIT_BRANCH'
-    - if: '$PIPELINE_TYPE == "auto" && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$RUN_TESTS != "false" && ($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend") && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$RUN_TESTS != "false" && ($PIPELINE_TYPE == "all" || $PIPELINE_TYPE == "frontend") && $CI_COMMIT_BRANCH'
+    - if: '$RUN_TESTS != "false" && $PIPELINE_TYPE == "auto" && $CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - frontend/**/*
         - docker-compose*.yml
         - .gitlab-ci.yml
-    - if: '$PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH'
+    - if: '$RUN_TESTS != "false" && $PIPELINE_TYPE == "auto" && $CI_COMMIT_BRANCH'
       changes:
         - frontend/**/*
         - docker-compose*.yml
