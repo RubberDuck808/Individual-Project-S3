@@ -128,16 +128,23 @@ frontend-test:
         - frontend/nginx.conf
         - docker-compose*.yml
         - .gitlab-ci.yml
+        # Also run when backend changes (keeps unit tests aligned with E2E runs)
+        - backend/**/*
+        - backend/Dockerfile
     - when: never
   script:
     - cd frontend
     - npm ci
+    - mkdir -p test-results
     - npm run test:coverage
   artifacts:
     when: always
+    reports:
+      junit: frontend/test-results/junit.xml
     paths:
       - frontend/coverage/
       - frontend/coverage/lcov.info
+      - frontend/test-results/junit.xml
     expire_in: 1 week
   needs:
     - frontend-build
