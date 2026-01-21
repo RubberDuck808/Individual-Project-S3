@@ -41,6 +41,9 @@ backend-build:
         - backend/Dockerfile
         - docker-compose*.yml
         - .gitlab-ci.yml
+        # Also run if frontend changes (needed for e2e tests)
+        - frontend/**/*
+        - frontend/Dockerfile
     - when: never
   script:
     - cd backend
@@ -65,6 +68,9 @@ frontend-build:
         - frontend/nginx.conf
         - docker-compose*.yml
         - .gitlab-ci.yml
+        # Also run if backend changes (needed for e2e tests)
+        - backend/**/*
+        - backend/Dockerfile
     - when: never
   script:
     - cd frontend
