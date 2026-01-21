@@ -7,12 +7,13 @@ set -e
 echo "Starting E2E test environment..."
 
 # Start services
-docker-compose -f docker-compose.e2e.yml up -d
+docker compose -f docker-compose.e2e.yml -f docker-compose.e2e.local.yml up -d --build
 
 echo "Waiting for services to be ready..."
 
-# Wait for postgres
-until docker exec e2e-postgres pg_isready -U test -d testdb > /dev/null 2>&1; do
+# Wait for postgres (via published port)
+until docker compose -f docker-compose.e2e.yml -f docker-compose.e2e.local.yml exec -T postgres \
+  pg_isready -U test -d testdb > /dev/null 2>&1; do
   echo "Waiting for postgres..."
   sleep 2
 done
@@ -55,7 +56,7 @@ read -p "Stop test services? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
   echo "Stopping services..."
-  docker-compose -f docker-compose.e2e.yml down -v
+  docker compose -f docker-compose.e2e.yml -f docker-compose.e2e.local.yml down -v
 fi
 
 exit $TEST_EXIT_CODE

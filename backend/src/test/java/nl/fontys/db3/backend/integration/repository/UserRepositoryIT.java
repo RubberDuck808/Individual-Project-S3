@@ -33,13 +33,15 @@ class UserRepositoryIT {
     void setUp() {
         try {
             userRepository.deleteAll();
-            roleRepository.deleteAll();
+            // Don't delete roles - migration V4__Seed_roles.sql creates them
+            // and they may be referenced by foreign keys
         } catch (Exception ignored) {
             // Tables may not exist yet - schema will be created on first save
         }
         
-        userRole = Role.builder().name("USER").build();
-        roleRepository.save(userRole);
+        // Use existing USER role from migration, or create if it doesn't exist
+        userRole = roleRepository.findByName("USER")
+                .orElseGet(() -> roleRepository.save(Role.builder().name("USER").build()));
     }
 
     @Test

@@ -7,8 +7,11 @@ services:
       POSTGRES_DB: testdb
       POSTGRES_USER: test
       POSTGRES_PASSWORD: test
-    # Port mapping only for local testing (CI doesn't need it - containers communicate via docker network)
-    # Uncomment for local: ports: - "5433:5432"
+    # CI NOTE:
+    # Do NOT publish ports in CI. With socket-based Docker, published ports bind on the runner host
+    # and will conflict between pipelines or with other services.
+    #
+    # For local testing, use docker-compose.e2e.local.yml (ports are published there).
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U test -d testdb"]
       interval: 2s
@@ -17,8 +20,6 @@ services:
 
   backend:
     build: ./backend
-    ports:
-      - "8081:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/testdb
       SPRING_DATASOURCE_USERNAME: test
@@ -47,8 +48,6 @@ services:
         # For CI (Playwright runs on the docker-compose network): http://backend:8080
         # For local runs (browser on host): export VITE_API_URL=http://localhost:8081 before building
         VITE_API_URL: ${VITE_API_URL:-http://backend:8080}
-    ports:
-      - "5174:80"
     depends_on:
       backend:
         condition: service_healthy
