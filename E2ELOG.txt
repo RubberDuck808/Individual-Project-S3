@@ -1,0 +1,1665 @@
+[0KRunning with gitlab-runner 18.6.0 (3a847532)[0;m
+[0K  on docker runner v_ajExQ7g, system ID: r_d2rtipRO5ZmO[0;m
+section_start:1768997232:prepare_executor
+[0K[0K[36;1mPreparing the "docker" executor[0;m[0;m
+[0KUsing Docker executor with image docker:24 ...[0;m
+[0KStarting service docker:24-dind...[0;m
+[0KUsing effective pull policy of [always] for container docker:24-dind[0;m
+[0KPulling docker image docker:24-dind ...[0;m
+[0KUsing docker image sha256:9b17a9f25adf17b88d0a013b4f00160754adf4b07ccbe9986664a49886c2c98e for docker:24-dind with digest docker@sha256:9b17a9f25adf17b88d0a013b4f00160754adf4b07ccbe9986664a49886c2c98e ...[0;m
+[0;33mWARNING: Service docker:24-dind is already created. Ignoring.[0;m
+[0KWaiting for services to be up and running (timeout 30 seconds)...[0;m
+[0KUsing effective pull policy of [always] for container docker:24[0;m
+[0KPulling docker image docker:24 ...[0;m
+[0KUsing docker image sha256:9b17a9f25adf17b88d0a013b4f00160754adf4b07ccbe9986664a49886c2c98e for docker:24 with digest docker@sha256:9b17a9f25adf17b88d0a013b4f00160754adf4b07ccbe9986664a49886c2c98e ...[0;m
+section_end:1768997238:prepare_executor
+[0Ksection_start:1768997238:prepare_script
+[0K[0K[36;1mPreparing environment[0;m[0;m
+[0KUsing effective pull policy of [always] for container sha256:97b8eb93066a749581908555073aeab4db451cfc401a00a0d952a506b5ebc624[0;m
+Running on runner-vajexq7g-project-66487-concurrent-0 via 9a5a1bd1e647...
+section_end:1768997239:prepare_script
+[0Ksection_start:1768997239:get_sources
+[0K[0K[36;1mGetting source from Git repository[0;m[0;m
+[32;1mGitaly correlation ID: 01KFG776EYRYK5REEAN055WMWJ[0;m
+[32;1mFetching changes with git depth set to 20...[0;m
+Reinitialized existing Git repository in /builds/I548789/individual-project-s3/.git/
+[32;1mCreated fresh repository.[0;m
+[32;1mChecking out feae9f8a as detached HEAD (ref is development)...[0;m
+Removing backend/.gradle/
+Removing frontend/dist/
+Removing frontend/node_modules/
+
+[32;1mSkipping Git submodules setup[0;m
+section_end:1768997241:get_sources
+[0Ksection_start:1768997241:restore_cache
+[0K[0K[36;1mRestoring cache[0;m[0;m
+[32;1mChecking cache for development-non_protected...[0;m
+No URL provided, cache will not be downloaded from shared cache server. Instead a local version of cache will be extracted.[0;m 
+[32;1mSuccessfully extracted cache[0;m
+section_end:1768997242:restore_cache
+[0Ksection_start:1768997242:download_artifacts
+[0K[0K[36;1mDownloading artifacts[0;m[0;m
+[32;1mDownloading artifacts for backend-build (928544)...[0;m
+Downloading artifacts from coordinator... ok      [0;m  correlation_id[0;m=01KFG77GVEP6NVCWM5FR0KFFAD host[0;m=git.fhict.nl id[0;m=928544 responseStatus[0;m=200 OK token[0;m=64_5vwFoJ
+[32;1mDownloading artifacts for frontend-build (928545)...[0;m
+Downloading artifacts from coordinator... ok      [0;m  correlation_id[0;m=01KFG78BCMAJ3TJP0Z0R0E13SE host[0;m=git.fhict.nl id[0;m=928545 responseStatus[0;m=200 OK token[0;m=64_5vwFoJ
+section_end:1768997270:download_artifacts
+[0Ksection_start:1768997270:step_script
+[0K[0K[36;1mExecuting "step_script" stage of the job script[0;m[0;m
+[0KUsing effective pull policy of [always] for container docker:24[0;m
+[0KUsing docker image sha256:9b17a9f25adf17b88d0a013b4f00160754adf4b07ccbe9986664a49886c2c98e for docker:24 with digest docker@sha256:9b17a9f25adf17b88d0a013b4f00160754adf4b07ccbe9986664a49886c2c98e ...[0;m
+[32;1m$ echo "==========================================" # collapsed multi-line command[0;m
+==========================================
+=== E2E JOB START - DEBUGGING MODE ===
+==========================================
+Job ID: 928547
+Pipeline ID: 264690
+Project Name: e2e-264690
+
+=== Environment Variables ===
+CI_PROJECT_DIR: /builds/I548789/individual-project-s3
+DOCKER_HOST: tcp://docker:2375
+PLAYWRIGHT_BASE_URL: http://frontend
+VITE_API_URL: https://tripwire-backend-166064655547.europe-west4.run.app
+VITE_MAPBOX_TOKEN: pk.eyJ1Ijoib3NjYXIwMDUiLCJhIjoiY21oaTYxcDJpMHNvZjJscXZmdnp5NTN5bSJ9.O7gyUFqu1gJX0EidNEfNzw
+
+=== Current Directory ===
+/builds/I548789/individual-project-s3
+
+=== Directory Contents ===
+total 96
+drwxrwxrwx    9 root     root          4096 Jan 21 12:05 .
+drwxrwxrwx    4 root     root          4096 Nov 20 23:57 ..
+drwxrwxrwx    6 root     root          4096 Jan 21 12:07 .git
+-rw-rw-rw-    1 root     root           615 Jan 19 23:53 .gitignore
+-rw-rw-rw-    1 root     root         25135 Jan 21 12:05 .gitlab-ci.yml
+drwxrwxrwx    2 root     root          4096 Jan 16 16:57 .vscode
+-rw-rw-rw-    1 root     root          3553 Jan 16 16:57 Functions.txt
+-rw-rw-rw-    1 root     root          3359 Nov 20 23:57 README.md
+drwxrwxrwx    7 root     root          4096 Jan 21 12:07 backend
+-rw-rw-rw-    1 root     root           384 Jan 21 11:26 docker-compose.e2e.local.yml
+-rw-rw-rw-    1 root     root          1743 Jan 21 11:26 docker-compose.e2e.yml
+-rw-rw-rw-    1 root     root          1142 Jan 16 16:57 docker-compose.sonar.yml
+-rw-rw-rw-    1 root     root           486 Jan 16 16:57 docker-compose.test.yml
+-rw-rw-rw-    1 root     root          1065 Jan 16 16:57 docker-compose.yml
+drwxrwxrwx    8 root     root          4096 Jan 21 12:07 frontend
+drwxrwxrwx    7 root     root          4096 Jan 19 23:53 hardware
+drwxrwxrwx    2 root     root          4096 Jan 21 11:26 scripts
+drwxrwxrwx    5 root     root          4096 Jan  5 12:33 supabase
+
+=== Frontend Directory ===
+total 412
+drwxrwxrwx    8 root     root          4096 Jan 21 12:07 .
+drwxrwxrwx    9 root     root          4096 Jan 21 12:05 ..
+-rw-rw-rw-    1 root     root           435 Jan 19 23:53 .gitignore
+drwxrwxrwx    2 root     root          4096 Jan 21 12:05 .scannerwork
+-rw-rw-rw-    1 root     root           819 Dec 16 10:30 Dockerfile
+-rw-rw-rw-    1 root     root           856 Nov 20 23:57 README.md
+drwxr-xr-x    5 root     root          4096 Jan 21 12:07 dist
+drwxrwxrwx    2 root     root          4096 Jan 21 10:58 e2e
+-rw-rw-rw-    1 root     root           763 Nov 20 23:57 eslint.config.js
+-rw-rw-rw-    1 root     root           417 Jan  8 11:03 index.html
+-rw-rw-rw-    1 root     root           239 Nov 20 23:57 nginx.conf
+-rw-rw-rw-    1 root     root        332914 Jan 21 10:58 package-lock.json
+-rw-rw-rw-    1 root     root          1856 Jan 21 10:58 package.json
+-rw-rw-rw-    1 root     root           591 Jan 21 10:58 playwright.config.js
+-rw-rw-rw-    1 root     root            80 Nov 20 23:57 postcss.config.js
+drwxrwxrwx    4 root     root          4096 Jan  8 11:03 public
+-rw-rw-rw-    1 root     root          1450 Jan 21 10:58 sonarConfig.cjs
+drwxrwxrwx   11 root     root          4096 Jan 19 23:53 src
+-rw-rw-rw-    1 root     root           337 Jan  5 12:33 tailwind.config.js
+drwxrwxrwx    9 root     root          4096 Jan 19 23:53 tests
+-rw-rw-rw-    1 root     root           465 Jan 16 16:57 vite.config.js
+-rw-rw-rw-    1 root     root           306 Jan  5 12:33 vitest.config.js
+
+=== Backend Directory ===
+total 68
+drwxrwxrwx    7 root     root          4096 Jan 21 12:07 .
+drwxrwxrwx    9 root     root          4096 Jan 21 12:05 ..
+-rw-rw-rw-    1 root     root            54 Nov 20 23:57 .gitattributes
+-rw-rw-rw-    1 root     root           485 Jan 19 23:53 .gitignore
+drwxr-xr-x    5 root     root          4096 Jan  5 16:35 .gradle
+-rw-rw-rw-    1 root     root           573 Jan 20 17:12 Dockerfile
+drwxrwxrwx    3 root     root          4096 Jan 21 12:07 build
+-rw-rw-rw-    1 root     root          3831 Jan 19 23:53 build.gradle
+-rw-rw-rw-    1 root     root           435 Jan 16 16:57 docker-compose.test.yml
+drwxrwxrwx    3 root     root          4096 Nov 20 23:57 gradle
+-rwxrwxrwx    1 root     root          8733 Nov 20 23:57 gradlew
+-rw-rw-rw-    1 root     root          2937 Nov 20 23:57 gradlew.bat
+drwxrwxrwx    2 root     root          4096 Jan 21 11:55 logs
+-rw-rw-rw-    1 root     root            29 Nov 20 23:57 settings.gradle
+drwxrwxrwx    4 root     root          4096 Nov 20 23:57 src
+[32;1m$ apk add --no-cache docker-cli-compose curl[0;m
+fetch https://dl-cdn.alpinelinux.org/alpine/v3.20/main/x86_64/APKINDEX.tar.gz
+fetch https://dl-cdn.alpinelinux.org/alpine/v3.20/community/x86_64/APKINDEX.tar.gz
+(1/4) Upgrading libcurl (8.9.0-r0 -> 8.14.1-r2)
+(2/4) Installing curl (8.14.1-r2)
+(3/4) Installing docker-cli (26.1.5-r0)
+(4/4) Installing docker-cli-compose (2.27.0-r3)
+Executing busybox-1.36.1-r29.trigger
+OK: 129 MiB in 76 packages
+[32;1m$ export VITE_API_URL="http://backend:8080"[0;m
+[32;1m$ echo "=== Docker Installation Check ===" # collapsed multi-line command[0;m
+=== Docker Installation Check ===
+Docker version 24.0.9, build 2936816
+Docker Compose version v2.29.1
+[32;1m$ echo "" # collapsed multi-line command[0;m
+
+=== Waiting for DinD daemon ===
+DOCKER_HOST: tcp://docker:2375
+Attempt 1/30: Testing DinD connection...
+✓ DinD is ready!
+
+=== Docker Info ===
+Client:
+ Version:    24.0.9
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.16.2
+    Path:     /usr/local/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v2.29.1
+    Path:     /usr/local/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 0
+ Server Version: 24.0.9
+ Storage Driver: overlay2
+  Backing Filesystem: extfs
+  Supports d_type: true
+  Using metacopy: false
+  Native Overlay Diff: true
+  userxattr: false
+ Logging Driver: json-file
+ Cgroup Driver: cgroupfs
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local logentries splunk syslog
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: 7c3aca7a610df76212171d200ca3811ff6096eb8
+ runc version: v1.1.12-0-g51d5e94
+ init version: de40ad0
+ Security Options:
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.6.87.2-microsoft-standard-WSL2
+ Operating System: Alpine Linux v3.20 (containerized)
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 22
+ Total Memory: 15.3GiB
+ Name: d3425bb33017
+ ID: 19af2669-0b8a-4b7a-b6f4-342d8da39669
+ Docker Root Dir: /var/lib/docker
+ Debug Mode: false
+ Experimental: false
+ Insecure Registries:
+  127.0.0.0/8
+ Live Restore Enabled: false
+ Product License: Community Engine
+
+WARNING: API is accessible on http://0.0.0.0:2375 without encryption.
+         Access to the remote API is equivalent to root access on the host. Refer
+         to the 'Docker daemon attack surface' section in the documentation for
+         more information: https://docs.docker.com/go/attack-surface/
+
+=== Docker Networks ===
+NETWORK ID     NAME      DRIVER    SCOPE
+d48eb3bfba26   bridge    bridge    local
+405f235aafa6   host      host      local
+135ae8525328   none      null      local
+
+=== Docker Containers ===
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+[32;1m$ echo "" # collapsed multi-line command[0;m
+
+=== Cleaning up previous compose ===
+time="2026-01-21T12:07:52Z" level=warning msg="/builds/I548789/individual-project-s3/docker-compose.e2e.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+Cleanup complete
+[32;1m$ echo "" # collapsed multi-line command[0;m
+
+=== Starting docker-compose services ===
+Project name: e2e-264690
+Compose file: docker-compose.e2e.yml
+time="2026-01-21T12:07:52Z" level=warning msg="/builds/I548789/individual-project-s3/docker-compose.e2e.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ postgres Pulling 
+ 119d43eec815 Pulling fs layer 
+ 1df764af9d29 Pulling fs layer 
+ 56f952a300d5 Pulling fs layer 
+ c56f2098d81b Pulling fs layer 
+ 2c60e8d26a28 Pulling fs layer 
+ e3a93a48af49 Pulling fs layer 
+ 749a66f683f6 Pulling fs layer 
+ 7217575ed52c Pulling fs layer 
+ 070510219061 Pulling fs layer 
+ b0e2b008abd1 Pulling fs layer 
+ 566364257f63 Pulling fs layer 
+ 6e117204916b Pulling fs layer 
+ e893053483fe Pulling fs layer 
+ cdd02f27cbd2 Pulling fs layer 
+ c56f2098d81b Waiting 
+ 070510219061 Waiting 
+ 2c60e8d26a28 Waiting 
+ b0e2b008abd1 Waiting 
+ e893053483fe Waiting 
+ cdd02f27cbd2 Waiting 
+ 7217575ed52c Waiting 
+ 6e117204916b Waiting 
+ 749a66f683f6 Waiting 
+ 566364257f63 Waiting 
+ 1df764af9d29 Downloading [========================================>          ]     953B/1.168kB
+ 1df764af9d29 Downloading [==================================================>]  1.168kB/1.168kB
+ 1df764af9d29 Verifying Checksum 
+ 1df764af9d29 Download complete 
+ 56f952a300d5 Downloading [>                                                  ]  65.54kB/6.438MB
+ 119d43eec815 Downloading [>                                                  ]  299.7kB/29.77MB
+ 56f952a300d5 Downloading [===============>                                   ]  2.003MB/6.438MB
+ 119d43eec815 Downloading [===>                                               ]  2.146MB/29.77MB
+ 56f952a300d5 Downloading [==============================>                    ]  3.867MB/6.438MB
+ 119d43eec815 Downloading [=======>                                           ]  4.293MB/29.77MB
+ 56f952a300d5 Downloading [============================================>      ]  5.747MB/6.438MB
+ 56f952a300d5 Verifying Checksum 
+ 56f952a300d5 Download complete 
+ 119d43eec815 Downloading [==========>                                        ]  6.447MB/29.77MB
+ 119d43eec815 Downloading [================>                                  ]  9.548MB/29.77MB
+ 119d43eec815 Downloading [====================>                              ]  12.29MB/29.77MB
+ c56f2098d81b Downloading [>                                                  ]  13.69kB/1.257MB
+ c56f2098d81b Verifying Checksum 
+ c56f2098d81b Download complete 
+ 119d43eec815 Downloading [=========================>                         ]  15.05MB/29.77MB
+ 119d43eec815 Downloading [=============================>                     ]   17.5MB/29.77MB
+ 119d43eec815 Downloading [==================================>                ]  20.56MB/29.77MB
+ 119d43eec815 Downloading [========================================>          ]   24.2MB/29.77MB
+ 2c60e8d26a28 Downloading [>                                                  ]  85.31kB/8.204MB
+ 2c60e8d26a28 Downloading [=>                                                 ]  254.8kB/8.204MB
+ 119d43eec815 Downloading [=============================================>     ]  26.93MB/29.77MB
+ 2c60e8d26a28 Downloading [=============>                                     ]  2.208MB/8.204MB
+ 119d43eec815 Downloading [================================================>  ]  29.09MB/29.77MB
+ 119d43eec815 Verifying Checksum 
+ 119d43eec815 Download complete 
+ e3a93a48af49 Downloading [>                                                  ]  13.69kB/1.312MB
+ 2c60e8d26a28 Downloading [===========================>                       ]  4.538MB/8.204MB
+ 119d43eec815 Extracting [>                                                  ]  327.7kB/29.77MB
+ e3a93a48af49 Verifying Checksum 
+ e3a93a48af49 Download complete 
+ 2c60e8d26a28 Downloading [==========================================>        ]  6.963MB/8.204MB
+ 2c60e8d26a28 Verifying Checksum 
+ 2c60e8d26a28 Download complete 
+ 119d43eec815 Extracting [====>                                              ]  2.949MB/29.77MB
+ 119d43eec815 Extracting [==========>                                        ]  6.226MB/29.77MB
+ 119d43eec815 Extracting [==============>                                    ]  8.847MB/29.77MB
+ 749a66f683f6 Downloading [==================================================>]     116B/116B
+ 749a66f683f6 Verifying Checksum 
+ 749a66f683f6 Download complete 
+ 119d43eec815 Extracting [=================>                                 ]  10.49MB/29.77MB
+ 7217575ed52c Downloading [===============>                                   ]     953B/3.139kB
+ 7217575ed52c Downloading [==================================================>]  3.139kB/3.139kB
+ 7217575ed52c Verifying Checksum 
+ 7217575ed52c Download complete 
+ 119d43eec815 Extracting [====================>                              ]  12.12MB/29.77MB
+ 070510219061 Downloading [>                                                  ]  540.7kB/113.1MB
+ 119d43eec815 Extracting [==========================>                        ]  16.06MB/29.77MB
+ 070510219061 Downloading [=>                                                 ]  3.768MB/113.1MB
+ 119d43eec815 Extracting [=================================>                 ]  19.99MB/29.77MB
+ 070510219061 Downloading [===>                                               ]   6.98MB/113.1MB
+ 119d43eec815 Extracting [=======================================>           ]  23.59MB/29.77MB
+ b0e2b008abd1 Downloading [======>                                            ]  1.369kB/10.01kB
+ b0e2b008abd1 Downloading [==================================================>]  10.01kB/10.01kB
+ b0e2b008abd1 Verifying Checksum 
+ b0e2b008abd1 Download complete 
+ 070510219061 Downloading [====>                                              ]  10.17MB/113.1MB
+ 566364257f63 Downloading [==================================================>]     127B/127B
+ 566364257f63 Verifying Checksum 
+ 566364257f63 Download complete 
+ 119d43eec815 Extracting [==========================================>        ]  25.56MB/29.77MB
+ 070510219061 Downloading [=====>                                             ]  13.36MB/113.1MB
+ 070510219061 Downloading [=======>                                           ]  16.59MB/113.1MB
+ 070510219061 Downloading [========>                                          ]  19.82MB/113.1MB
+ 119d43eec815 Extracting [============================================>      ]  26.21MB/29.77MB
+ 070510219061 Downloading [==========>                                        ]  23.04MB/113.1MB
+ 6e117204916b Downloading [==================================================>]     167B/167B
+ 6e117204916b Verifying Checksum 
+ 6e117204916b Download complete 
+ e893053483fe Downloading [========>                                          ]     953B/5.837kB
+ e893053483fe Downloading [==================================================>]  5.837kB/5.837kB
+ e893053483fe Verifying Checksum 
+ e893053483fe Download complete 
+ 119d43eec815 Extracting [==============================================>    ]  27.85MB/29.77MB
+ 070510219061 Downloading [===========>                                       ]  26.26MB/113.1MB
+ 070510219061 Downloading [============>                                      ]  28.93MB/113.1MB
+ 119d43eec815 Extracting [===============================================>   ]  28.51MB/29.77MB
+ 070510219061 Downloading [==============>                                    ]  32.16MB/113.1MB
+ 070510219061 Downloading [===============>                                   ]  35.39MB/113.1MB
+ cdd02f27cbd2 Downloading [==================================================>]     185B/185B
+ cdd02f27cbd2 Verifying Checksum 
+ cdd02f27cbd2 Download complete 
+ 119d43eec815 Extracting [================================================>  ]  28.84MB/29.77MB
+ 070510219061 Downloading [=================>                                 ]  38.61MB/113.1MB
+ 070510219061 Downloading [==================>                                ]  41.28MB/113.1MB
+ 070510219061 Downloading [===================>                               ]  43.97MB/113.1MB
+ 119d43eec815 Extracting [================================================>  ]  29.16MB/29.77MB
+ 070510219061 Downloading [====================>                              ]  46.65MB/113.1MB
+ 070510219061 Downloading [=====================>                             ]  49.35MB/113.1MB
+ 119d43eec815 Extracting [==================================================>]  29.77MB/29.77MB
+ 070510219061 Downloading [=======================>                           ]  52.56MB/113.1MB
+ 119d43eec815 Pull complete 
+ 1df764af9d29 Extracting [==================================================>]  1.168kB/1.168kB
+ 1df764af9d29 Extracting [==================================================>]  1.168kB/1.168kB
+ 070510219061 Downloading [========================>                          ]  55.77MB/113.1MB
+ 1df764af9d29 Pull complete 
+ 56f952a300d5 Extracting [>                                                  ]  65.54kB/6.438MB
+ 070510219061 Downloading [=========================>                         ]  58.45MB/113.1MB
+ 56f952a300d5 Extracting [================>                                  ]  2.097MB/6.438MB
+ 070510219061 Downloading [==========================>                        ]  60.58MB/113.1MB
+ 56f952a300d5 Extracting [=====================================>             ]   4.85MB/6.438MB
+ 070510219061 Downloading [============================>                      ]   63.8MB/113.1MB
+ 56f952a300d5 Extracting [=================================================> ]  6.423MB/6.438MB
+ 56f952a300d5 Extracting [==================================================>]  6.438MB/6.438MB
+ 070510219061 Downloading [=============================>                     ]  66.47MB/113.1MB
+ 56f952a300d5 Pull complete 
+ c56f2098d81b Extracting [=>                                                 ]  32.77kB/1.257MB
+ 070510219061 Downloading [==============================>                    ]  69.68MB/113.1MB
+ c56f2098d81b Extracting [==================================================>]  1.257MB/1.257MB
+ c56f2098d81b Pull complete 
+ 070510219061 Downloading [================================>                  ]  72.89MB/113.1MB
+ 2c60e8d26a28 Extracting [>                                                  ]   98.3kB/8.204MB
+ 2c60e8d26a28 Extracting [=========>                                         ]  1.573MB/8.204MB
+ 070510219061 Downloading [=================================>                 ]  75.56MB/113.1MB
+ 2c60e8d26a28 Extracting [==================>                                ]  3.047MB/8.204MB
+ 070510219061 Downloading [==================================>                ]  78.25MB/113.1MB
+ 070510219061 Downloading [===================================>               ]  80.92MB/113.1MB
+ 2c60e8d26a28 Extracting [=======================>                           ]  3.932MB/8.204MB
+ 070510219061 Downloading [====================================>              ]  83.59MB/113.1MB
+ 2c60e8d26a28 Extracting [=============================>                     ]  4.817MB/8.204MB
+ 070510219061 Downloading [======================================>            ]  86.27MB/113.1MB
+ 2c60e8d26a28 Extracting [===================================>               ]  5.898MB/8.204MB
+ 070510219061 Downloading [=======================================>           ]  88.97MB/113.1MB
+ 2c60e8d26a28 Extracting [=======================================>           ]  6.488MB/8.204MB
+ 070510219061 Downloading [========================================>          ]  91.64MB/113.1MB
+ 2c60e8d26a28 Extracting [===============================================>   ]  7.864MB/8.204MB
+ 2c60e8d26a28 Extracting [==================================================>]  8.204MB/8.204MB
+ 070510219061 Downloading [=========================================>         ]   93.8MB/113.1MB
+ 2c60e8d26a28 Pull complete 
+ e3a93a48af49 Extracting [=>                                                 ]  32.77kB/1.312MB
+ 070510219061 Downloading [==========================================>        ]   95.4MB/113.1MB
+ e3a93a48af49 Extracting [==================================================>]  1.312MB/1.312MB
+ 070510219061 Downloading [===========================================>       ]  98.09MB/113.1MB
+ e3a93a48af49 Pull complete 
+ 749a66f683f6 Extracting [==================================================>]     116B/116B
+ 749a66f683f6 Extracting [==================================================>]     116B/116B
+ 749a66f683f6 Pull complete 
+ 7217575ed52c Extracting [==================================================>]  3.139kB/3.139kB
+ 7217575ed52c Extracting [==================================================>]  3.139kB/3.139kB
+ 7217575ed52c Pull complete 
+ 070510219061 Downloading [============================================>      ]  100.7MB/113.1MB
+ 070510219061 Downloading [=============================================>     ]  101.8MB/113.1MB
+ 070510219061 Downloading [==============================================>    ]  104.5MB/113.1MB
+ 070510219061 Downloading [===============================================>   ]  106.6MB/113.1MB
+ 070510219061 Downloading [================================================>  ]  109.8MB/113.1MB
+ 070510219061 Downloading [=================================================> ]  112.5MB/113.1MB
+ 070510219061 Verifying Checksum 
+ 070510219061 Download complete 
+ 070510219061 Extracting [>                                                  ]  557.1kB/113.1MB
+ 070510219061 Extracting [=>                                                 ]  2.785MB/113.1MB
+ 070510219061 Extracting [===>                                               ]  7.242MB/113.1MB
+ 070510219061 Extracting [===>                                               ]  8.913MB/113.1MB
+ 070510219061 Extracting [====>                                              ]  10.58MB/113.1MB
+ 070510219061 Extracting [=====>                                             ]  12.81MB/113.1MB
+ 070510219061 Extracting [======>                                            ]   15.6MB/113.1MB
+ 070510219061 Extracting [========>                                          ]  18.38MB/113.1MB
+ 070510219061 Extracting [=========>                                         ]  21.17MB/113.1MB
+ 070510219061 Extracting [==========>                                        ]  24.51MB/113.1MB
+ 070510219061 Extracting [=============>                                     ]  29.52MB/113.1MB
+ 070510219061 Extracting [===============>                                   ]  35.65MB/113.1MB
+ 070510219061 Extracting [==================>                                ]  41.78MB/113.1MB
+ 070510219061 Extracting [====================>                              ]  47.35MB/113.1MB
+ 070510219061 Extracting [=======================>                           ]  52.92MB/113.1MB
+ 070510219061 Extracting [========================>                          ]  54.59MB/113.1MB
+ 070510219061 Extracting [=========================>                         ]  56.82MB/113.1MB
+ 070510219061 Extracting [==========================>                        ]   59.6MB/113.1MB
+ 070510219061 Extracting [===========================>                       ]  62.95MB/113.1MB
+ 070510219061 Extracting [==============================>                    ]  68.52MB/113.1MB
+ 070510219061 Extracting [================================>                  ]  74.09MB/113.1MB
+ 070510219061 Extracting [==================================>                ]  78.54MB/113.1MB
+ 070510219061 Extracting [====================================>              ]  83.56MB/113.1MB
+ 070510219061 Extracting [=======================================>           ]  89.69MB/113.1MB
+ 070510219061 Extracting [=========================================>         ]   94.7MB/113.1MB
+ 070510219061 Extracting [==========================================>        ]  96.37MB/113.1MB
+ 070510219061 Extracting [===========================================>       ]  99.16MB/113.1MB
+ 070510219061 Extracting [============================================>      ]  100.8MB/113.1MB
+ 070510219061 Extracting [=============================================>     ]  103.1MB/113.1MB
+ 070510219061 Extracting [==============================================>    ]  105.3MB/113.1MB
+ 070510219061 Extracting [===============================================>   ]    107MB/113.1MB
+ 070510219061 Extracting [===============================================>   ]  108.1MB/113.1MB
+ 070510219061 Extracting [================================================>  ]  109.2MB/113.1MB
+ 070510219061 Extracting [================================================>  ]  110.3MB/113.1MB
+ 070510219061 Extracting [=================================================> ]  111.4MB/113.1MB
+ 070510219061 Extracting [=================================================> ]    112MB/113.1MB
+ 070510219061 Extracting [=================================================> ]  113.1MB/113.1MB
+ 070510219061 Extracting [==================================================>]  113.1MB/113.1MB
+ 070510219061 Pull complete 
+ b0e2b008abd1 Extracting [==================================================>]  10.01kB/10.01kB
+ b0e2b008abd1 Extracting [==================================================>]  10.01kB/10.01kB
+ b0e2b008abd1 Pull complete 
+ 566364257f63 Extracting [==================================================>]     127B/127B
+ 566364257f63 Extracting [==================================================>]     127B/127B
+ 566364257f63 Pull complete 
+ 6e117204916b Extracting [==================================================>]     167B/167B
+ 6e117204916b Extracting [==================================================>]     167B/167B
+ 6e117204916b Pull complete 
+ e893053483fe Extracting [==================================================>]  5.837kB/5.837kB
+ e893053483fe Extracting [==================================================>]  5.837kB/5.837kB
+ e893053483fe Pull complete 
+ cdd02f27cbd2 Extracting [==================================================>]     185B/185B
+ cdd02f27cbd2 Extracting [==================================================>]     185B/185B
+ cdd02f27cbd2 Pull complete 
+ postgres Pulled 
+#0 building with "default" instance using docker driver
+
+#1 [backend internal] load build definition from Dockerfile
+#1 transferring dockerfile: 612B done
+#1 DONE 0.1s
+
+#2 [backend internal] load .dockerignore
+#2 transferring context: 2B done
+#2 DONE 0.2s
+
+#3 [backend internal] load metadata for docker.io/library/gradle:8.9-jdk21
+#3 ...
+
+#4 [backend internal] load metadata for docker.io/library/eclipse-temurin:21-jre
+#4 DONE 1.5s
+
+#3 [backend internal] load metadata for docker.io/library/gradle:8.9-jdk21
+#3 DONE 1.6s
+
+#5 [backend internal] load build context
+#5 DONE 0.0s
+
+#6 [backend stage-1 1/4] FROM docker.io/library/eclipse-temurin:21-jre@sha256:d45e4719da1774b3abde398867f78a6d9b9afe4265f574f3d54062f6daeb00b3
+#6 resolve docker.io/library/eclipse-temurin:21-jre@sha256:d45e4719da1774b3abde398867f78a6d9b9afe4265f574f3d54062f6daeb00b3 0.1s done
+#6 sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114 0B / 29.73MB 0.0s
+#6 sha256:d45e4719da1774b3abde398867f78a6d9b9afe4265f574f3d54062f6daeb00b3 7.18kB / 7.18kB done
+#6 sha256:f02bd1087b97c45eba6380894cee2e88c1dabfa30e8db35e7c308625653d39e9 1.94kB / 1.94kB done
+#6 sha256:d5cf4d9c733545bbced0ef68c12c76b7b94dbb71c9eea2c5ffaf4943a2c7ae62 5.82kB / 5.82kB done
+#6 sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82 0B / 16.98MB 0.1s
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 0B / 52.98MB 0.1s
+#6 sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114 3.15MB / 29.73MB 0.4s
+#6 sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114 5.24MB / 29.73MB 0.5s
+#6 sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114 8.39MB / 29.73MB 0.7s
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 3.15MB / 52.98MB 0.7s
+#6 sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82 1.05MB / 16.98MB 0.8s
+#6 sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114 10.49MB / 29.73MB 0.9s
+#6 sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82 2.10MB / 16.98MB 0.9s
+#6 sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82 3.15MB / 16.98MB 1.0s
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 6.29MB / 52.98MB 1.0s
+#6 sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82 4.19MB / 16.98MB 1.1s
+#6 sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114 13.63MB / 29.73MB 1.3s
+#6 sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82 6.29MB / 16.98MB 1.3s
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 9.44MB / 52.98MB 1.3s
+#6 sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82 7.34MB / 16.98MB 1.4s
+#6 ...
+
+#5 [backend internal] load build context
+#5 transferring context: 140.27MB 1.5s done
+#5 DONE 1.6s
+
+#6 [backend stage-1 1/4] FROM docker.io/library/eclipse-temurin:21-jre@sha256:d45e4719da1774b3abde398867f78a6d9b9afe4265f574f3d54062f6daeb00b3
+#6 sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114 16.78MB / 29.73MB 1.6s
+#6 sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82 9.44MB / 16.98MB 1.6s
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 12.58MB / 52.98MB 1.6s
+#6 sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114 18.87MB / 29.73MB 1.8s
+#6 sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82 11.53MB / 16.98MB 1.8s
+#6 sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114 20.97MB / 29.73MB 2.0s
+#6 sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82 13.63MB / 16.98MB 2.0s
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 17.83MB / 52.98MB 2.0s
+#6 sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114 23.07MB / 29.73MB 2.2s
+#6 sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82 15.73MB / 16.98MB 2.2s
+#6 sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114 27.26MB / 29.73MB 2.4s
+#6 sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82 16.98MB / 16.98MB 2.3s done
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 23.07MB / 52.98MB 2.4s
+#6 sha256:5ac4b4cf16a8ad1b819f8041978350794113eb509aba19c5cd47bd77a053c335 0B / 158B 2.4s
+#6 sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114 29.73MB / 29.73MB 2.6s done
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 30.41MB / 52.98MB 2.7s
+#6 sha256:5ac4b4cf16a8ad1b819f8041978350794113eb509aba19c5cd47bd77a053c335 158B / 158B 2.6s done
+#6 sha256:abb78f73258bc413aae5281eb128ee526870ba076049a4526b38041362fe99c6 0B / 2.28kB 2.7s
+#6 extracting sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 34.60MB / 52.98MB 2.9s
+#6 sha256:abb78f73258bc413aae5281eb128ee526870ba076049a4526b38041362fe99c6 2.28kB / 2.28kB 2.9s done
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 37.75MB / 52.98MB 3.1s
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 40.89MB / 52.98MB 3.3s
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 44.04MB / 52.98MB 3.6s
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 47.19MB / 52.98MB 3.9s
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 50.33MB / 52.98MB 4.2s
+#6 sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 52.98MB / 52.98MB 4.5s done
+#6 extracting sha256:a3629ac5b9f4680dc2032439ff2354e73b06aecc2e68f0035a2d7c001c8b4114 3.0s done
+#6 extracting sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82
+#6 extracting sha256:996467dfb4d0179a2f091bc2a9d9749646d7fc320067d1147a6df2b4833f1c82 2.1s done
+#6 extracting sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743
+#6 ...
+
+#7 [backend build 1/4] FROM docker.io/library/gradle:8.9-jdk21@sha256:0c13b320f227a67179fca5d5746ab889c011ed143023c80c5fc8520609fe427f
+#7 resolve docker.io/library/gradle:8.9-jdk21@sha256:0c13b320f227a67179fca5d5746ab889c011ed143023c80c5fc8520609fe427f 0.1s done
+#7 sha256:6879120d1841961213e7c9c8cd59a99e540f44afa32325e7c31312e243e6cd5b 9.44kB / 9.44kB done
+#7 sha256:0c13b320f227a67179fca5d5746ab889c011ed143023c80c5fc8520609fe427f 5.20kB / 5.20kB done
+#7 sha256:8a7e116207e70fd3bee6b60169d76b8fef559a81f1d5f43177869a863a09f5a7 2.88kB / 2.88kB done
+#7 sha256:9b857f539cb142c9aa2201a17bb8e1cd5cf12edd4a65adf5732fe9f4343964cf 30.44MB / 30.44MB 5.1s done
+#7 sha256:0ff50609e3ed14c7c3740b327b78aacfe1ea1ee52420196ee57d2b4319ae0936 17.41MB / 17.41MB 4.7s done
+#7 sha256:1bb7392271a97e97ea73ccfd39a06b4c83857ad79f4268a59103857b0fb6cd7f 57.67MB / 158.59MB 9.5s
+#7 sha256:e5bdd092a67162b7a31654a479d0354e1a6bbc07290915a3afe4841c03e0d8b3 174B / 174B 5.1s done
+#7 sha256:10084474a2eb75fd61510f583fe2f83d3520beeae318672023e43f531853a81c 1.87kB / 1.87kB 5.4s done
+#7 sha256:1165fcc23a7d6939e8b374f715883a6bb92b6baadb70fd13553cf729619275e7 4.32kB / 4.32kB 5.5s done
+#7 extracting sha256:9b857f539cb142c9aa2201a17bb8e1cd5cf12edd4a65adf5732fe9f4343964cf 3.1s done
+#7 sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 32B / 32B 5.7s done
+#7 sha256:28b661c88625b41ce43f9a98f1bfc476f5051ec1fdf8478d2e752c81b9e2addc 37.75MB / 51.56MB 9.5s
+#7 sha256:0b1ce45e0f6ea096500193d1b888551cb90f45740f421273f2c13ccad920bc6b 34.60MB / 136.13MB 9.5s
+#7 extracting sha256:0ff50609e3ed14c7c3740b327b78aacfe1ea1ee52420196ee57d2b4319ae0936 0.9s
+#7 sha256:28b661c88625b41ce43f9a98f1bfc476f5051ec1fdf8478d2e752c81b9e2addc 40.89MB / 51.56MB 9.8s
+#7 sha256:28b661c88625b41ce43f9a98f1bfc476f5051ec1fdf8478d2e752c81b9e2addc 44.04MB / 51.56MB 10.2s
+#7 sha256:0b1ce45e0f6ea096500193d1b888551cb90f45740f421273f2c13ccad920bc6b 41.94MB / 136.13MB 10.4s
+#7 sha256:1bb7392271a97e97ea73ccfd39a06b4c83857ad79f4268a59103857b0fb6cd7f 66.06MB / 158.59MB 10.5s
+#7 sha256:28b661c88625b41ce43f9a98f1bfc476f5051ec1fdf8478d2e752c81b9e2addc 47.19MB / 51.56MB 10.6s
+#7 sha256:28b661c88625b41ce43f9a98f1bfc476f5051ec1fdf8478d2e752c81b9e2addc 50.33MB / 51.56MB 11.1s
+#7 sha256:28b661c88625b41ce43f9a98f1bfc476f5051ec1fdf8478d2e752c81b9e2addc 51.56MB / 51.56MB 11.4s done
+#7 sha256:0b1ce45e0f6ea096500193d1b888551cb90f45740f421273f2c13ccad920bc6b 50.33MB / 136.13MB 11.5s
+#7 sha256:3bacf17c155113f9ea58f8b8213e2cece47cb9471e56425b371d12fd8ee25e1f 0B / 54.90kB 11.5s
+#7 ...
+
+#6 [backend stage-1 1/4] FROM docker.io/library/eclipse-temurin:21-jre@sha256:d45e4719da1774b3abde398867f78a6d9b9afe4265f574f3d54062f6daeb00b3
+#6 extracting sha256:14c9275308302d364422df0f3e02503135621d8a4b49a0c18580cf9220532743 2.4s done
+#6 extracting sha256:5ac4b4cf16a8ad1b819f8041978350794113eb509aba19c5cd47bd77a053c335 done
+#6 extracting sha256:abb78f73258bc413aae5281eb128ee526870ba076049a4526b38041362fe99c6 done
+#6 DONE 11.7s
+
+#7 [backend build 1/4] FROM docker.io/library/gradle:8.9-jdk21@sha256:0c13b320f227a67179fca5d5746ab889c011ed143023c80c5fc8520609fe427f
+#7 sha256:1bb7392271a97e97ea73ccfd39a06b4c83857ad79f4268a59103857b0fb6cd7f 74.45MB / 158.59MB 11.6s
+#7 ...
+
+#8 [backend stage-1 2/4] WORKDIR /app
+#8 DONE 1.0s
+
+#9 [backend stage-1 3/4] RUN apt-get update &&     apt-get install -y --no-install-recommends wget &&     rm -rf /var/lib/apt/lists/*
+#9 0.504 Get:1 http://archive.ubuntu.com/ubuntu noble InRelease [256 kB]
+#9 0.587 Get:2 http://archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+#9 0.616 Get:3 http://archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+#9 0.646 Get:4 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+#9 0.733 Get:5 http://archive.ubuntu.com/ubuntu noble/multiverse amd64 Packages [331 kB]
+#9 0.796 Get:6 http://archive.ubuntu.com/ubuntu noble/main amd64 Packages [1,808 kB]
+#9 0.953 Get:7 http://archive.ubuntu.com/ubuntu noble/restricted amd64 Packages [117 kB]
+#9 0.965 Get:8 http://archive.ubuntu.com/ubuntu noble/universe amd64 Packages [19.3 MB]
+#9 1.100 Get:9 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [2,919 kB]
+#9 1.740 Get:10 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Packages [33.1 kB]
+#9 1.744 Get:11 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1,193 kB]
+#9 1.896 Get:12 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages [1,773 kB]
+#9 2.837 Get:13 http://archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [35.9 kB]
+#9 2.838 Get:14 http://archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [3,077 kB]
+#9 3.091 Get:15 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [2,147 kB]
+#9 3.273 Get:16 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1,966 kB]
+#9 3.399 Get:17 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 Packages [49.5 kB]
+#9 3.402 Get:18 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [34.6 kB]
+#9 4.395 Fetched 35.4 MB in 4s (9,029 kB/s)
+#9 4.395 Reading package lists...
+#9 ...
+
+#7 [backend build 1/4] FROM docker.io/library/gradle:8.9-jdk21@sha256:0c13b320f227a67179fca5d5746ab889c011ed143023c80c5fc8520609fe427f
+#7 sha256:1bb7392271a97e97ea73ccfd39a06b4c83857ad79f4268a59103857b0fb6cd7f 158.59MB / 158.59MB 18.1s done
+#7 sha256:0b1ce45e0f6ea096500193d1b888551cb90f45740f421273f2c13ccad920bc6b 136.13MB / 136.13MB 18.1s done
+#7 extracting sha256:0ff50609e3ed14c7c3740b327b78aacfe1ea1ee52420196ee57d2b4319ae0936 3.8s done
+#7 sha256:3bacf17c155113f9ea58f8b8213e2cece47cb9471e56425b371d12fd8ee25e1f 54.90kB / 54.90kB 11.8s done
+#7 extracting sha256:1bb7392271a97e97ea73ccfd39a06b4c83857ad79f4268a59103857b0fb6cd7f 0.2s
+#7 ...
+
+#9 [backend stage-1 3/4] RUN apt-get update &&     apt-get install -y --no-install-recommends wget &&     rm -rf /var/lib/apt/lists/*
+#9 4.395 Reading package lists...
+#9 6.264 Reading package lists...
+#9 7.712 Building dependency tree...
+#9 7.966 Reading state information...
+#9 8.334 wget is already the newest version (1.21.4-1ubuntu4.1).
+#9 8.334 0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+#9 DONE 8.5s
+
+#7 [backend build 1/4] FROM docker.io/library/gradle:8.9-jdk21@sha256:0c13b320f227a67179fca5d5746ab889c011ed143023c80c5fc8520609fe427f
+#7 extracting sha256:1bb7392271a97e97ea73ccfd39a06b4c83857ad79f4268a59103857b0fb6cd7f 3.4s done
+#7 extracting sha256:e5bdd092a67162b7a31654a479d0354e1a6bbc07290915a3afe4841c03e0d8b3
+#7 extracting sha256:e5bdd092a67162b7a31654a479d0354e1a6bbc07290915a3afe4841c03e0d8b3 done
+#7 extracting sha256:10084474a2eb75fd61510f583fe2f83d3520beeae318672023e43f531853a81c done
+#7 extracting sha256:1165fcc23a7d6939e8b374f715883a6bb92b6baadb70fd13553cf729619275e7
+#7 extracting sha256:1165fcc23a7d6939e8b374f715883a6bb92b6baadb70fd13553cf729619275e7 done
+#7 extracting sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 done
+#7 extracting sha256:28b661c88625b41ce43f9a98f1bfc476f5051ec1fdf8478d2e752c81b9e2addc
+#7 extracting sha256:28b661c88625b41ce43f9a98f1bfc476f5051ec1fdf8478d2e752c81b9e2addc 2.9s done
+#7 extracting sha256:0b1ce45e0f6ea096500193d1b888551cb90f45740f421273f2c13ccad920bc6b
+#7 extracting sha256:0b1ce45e0f6ea096500193d1b888551cb90f45740f421273f2c13ccad920bc6b 1.3s done
+#7 extracting sha256:3bacf17c155113f9ea58f8b8213e2cece47cb9471e56425b371d12fd8ee25e1f done
+#7 DONE 26.9s
+
+#10 [backend build 2/4] WORKDIR /workspace
+#10 DONE 0.2s
+
+#11 [backend build 3/4] COPY . .
+#11 DONE 0.2s
+
+#12 [backend build 4/4] RUN ./gradlew clean bootJar --no-daemon
+#12 0.335 Downloading https://services.gradle.org/distributions/gradle-8.14.3-bin.zip
+#12 0.933 .............10%.............20%.............30%.............40%.............50%.............60%.............70%.............80%.............90%..............100%
+#12 6.790 
+#12 6.790 Welcome to Gradle 8.14.3!
+#12 6.790 
+#12 6.790 Here are the highlights of this release:
+#12 6.790  - Java 24 support
+#12 6.791  - GraalVM Native Image toolchain selection
+#12 6.791  - Enhancements to test reporting
+#12 6.791  - Build Authoring improvements
+#12 6.791 
+#12 6.791 For more details see https://docs.gradle.org/8.14.3/release-notes.html
+#12 6.791 
+#12 6.889 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+#12 7.790 Daemon will be stopped at the end of the build 
+#12 20.59 
+#12 20.59 > Configure project :
+#12 20.59 The 'sonarqube' task depends on compile tasks. This behavior is now deprecated and will be removed in version 5.x. To avoid implicit compilation, set property 'sonar.skipCompile' to 'true' and make sure your project is compiled, before analysis has started.
+#12 20.59 The 'sonar' task depends on compile tasks. This behavior is now deprecated and will be removed in version 5.x. To avoid implicit compilation, set property 'sonar.skipCompile' to 'true' and make sure your project is compiled, before analysis has started.
+#12 30.09 
+#12 30.09 > Task :clean
+#12 43.09 > Task :compileJava
+#12 43.09 > Task :processResources
+#12 43.09 > Task :classes
+#12 43.19 > Task :resolveMainClassName
+#12 48.19 > Task :bootJar
+#12 48.19 
+#12 48.19 BUILD SUCCESSFUL in 47s
+#12 48.19 5 actionable tasks: 5 executed
+#12 DONE 48.5s
+
+#13 [backend stage-1 4/4] COPY --from=build /workspace/build/libs/*.jar app.jar
+#13 DONE 0.2s
+
+#14 [backend] exporting to image
+#14 exporting layers
+#14 exporting layers 0.5s done
+#14 writing image sha256:e69891f66e740123d62683b6d87281561be50dfba9c57e254ef58625369327f3 done
+#14 naming to docker.io/library/e2e-264690-backend 0.0s done
+#14 DONE 0.5s
+
+#15 [backend] resolving provenance for metadata file
+#15 DONE 0.0s
+
+#16 [frontend internal] load build definition from Dockerfile
+#16 transferring dockerfile:
+#16 transferring dockerfile: 858B done
+#16 DONE 0.1s
+
+#17 [frontend internal] load .dockerignore
+#17 transferring context: 2B done
+#17 DONE 0.1s
+
+#18 [frontend internal] load metadata for docker.io/library/node:22
+#18 DONE 1.5s
+
+#19 [frontend internal] load metadata for docker.io/library/nginx:alpine
+#19 DONE 1.6s
+
+#20 [frontend internal] load build context
+#20 transferring context: 3.74MB 0.0s done
+#20 DONE 0.1s
+
+#21 [frontend build 1/8] FROM docker.io/library/node:22@sha256:cd7bcd2e7a1e6f72052feb023c7f6b722205d3fcab7bbcbd2d1bfdab10b1e935
+#21 resolve docker.io/library/node:22@sha256:cd7bcd2e7a1e6f72052feb023c7f6b722205d3fcab7bbcbd2d1bfdab10b1e935 0.1s done
+#21 sha256:cd7bcd2e7a1e6f72052feb023c7f6b722205d3fcab7bbcbd2d1bfdab10b1e935 6.41kB / 6.41kB done
+#21 sha256:58b82c7153457434610289a1f61c4326cc9ea77b996a8e9b3cdd92c9814bd7e6 2.49kB / 2.49kB done
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 0B / 48.48MB 0.1s
+#21 sha256:a08c488a9779570021138dacddb3138542f6632362b21bb14a7e5d5621e34258 6.74kB / 6.74kB done
+#21 sha256:64538a062a61add8dc8b290fa69475e8902eb839c497a5f5dcd5a950422e493c 0B / 24.04MB 0.1s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 0B / 64.40MB 0.1s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 3.15MB / 48.48MB 0.5s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 8.39MB / 48.48MB 0.8s
+#21 sha256:64538a062a61add8dc8b290fa69475e8902eb839c497a5f5dcd5a950422e493c 3.15MB / 24.04MB 0.8s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 6.29MB / 64.40MB 0.8s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 11.53MB / 48.48MB 1.0s
+#21 sha256:64538a062a61add8dc8b290fa69475e8902eb839c497a5f5dcd5a950422e493c 6.29MB / 24.04MB 1.0s
+#21 sha256:64538a062a61add8dc8b290fa69475e8902eb839c497a5f5dcd5a950422e493c 8.39MB / 24.04MB 1.2s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 10.49MB / 64.40MB 1.2s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 14.68MB / 48.48MB 1.3s
+#21 sha256:64538a062a61add8dc8b290fa69475e8902eb839c497a5f5dcd5a950422e493c 10.49MB / 24.04MB 1.4s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 17.83MB / 48.48MB 1.6s
+#21 sha256:64538a062a61add8dc8b290fa69475e8902eb839c497a5f5dcd5a950422e493c 12.58MB / 24.04MB 1.6s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 15.73MB / 64.40MB 1.6s
+#21 sha256:64538a062a61add8dc8b290fa69475e8902eb839c497a5f5dcd5a950422e493c 15.73MB / 24.04MB 1.8s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 23.07MB / 48.48MB 2.0s
+#21 sha256:64538a062a61add8dc8b290fa69475e8902eb839c497a5f5dcd5a950422e493c 17.83MB / 24.04MB 2.0s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 20.97MB / 64.40MB 2.0s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 26.21MB / 48.48MB 2.3s
+#21 sha256:64538a062a61add8dc8b290fa69475e8902eb839c497a5f5dcd5a950422e493c 20.97MB / 24.04MB 2.3s
+#21 sha256:64538a062a61add8dc8b290fa69475e8902eb839c497a5f5dcd5a950422e493c 23.07MB / 24.04MB 2.4s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 25.17MB / 64.40MB 2.4s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 29.36MB / 48.48MB 2.5s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 32.51MB / 48.48MB 2.7s
+#21 sha256:64538a062a61add8dc8b290fa69475e8902eb839c497a5f5dcd5a950422e493c 24.04MB / 24.04MB 2.5s done
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 30.41MB / 64.40MB 2.7s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 0B / 211.49MB 2.7s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 35.65MB / 48.48MB 2.9s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 35.65MB / 64.40MB 3.1s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 38.80MB / 48.48MB 3.2s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 41.94MB / 48.48MB 3.5s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 39.85MB / 64.40MB 3.5s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 46.14MB / 48.48MB 3.8s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 44.04MB / 64.40MB 3.8s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 11.53MB / 211.49MB 3.8s
+#21 sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 48.48MB / 48.48MB 4.0s done
+#21 sha256:357cb6974fa00f5868ed182a039825412fca969c0988eb54c7114136aba26f0b 0B / 3.32kB 4.1s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 49.28MB / 64.40MB 4.2s
+#21 extracting sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 0.1s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 54.53MB / 64.40MB 4.5s
+#21 sha256:357cb6974fa00f5868ed182a039825412fca969c0988eb54c7114136aba26f0b 3.32kB / 3.32kB 4.3s done
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 0B / 58.30MB 4.5s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 25.17MB / 211.49MB 4.7s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 58.72MB / 64.40MB 4.8s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 3.15MB / 58.30MB 5.0s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 62.91MB / 64.40MB 5.2s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 6.29MB / 58.30MB 5.3s
+#21 sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 64.40MB / 64.40MB 5.3s done
+#21 sha256:737aff54b15787f7e024f1e1a146d3d7677be2f217565c88152937be519722ec 0B / 1.25MB 5.4s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 10.49MB / 58.30MB 5.6s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 37.75MB / 211.49MB 5.8s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 13.63MB / 58.30MB 5.8s
+#21 sha256:737aff54b15787f7e024f1e1a146d3d7677be2f217565c88152937be519722ec 1.25MB / 1.25MB 5.7s done
+#21 sha256:5e9e90c62a56b42994131b60a9afcd3851a32cabafa66d482444ab1dcbdbc620 0B / 446B 6.0s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 17.83MB / 58.30MB 6.1s
+#21 sha256:5e9e90c62a56b42994131b60a9afcd3851a32cabafa66d482444ab1dcbdbc620 446B / 446B 6.0s done
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 20.97MB / 58.30MB 6.3s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 24.12MB / 58.30MB 6.6s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 49.28MB / 211.49MB 6.7s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 27.26MB / 58.30MB 6.8s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 30.41MB / 58.30MB 7.1s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 33.55MB / 58.30MB 7.3s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 60.82MB / 211.49MB 7.6s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 36.70MB / 58.30MB 7.6s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 39.85MB / 58.30MB 7.8s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 42.99MB / 58.30MB 8.0s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 46.14MB / 58.30MB 8.2s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 72.35MB / 211.49MB 8.3s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 49.28MB / 58.30MB 8.4s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 52.43MB / 58.30MB 8.6s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 56.62MB / 58.30MB 8.8s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 83.89MB / 211.49MB 9.0s
+#21 sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 58.30MB / 58.30MB 8.9s done
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 96.47MB / 211.49MB 9.7s
+#21 extracting sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 5.6s
+#21 ...
+
+#22 [frontend stage-1 1/4] FROM docker.io/library/nginx:alpine@sha256:b0f7830b6bfaa1258f45d94c240ab668ced1b3651c8a222aefe6683447c7bf55
+#22 resolve docker.io/library/nginx:alpine@sha256:b0f7830b6bfaa1258f45d94c240ab668ced1b3651c8a222aefe6683447c7bf55 0.2s done
+#22 sha256:b0f7830b6bfaa1258f45d94c240ab668ced1b3651c8a222aefe6683447c7bf55 10.33kB / 10.33kB done
+#22 sha256:e7e5b7fa7a0b1ab2f59d6066092a6d35984864cc8baf2cff7c088ee409657e57 2.50kB / 2.50kB done
+#22 sha256:004f022f4ef5da74ce61b1dddd7a3b84e93c151a1af058f3a8e20246da9b895b 11.65kB / 11.65kB done
+#22 sha256:1074353eec0db2c1d81d5af2671e56e00cf5738486f5762609ea33d606f88612 3.86MB / 3.86MB 6.7s done
+#22 extracting sha256:1074353eec0db2c1d81d5af2671e56e00cf5738486f5762609ea33d606f88612 0.3s done
+#22 sha256:25f453064fd3e8a9754b6e51b86c637e13203cbfc748fcf73f3c8b2d10816ae3 1.86MB / 1.86MB 7.1s done
+#22 extracting sha256:25f453064fd3e8a9754b6e51b86c637e13203cbfc748fcf73f3c8b2d10816ae3 0.1s done
+#22 sha256:567f84da6fbd4287d40a5837485469435c40a81f9a94e98395b6385d3600643a 626B / 626B 7.4s done
+#22 sha256:da7c973d8b92a1555060972c8849a332c93bfe2608c11faeee2098c4cfbe8c3d 953B / 953B 7.7s done
+#22 extracting sha256:567f84da6fbd4287d40a5837485469435c40a81f9a94e98395b6385d3600643a done
+#22 sha256:33f95a0f3229b49e777082e801b882b13fcc5b4e389410ce8eb066f4d58c71b9 403B / 403B 8.0s done
+#22 extracting sha256:da7c973d8b92a1555060972c8849a332c93bfe2608c11faeee2098c4cfbe8c3d done
+#22 extracting sha256:33f95a0f3229b49e777082e801b882b13fcc5b4e389410ce8eb066f4d58c71b9 done
+#22 sha256:085c5e5aaa8eb4b957ecf253c74f16a6a5551231de3fb7c3ac74814a6bf17e06 1.21kB / 1.21kB 8.4s done
+#22 extracting sha256:085c5e5aaa8eb4b957ecf253c74f16a6a5551231de3fb7c3ac74814a6bf17e06 done
+#22 sha256:0abf9e5672665202e79f26f23ef5dbd12558e2ea51ac32807922ab76fdb24ab0 1.40kB / 1.40kB 8.7s done
+#22 extracting sha256:0abf9e5672665202e79f26f23ef5dbd12558e2ea51ac32807922ab76fdb24ab0 done
+#22 sha256:e096540205d5d1ab2c2647d716491020d81e3f167a33606665b193d75540857f 13.63MB / 20.18MB 9.9s
+#22 sha256:e096540205d5d1ab2c2647d716491020d81e3f167a33606665b193d75540857f 16.78MB / 20.18MB 10.1s
+#22 ...
+
+#21 [frontend build 1/8] FROM docker.io/library/node:22@sha256:cd7bcd2e7a1e6f72052feb023c7f6b722205d3fcab7bbcbd2d1bfdab10b1e935
+#21 extracting sha256:c1be109a62df95316ceac87ea501079f32e17f36b636865a860841b7db06100c 6.0s done
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 109.05MB / 211.49MB 10.4s
+#21 extracting sha256:64538a062a61add8dc8b290fa69475e8902eb839c497a5f5dcd5a950422e493c
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 121.08MB / 211.49MB 10.9s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 133.17MB / 211.49MB 11.5s
+#21 ...
+
+#22 [frontend stage-1 1/4] FROM docker.io/library/nginx:alpine@sha256:b0f7830b6bfaa1258f45d94c240ab668ced1b3651c8a222aefe6683447c7bf55
+#22 sha256:e096540205d5d1ab2c2647d716491020d81e3f167a33606665b193d75540857f 20.18MB / 20.18MB 10.2s done
+#22 extracting sha256:e096540205d5d1ab2c2647d716491020d81e3f167a33606665b193d75540857f 1.0s done
+#22 DONE 12.2s
+
+#21 [frontend build 1/8] FROM docker.io/library/node:22@sha256:cd7bcd2e7a1e6f72052feb023c7f6b722205d3fcab7bbcbd2d1bfdab10b1e935
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 145.75MB / 211.49MB 12.0s
+#21 extracting sha256:64538a062a61add8dc8b290fa69475e8902eb839c497a5f5dcd5a950422e493c 1.6s done
+#21 extracting sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 0.1s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 160.43MB / 211.49MB 12.6s
+#21 ...
+
+#23 [frontend stage-1 2/4] RUN rm -rf /usr/share/nginx/html/*
+#23 DONE 0.9s
+
+#21 [frontend build 1/8] FROM docker.io/library/node:22@sha256:cd7bcd2e7a1e6f72052feb023c7f6b722205d3fcab7bbcbd2d1bfdab10b1e935
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 171.97MB / 211.49MB 13.2s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 185.60MB / 211.49MB 13.7s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 198.18MB / 211.49MB 14.2s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 209.72MB / 211.49MB 14.7s
+#21 sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 211.49MB / 211.49MB 14.7s done
+#21 extracting sha256:fd1872fa12cc6b1145803f1a0679ca26cc65fa1b4e0ee389bfb30267594736b6 4.8s done
+#21 extracting sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663
+#21 extracting sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 5.0s
+#21 extracting sha256:4925cf9d8be888d2b942e0479d921815942727632813c006bad6a067e6363663 8.7s done
+#21 extracting sha256:357cb6974fa00f5868ed182a039825412fca969c0988eb54c7114136aba26f0b
+#21 extracting sha256:357cb6974fa00f5868ed182a039825412fca969c0988eb54c7114136aba26f0b done
+#21 extracting sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 0.1s
+#21 extracting sha256:a6174c95fe7408545d8621aba806a8dce153306ae7f114bf6cfc66854efa5494 3.6s done
+#21 extracting sha256:737aff54b15787f7e024f1e1a146d3d7677be2f217565c88152937be519722ec
+#21 extracting sha256:737aff54b15787f7e024f1e1a146d3d7677be2f217565c88152937be519722ec 0.1s done
+#21 extracting sha256:5e9e90c62a56b42994131b60a9afcd3851a32cabafa66d482444ab1dcbdbc620 done
+#21 DONE 30.5s
+
+#24 [frontend build 2/8] WORKDIR /app
+#24 DONE 0.2s
+
+#25 [frontend build 3/8] COPY package*.json ./
+#25 DONE 0.1s
+
+#26 [frontend build 4/8] RUN npm ci
+#26 13.70 
+#26 13.70 added 669 packages, and audited 670 packages in 13s
+#26 13.70 
+#26 13.70 135 packages are looking for funding
+#26 13.70   run `npm fund` for details
+#26 13.76 
+#26 13.76 13 vulnerabilities (6 low, 3 moderate, 4 high)
+#26 13.76 
+#26 13.76 To address issues that do not require attention, run:
+#26 13.76   npm audit fix
+#26 13.76 
+#26 13.76 To address all issues (including breaking changes), run:
+#26 13.76   npm audit fix --force
+#26 13.76 
+#26 13.76 Run `npm audit` for details.
+#26 13.76 npm notice
+#26 13.76 npm notice New major version of npm available! 10.9.4 -> 11.7.0
+#26 13.76 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.7.0
+#26 13.76 npm notice To update run: npm install -g npm@11.7.0
+#26 13.76 npm notice
+#26 DONE 14.3s
+
+#27 [frontend build 5/8] RUN echo "VITE_MAPBOX_TOKEN=pk.eyJ1Ijoib3NjYXIwMDUiLCJhIjoiY21oaTYxcDJpMHNvZjJscXZmdnp5NTN5bSJ9.O7gyUFqu1gJX0EidNEfNzw"
+#27 0.397 VITE_MAPBOX_TOKEN=pk.eyJ1Ijoib3NjYXIwMDUiLCJhIjoiY21oaTYxcDJpMHNvZjJscXZmdnp5NTN5bSJ9.O7gyUFqu1gJX0EidNEfNzw
+#27 DONE 0.4s
+
+#28 [frontend build 6/8] RUN echo "VITE_API_URL=http://backend:8080"
+#28 0.584 VITE_API_URL=http://backend:8080
+#28 DONE 0.6s
+
+#29 [frontend build 7/8] COPY . .
+#29 DONE 0.1s
+
+#30 [frontend build 8/8] RUN npm run build
+#30 0.358 
+#30 0.358 > frontend@0.0.0 build
+#30 0.358 > vite build
+#30 0.358 
+#30 0.576 vite v7.1.7 building for production...
+#30 0.774 [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+#30 0.864 transforming...
+#30 13.16 ✓ 2174 modules transformed.
+#30 13.41 node_modules/vm-browserify/index.js (117:9): Use of eval in "node_modules/vm-browserify/index.js" is strongly discouraged as it poses security risks and may cause issues with minification.
+#30 13.52 rendering chunks...
+#30 14.28 computing gzip size...
+#30 14.34 dist/index.html                                 0.52 kB │ gzip:   0.33 kB
+#30 14.34 dist/assets/index-B4cq3w-u.css                 93.68 kB │ gzip:  13.33 kB
+#30 14.34 dist/assets/image-By4rviFC.js                   0.44 kB │ gzip:   0.33 kB
+#30 14.34 dist/assets/square-pen-Ca1xnUxW.js              0.49 kB │ gzip:   0.34 kB
+#30 14.34 dist/assets/trash-2-CZEz559r.js                 0.50 kB │ gzip:   0.32 kB
+#30 14.34 dist/assets/adminApi-BB_LVKqW.js                2.00 kB │ gzip:   0.52 kB
+#30 14.34 dist/assets/AdminUsersPage-BP6Zkj50.js          4.35 kB │ gzip:   1.47 kB
+#30 14.34 dist/assets/AdminLayout-D2BKV-pm.js             4.59 kB │ gzip:   1.59 kB
+#30 14.34 dist/assets/AdminDashboardPage-BXA67WO-.js      5.62 kB │ gzip:   1.59 kB
+#30 14.34 dist/assets/AdminDevicesPage-yZGirFwC.js        7.22 kB │ gzip:   2.21 kB
+#30 14.34 dist/assets/AdminAssetsPage-WSfW43Wk.js         7.81 kB │ gzip:   2.46 kB
+#30 14.34 dist/assets/index-h9wi817Q.js               2,907.60 kB │ gzip: 817.01 kB
+#30 14.34 
+#30 14.34 (!) Some chunks are larger than 500 kB after minification. Consider:
+#30 14.34 - Using dynamic import() to code-split the application
+#30 14.34 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+#30 14.34 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+#30 14.34 ✓ built in 13.75s
+#30 DONE 14.5s
+
+#31 [frontend stage-1 3/4] COPY --from=build /app/dist /usr/share/nginx/html
+#31 DONE 0.1s
+
+#32 [frontend stage-1 4/4] COPY nginx.conf /etc/nginx/conf.d/default.conf
+#32 DONE 0.1s
+
+#33 [frontend] exporting to image
+#33 exporting layers 0.1s done
+#33 writing image sha256:9a54551c22db538d4773437e11f66cd092e60c5f84194a38be6c833625cee262 done
+#33 naming to docker.io/library/e2e-264690-frontend 0.0s done
+#33 DONE 0.2s
+
+#34 [frontend] resolving provenance for metadata file
+#34 DONE 0.0s
+ Network e2e-264690_default  Creating
+ Network e2e-264690_default  Created
+ Container e2e-264690-postgres-1  Creating
+ Container e2e-264690-postgres-1  Created
+ Container e2e-264690-backend-1  Creating
+ Container e2e-264690-backend-1  Created
+ Container e2e-264690-frontend-1  Creating
+ Container e2e-264690-frontend-1  Created
+ Container e2e-264690-postgres-1  Starting
+ Container e2e-264690-postgres-1  Started
+ Container e2e-264690-postgres-1  Waiting
+ Container e2e-264690-postgres-1  Healthy
+ Container e2e-264690-backend-1  Starting
+ Container e2e-264690-backend-1  Started
+ Container e2e-264690-backend-1  Waiting
+ Container e2e-264690-backend-1  Healthy
+ Container e2e-264690-frontend-1  Starting
+ Container e2e-264690-frontend-1  Started
+
+=== Compose services started ===
+time="2026-01-21T12:10:49Z" level=warning msg="/builds/I548789/individual-project-s3/docker-compose.e2e.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+NAME                    IMAGE                 COMMAND                  SERVICE    CREATED          STATUS                    PORTS
+e2e-264690-backend-1    e2e-264690-backend    "java -jar app.jar"      backend    20 seconds ago   Up 16 seconds (healthy)   8080/tcp
+e2e-264690-frontend-1   e2e-264690-frontend   "/docker-entrypoint.…"   frontend   20 seconds ago   Up Less than a second     80/tcp
+e2e-264690-postgres-1   postgres:16           "docker-entrypoint.s…"   postgres   20 seconds ago   Up 19 seconds (healthy)   5432/tcp
+
+=== Compose networks ===
+
+unknown docker command: "compose network"
+Usage:  docker compose [OPTIONS] COMMAND
+
+Define and run multi-container applications with Docker
+
+Options:
+      --all-resources              Include all resources, even those not
+                                   used by services
+      --ansi string                Control when to print ANSI control
+                                   characters ("never"|"always"|"auto")
+                                   (default "auto")
+      --compatibility              Run compose in backward compatibility mode
+      --dry-run                    Execute command in dry run mode
+      --env-file stringArray       Specify an alternate environment file
+  -f, --file stringArray           Compose configuration files
+      --parallel int               Control max parallelism, -1 for
+                                   unlimited (default -1)
+      --profile stringArray        Specify a profile to enable
+      --progress string            Set type of progress output (auto,
+                                   tty, plain, json, quiet) (default "auto")
+      --project-directory string   Specify an alternate working directory
+                                   (default: the path of the, first
+                                   specified, Compose file)
+  -p, --project-name string        Project name
+
+Commands:
+  attach      Attach local standard input, output, and error streams to a service's running container
+  build       Build or rebuild services
+  config      Parse, resolve and render compose file in canonical format
+  cp          Copy files/folders between a service container and the local filesystem
+  create      Creates containers for a service
+  down        Stop and remove containers, networks
+  events      Receive real time events from containers
+  exec        Execute a command in a running container
+  images      List images used by the created containers
+  kill        Force stop service containers
+  logs        View output from containers
+  ls          List running compose projects
+  pause       Pause services
+  port        Print the public port for a port binding
+  ps          List containers
+  pull        Pull service images
+  push        Push service images
+  restart     Restart service containers
+  rm          Removes stopped service containers
+  run         Run a one-off command on a service
+  scale       Scale services 
+  start       Start services
+  stats       Display a live stream of container(s) resource usage statistics
+  stop        Stop services
+  top         Display the running processes
+  unpause     Unpause services
+  up          Create and start containers
+  version     Show the Docker Compose version information
+  wait        Block until the first service container stops
+  watch       Watch build context for service and rebuild/refresh containers when files are updated
+
+Run 'docker compose COMMAND --help' for more information on a command.
+3e2b7821b5cf   e2e-264690_default   bridge    local
+[32;1m$ echo "" # collapsed multi-line command[0;m
+
+=== Waiting for backend to be healthy ===
+Network: e2e-264690_default
+Backend URL: http://backend:8080/actuator/health
+Attempt 1/30: Checking backend health...
+  - Backend container status:
+time="2026-01-21T12:10:49Z" level=warning msg="/builds/I548789/individual-project-s3/docker-compose.e2e.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+NAME                   IMAGE                COMMAND               SERVICE   CREATED          STATUS                    PORTS
+e2e-264690-backend-1   e2e-264690-backend   "java -jar app.jar"   backend   20 seconds ago   Up 16 seconds (healthy)   8080/tcp
+  - Testing health endpoint...
+Unable to find image 'curlimages/curl:8.11.1' locally
+8.11.1: Pulling from curlimages/curl
+38a8310d387e: Pulling fs layer
+fa22e15491be: Pulling fs layer
+4ca545ee6d5d: Pulling fs layer
+4ca545ee6d5d: Download complete
+38a8310d387e: Verifying Checksum
+38a8310d387e: Download complete
+fa22e15491be: Verifying Checksum
+fa22e15491be: Download complete
+38a8310d387e: Pull complete
+fa22e15491be: Pull complete
+4ca545ee6d5d: Pull complete
+Digest: sha256:c1fe1679c34d9784c1b0d1e5f62ac0a79fca01fb6377cdd33e90473c6f9f9a69
+Status: Downloaded newer image for curlimages/curl:8.11.1
+{"status":"UP"}
+✓ Backend is ready!
+Backend health check response:
+{"status":"UP"}[32;1m$ echo "" # collapsed multi-line command[0;m
+
+=== Waiting for frontend to be ready ===
+Network: e2e-264690_default
+Frontend URL: http://frontend
+Attempt 1/30: Checking frontend...
+  - Frontend container status:
+time="2026-01-21T12:10:54Z" level=warning msg="/builds/I548789/individual-project-s3/docker-compose.e2e.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+NAME                    IMAGE                 COMMAND                  SERVICE    CREATED          STATUS         PORTS
+e2e-264690-frontend-1   e2e-264690-frontend   "/docker-entrypoint.…"   frontend   25 seconds ago   Up 4 seconds   80/tcp
+  - Testing frontend endpoint...
+
+✓ Frontend is ready!
+Frontend response (first 200 chars):
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="https://storage.googleapis.com/tripwire_bucket/icons/tripwire_logo.svg" />
+    <m
+[32;1m$ echo "" # collapsed multi-line command[0;m
+
+=== Final Compose Status ===
+time="2026-01-21T12:10:55Z" level=warning msg="/builds/I548789/individual-project-s3/docker-compose.e2e.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+NAME                    IMAGE                 COMMAND                  SERVICE    CREATED          STATUS                    PORTS
+e2e-264690-backend-1    e2e-264690-backend    "java -jar app.jar"      backend    26 seconds ago   Up 22 seconds (healthy)   8080/tcp
+e2e-264690-frontend-1   e2e-264690-frontend   "/docker-entrypoint.…"   frontend   26 seconds ago   Up 6 seconds              80/tcp
+e2e-264690-postgres-1   postgres:16           "docker-entrypoint.s…"   postgres   26 seconds ago   Up 25 seconds (healthy)   5432/tcp
+
+=== All Docker Containers ===
+CONTAINER ID   IMAGE                 COMMAND                  CREATED          STATUS                    PORTS      NAMES
+09f5ae971a7d   e2e-264690-frontend   "/docker-entrypoint.…"   26 seconds ago   Up 6 seconds              80/tcp     e2e-264690-frontend-1
+c152dcc4c62e   e2e-264690-backend    "java -jar app.jar"      26 seconds ago   Up 22 seconds (healthy)   8080/tcp   e2e-264690-backend-1
+1f955d373b84   postgres:16           "docker-entrypoint.s…"   26 seconds ago   Up 25 seconds (healthy)   5432/tcp   e2e-264690-postgres-1
+
+=== All Docker Networks ===
+NETWORK ID     NAME                 DRIVER    SCOPE
+d48eb3bfba26   bridge               bridge    local
+3e2b7821b5cf   e2e-264690_default   bridge    local
+405f235aafa6   host                 host      local
+135ae8525328   none                 null      local
+[32;1m$ # DinD: bind mounts refer to THIS job container filesystem, so CI_PROJECT_DIR works as expected. # collapsed multi-line command[0;m
+
+==========================================
+=== RUNNING PLAYWRIGHT E2E TESTS ===
+==========================================
+
+=== Pre-flight Checks ===
+CI_PROJECT_DIR: /builds/I548789/individual-project-s3
+Network: e2e-264690_default
+
+=== Verifying project directory ===
+Project root exists:
+total 96
+drwxrwxrwx    9 root     root          4096 Jan 21 12:05 .
+drwxrwxrwx    4 root     root          4096 Nov 20 23:57 ..
+drwxrwxrwx    6 root     root          4096 Jan 21 12:07 .git
+-rw-rw-rw-    1 root     root           615 Jan 19 23:53 .gitignore
+-rw-rw-rw-    1 root     root         25135 Jan 21 12:05 .gitlab-ci.yml
+drwxrwxrwx    2 root     root          4096 Jan 16 16:57 .vscode
+-rw-rw-rw-    1 root     root          3553 Jan 16 16:57 Functions.txt
+-rw-rw-rw-    1 root     root          3359 Nov 20 23:57 README.md
+drwxrwxrwx    7 root     root          4096 Jan 21 12:07 backend
+
+Frontend directory exists:
+total 412
+drwxrwxrwx    8 root     root          4096 Jan 21 12:07 .
+drwxrwxrwx    9 root     root          4096 Jan 21 12:05 ..
+-rw-rw-rw-    1 root     root           435 Jan 19 23:53 .gitignore
+drwxrwxrwx    2 root     root          4096 Jan 21 12:05 .scannerwork
+-rw-rw-rw-    1 root     root           819 Dec 16 10:30 Dockerfile
+-rw-rw-rw-    1 root     root           856 Nov 20 23:57 README.md
+drwxr-xr-x    5 root     root          4096 Jan 21 12:07 dist
+drwxrwxrwx    2 root     root          4096 Jan 21 10:58 e2e
+-rw-rw-rw-    1 root     root           763 Nov 20 23:57 eslint.config.js
+-rw-rw-rw-    1 root     root           417 Jan  8 11:03 index.html
+-rw-rw-rw-    1 root     root           239 Nov 20 23:57 nginx.conf
+-rw-rw-rw-    1 root     root        332914 Jan 21 10:58 package-lock.json
+-rw-rw-rw-    1 root     root          1856 Jan 21 10:58 package.json
+-rw-rw-rw-    1 root     root           591 Jan 21 10:58 playwright.config.js
+-rw-rw-rw-    1 root     root            80 Nov 20 23:57 postcss.config.js
+drwxrwxrwx    4 root     root          4096 Jan  8 11:03 public
+-rw-rw-rw-    1 root     root          1450 Jan 21 10:58 sonarConfig.cjs
+drwxrwxrwx   11 root     root          4096 Jan 19 23:53 src
+-rw-rw-rw-    1 root     root           337 Jan  5 12:33 tailwind.config.js
+
+=== Checking frontend/package.json ===
+✓ package.json found
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "sonar": "node sonarConfig.cjs",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.4.2",
+
+=== Network connectivity test ===
+Testing backend from job container:
+{"status":"UP"}
+Testing frontend from job container:
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="im
+
+=== Starting Playwright container ===
+Mount point: /builds/I548789/individual-project-s3 -> /builds/I548789/individual-project-s3
+Working directory: /builds/I548789/individual-project-s3/frontend
+Environment:
+  PLAYWRIGHT_BASE_URL=http://frontend
+  VITE_API_URL=http://backend:8080
+  VITE_MAPBOX_TOKEN=pk.eyJ1Ijoib3NjYXIwMDUiLCJhIjoiY21oaTYxcDJpMHNvZjJscXZmdnp5NTN5bSJ9.O7gyUFqu1gJX0EidNEfNzw
+
+Unable to find image 'mcr.microsoft.com/playwright:v1.50.0-jammy' locally
+v1.50.0-jammy: Pulling from playwright
+7478e0ac0f23: Pulling fs layer
+d8a1b112fc21: Pulling fs layer
+d70fad4599f0: Pulling fs layer
+212876460db2: Pulling fs layer
+212876460db2: Waiting
+d70fad4599f0: Verifying Checksum
+d70fad4599f0: Download complete
+7478e0ac0f23: Verifying Checksum
+7478e0ac0f23: Download complete
+d8a1b112fc21: Verifying Checksum
+d8a1b112fc21: Download complete
+7478e0ac0f23: Pull complete
+d8a1b112fc21: Pull complete
+d70fad4599f0: Pull complete
+212876460db2: Verifying Checksum
+212876460db2: Download complete
+212876460db2: Pull complete
+Digest: sha256:86d37a5870b524ad1359121ad76a4268410d034e2a3864aaeec8c34c4c8f0ee7
+Status: Downloaded newer image for mcr.microsoft.com/playwright:v1.50.0-jammy
+=== Inside Playwright Container ===
+Working directory:
+/builds/I548789/individual-project-s3/frontend
+
+Directory contents:
+total 412
+drwxrwxrwx  8 root root   4096 Jan 21 12:07 .
+drwxrwxrwx  9 root root   4096 Jan 21 12:05 ..
+-rw-rw-rw-  1 root root    435 Jan 19 23:53 .gitignore
+drwxrwxrwx  2 root root   4096 Jan 21 12:05 .scannerwork
+-rw-rw-rw-  1 root root    819 Dec 16 10:30 Dockerfile
+-rw-rw-rw-  1 root root    856 Nov 20 23:57 README.md
+drwxr-xr-x  5 root root   4096 Jan 21 12:07 dist
+drwxrwxrwx  2 root root   4096 Jan 21 10:58 e2e
+-rw-rw-rw-  1 root root    763 Nov 20 23:57 eslint.config.js
+-rw-rw-rw-  1 root root    417 Jan  8 11:03 index.html
+-rw-rw-rw-  1 root root    239 Nov 20 23:57 nginx.conf
+-rw-rw-rw-  1 root root 332914 Jan 21 10:58 package-lock.json
+-rw-rw-rw-  1 root root   1856 Jan 21 10:58 package.json
+-rw-rw-rw-  1 root root    591 Jan 21 10:58 playwright.config.js
+-rw-rw-rw-  1 root root     80 Nov 20 23:57 postcss.config.js
+drwxrwxrwx  4 root root   4096 Jan  8 11:03 public
+-rw-rw-rw-  1 root root   1450 Jan 21 10:58 sonarConfig.cjs
+drwxrwxrwx 11 root root   4096 Jan 19 23:53 src
+-rw-rw-rw-  1 root root    337 Jan  5 12:33 tailwind.config.js
+drwxrwxrwx  9 root root   4096 Jan 19 23:53 tests
+-rw-rw-rw-  1 root root    465 Jan 16 16:57 vite.config.js
+-rw-rw-rw-  1 root root    306 Jan  5 12:33 vitest.config.js
+
+Checking package.json:
+✓ package.json found
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "sonar": "node sonarConfig.cjs",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.4.2",
+
+Environment variables:
+PLAYWRIGHT_BASE_URL=http://frontend
+PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+VITE_MAPBOX_TOKEN=pk.eyJ1Ijoib3NjYXIwMDUiLCJhIjoiY21oaTYxcDJpMHNvZjJscXZmdnp5NTN5bSJ9.O7gyUFqu1gJX0EidNEfNzw
+VITE_API_URL=http://backend:8080
+
+=== Running npm ci ===
+
+added 669 packages, and audited 670 packages in 13s
+
+135 packages are looking for funding
+  run `npm fund` for details
+
+13 vulnerabilities (6 low, 3 moderate, 4 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+npm notice
+npm notice New major version of npm available! 10.9.2 -> 11.7.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.7.0
+npm notice To update run: npm install -g npm@11.7.0
+npm notice
+
+=== Running Playwright tests ===
+
+Running 1 test using 1 worker
+
+  ✘  1 e2e/login.spec.e2e.js:3:1 › login: user can log in and is redirected to /map (3ms)
+
+
+  1) e2e/login.spec.e2e.js:3:1 › login: user can log in and is redirected to /map ──────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔══════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just updated to 1.57.0. ║
+    ║ Please update docker image as well.                                  ║
+    ║ -  current: mcr.microsoft.com/playwright:v1.50.0-jammy               ║
+    ║ - required: mcr.microsoft.com/playwright:v1.57.0-jammy               ║
+    ║                                                                      ║
+    ║ <3 Playwright Team                                                   ║
+    ╚══════════════════════════════════════════════════════════════════════╝
+
+  1 failed
+    e2e/login.spec.e2e.js:3:1 › login: user can log in and is redirected to /map ───────────────────
+section_end:1768997531:step_script
+[0Ksection_start:1768997531:after_script
+[0K[0K[36;1mRunning after_script[0;m[0;m
+[32;1mRunning after script...[0;m
+[32;1m$ echo "" # collapsed multi-line command[0;m
+
+==========================================
+=== AFTER SCRIPT - COLLECTING LOGS ===
+==========================================
+
+=== Compose Services Status ===
+time="2026-01-21T12:12:13Z" level=warning msg="/builds/I548789/individual-project-s3/docker-compose.e2e.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+NAME                    IMAGE                 COMMAND                  SERVICE    CREATED              STATUS                        PORTS
+e2e-264690-backend-1    e2e-264690-backend    "java -jar app.jar"      backend    About a minute ago   Up About a minute (healthy)   8080/tcp
+e2e-264690-frontend-1   e2e-264690-frontend   "/docker-entrypoint.…"   frontend   About a minute ago   Up About a minute             80/tcp
+e2e-264690-postgres-1   postgres:16           "docker-entrypoint.s…"   postgres   About a minute ago   Up About a minute (healthy)   5432/tcp
+
+=== Backend Logs ===
+time="2026-01-21T12:12:13Z" level=warning msg="/builds/I548789/individual-project-s3/docker-compose.e2e.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+backend-1  | 
+backend-1  |   .   ____          _            __ _ _
+backend-1  |  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+backend-1  | ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+backend-1  |  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+backend-1  |   '  |____| .__|_| |_|_| |_\__, | / / / /
+backend-1  |  =========|_|==============|___/=/_/_/_/
+backend-1  | 
+backend-1  |  :: Spring Boot ::                (v3.5.5)
+backend-1  | 
+backend-1  | 2026-01-21 12:10:34.461 [main] INFO  n.f.db3.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 1 (/app/app.jar started by root in /app)
+backend-1  | 2026-01-21 12:10:34.464 [main] INFO  n.f.db3.backend.BackendApplication - The following 1 profile is active: "test"
+backend-1  | 2026-01-21 12:10:36.054 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+backend-1  | 2026-01-21 12:10:36.202 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 132 ms. Found 14 JPA repository interfaces.
+backend-1  | 2026-01-21 12:10:37.206 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+backend-1  | 2026-01-21 12:10:37.232 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+backend-1  | 2026-01-21 12:10:37.233 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+backend-1  | 2026-01-21 12:10:37.280 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+backend-1  | 2026-01-21 12:10:37.281 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 2748 ms
+backend-1  | 2026-01-21 12:10:37.798 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+backend-1  | 2026-01-21 12:10:38.063 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@23c05889
+backend-1  | 2026-01-21 12:10:38.066 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+backend-1  | 2026-01-21 12:10:38.106 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:postgresql://postgres:5432/testdb (PostgreSQL 16.11)
+backend-1  | 2026-01-21 12:10:38.150 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Schema history table "public"."flyway_schema_history" does not exist yet
+backend-1  | 2026-01-21 12:10:38.156 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 4 migrations (execution time 00:00.023s)
+backend-1  | 2026-01-21 12:10:38.167 [main] INFO  org.flywaydb.core.Flyway - All configured schemas are empty; baseline operation skipped. A baseline or migration script with a lower version than the baseline version may execute if available. Check the Schemas parameter if this is not intended.
+backend-1  | 2026-01-21 12:10:38.194 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Creating Schema History table "public"."flyway_schema_history" ...
+backend-1  | 2026-01-21 12:10:38.277 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "public": << Empty Schema >>
+backend-1  | 2026-01-21 12:10:38.301 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "public" to version "1 - Initial schema"
+backend-1  | 2026-01-21 12:10:38.534 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "public" to version "2 - Add missing tables"
+backend-1  | 2026-01-21 12:10:38.863 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "public" to version "3 - Add unique vote user hazard"
+backend-1  | 2026-01-21 12:10:38.892 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "public" to version "4 - Seed roles"
+backend-1  | 2026-01-21 12:10:38.909 [main] INFO  o.f.core.internal.command.DbMigrate - Successfully applied 4 migrations to schema "public", now at version v4 (execution time 00:00.523s)
+backend-1  | 2026-01-21 12:10:39.450 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+backend-1  | 2026-01-21 12:10:41.091 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+backend-1  | 2026-01-21 12:10:41.937 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+backend-1  | 2026-01-21 12:10:43.376 [main] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+backend-1  | 2026-01-21 12:10:44.005 [main] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 1 endpoint beneath base path '/actuator'
+backend-1  | 2026-01-21 12:10:44.768 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Starting...
+backend-1  | 2026-01-21 12:10:44.769 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@11dcc499]]
+backend-1  | 2026-01-21 12:10:44.771 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Started.
+backend-1  | 2026-01-21 12:10:44.796 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+backend-1  | 2026-01-21 12:10:44.826 [main] INFO  n.f.db3.backend.BackendApplication - Started BackendApplication in 11.228 seconds (process running for 11.95)
+backend-1  | 2026-01-21 12:10:48.248 [http-nio-8080-exec-1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+backend-1  | 2026-01-21 12:10:48.249 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+backend-1  | 2026-01-21 12:10:48.255 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 5 ms
+backend-1  | 2026-01-21 12:11:44.704 [MessageBroker-1] INFO  o.s.w.s.c.WebSocketMessageBrokerStats - WebSocketSession[0 current WS(0)-HttpStream(0)-HttpPoll(0), 0 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(0)-CONNECTED(0)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], outboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], sockJsScheduler[pool size = 1, active threads = 1, queued tasks = 0, completed tasks = 0]
+
+=== Frontend Logs ===
+time="2026-01-21T12:12:13Z" level=warning msg="/builds/I548789/individual-project-s3/docker-compose.e2e.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+frontend-1  | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+frontend-1  | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+frontend-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+frontend-1  | 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+frontend-1  | 10-listen-on-ipv6-by-default.sh: info: /etc/nginx/conf.d/default.conf differs from the packaged version
+frontend-1  | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+frontend-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+frontend-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+frontend-1  | /docker-entrypoint.sh: Configuration complete; ready for start up
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: using the "epoll" event method
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: nginx/1.29.4
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: OS: Linux 6.6.87.2-microsoft-standard-WSL2
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker processes
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 29
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 30
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 31
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 32
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 33
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 34
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 35
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 36
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 37
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 38
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 39
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 40
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 41
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 42
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 43
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 44
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 45
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 46
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 47
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 48
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 49
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 50
+frontend-1  | 172.19.0.5 - - [21/Jan/2026:12:10:54 +0000] "GET / HTTP/1.1" 200 515 "-" "curl/8.11.1" "-"
+frontend-1  | 172.19.0.5 - - [21/Jan/2026:12:10:55 +0000] "GET / HTTP/1.1" 200 515 "-" "curl/8.11.1" "-"
+frontend-1  | 172.19.0.5 - - [21/Jan/2026:12:10:56 +0000] "GET / HTTP/1.1" 200 515 "-" "curl/8.11.1" "-"
+
+=== Postgres Logs ===
+time="2026-01-21T12:12:13Z" level=warning msg="/builds/I548789/individual-project-s3/docker-compose.e2e.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+postgres-1  | 
+postgres-1  | Data page checksums are disabled.
+postgres-1  | 
+postgres-1  | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+postgres-1  | creating subdirectories ... ok
+postgres-1  | selecting dynamic shared memory implementation ... posix
+postgres-1  | selecting default max_connections ... 100
+postgres-1  | selecting default shared_buffers ... 128MB
+postgres-1  | selecting default time zone ... Etc/UTC
+postgres-1  | creating configuration files ... ok
+postgres-1  | running bootstrap script ... ok
+postgres-1  | performing post-bootstrap initialization ... ok
+postgres-1  | syncing data to disk ... ok
+postgres-1  | initdb: warning: enabling "trust" authentication for local connections
+postgres-1  | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+postgres-1  | 
+postgres-1  | 
+postgres-1  | Success. You can now start the database server using:
+postgres-1  | 
+postgres-1  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+postgres-1  | 
+postgres-1  | waiting for server to start....2026-01-21 12:10:31.452 UTC [48] LOG:  starting PostgreSQL 16.11 (Debian 16.11-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+postgres-1  | 2026-01-21 12:10:31.457 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres-1  | 2026-01-21 12:10:31.476 UTC [51] LOG:  database system was shut down at 2026-01-21 12:10:30 UTC
+postgres-1  | 2026-01-21 12:10:31.485 UTC [48] LOG:  database system is ready to accept connections
+postgres-1  |  done
+postgres-1  | server started
+postgres-1  | CREATE DATABASE
+postgres-1  | 
+postgres-1  | 
+postgres-1  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+postgres-1  | 
+postgres-1  | waiting for server to shut down....2026-01-21 12:10:31.661 UTC [48] LOG:  received fast shutdown request
+postgres-1  | 2026-01-21 12:10:31.666 UTC [48] LOG:  aborting any active transactions
+postgres-1  | 2026-01-21 12:10:31.668 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+postgres-1  | 2026-01-21 12:10:31.668 UTC [49] LOG:  shutting down
+postgres-1  | 2026-01-21 12:10:31.673 UTC [49] LOG:  checkpoint starting: shutdown immediate
+postgres-1  | 2026-01-21 12:10:31.910 UTC [49] LOG:  checkpoint complete: wrote 926 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.021 s, sync=0.190 s, total=0.242 s; sync files=301, longest=0.005 s, average=0.001 s; distance=4273 kB, estimate=4273 kB; lsn=0/191F0D0, redo lsn=0/191F0D0
+postgres-1  | 2026-01-21 12:10:31.918 UTC [48] LOG:  database system is shut down
+postgres-1  |  done
+postgres-1  | server stopped
+postgres-1  | 
+postgres-1  | PostgreSQL init process complete; ready for start up.
+postgres-1  | 
+postgres-1  | 2026-01-21 12:10:31.990 UTC [1] LOG:  starting PostgreSQL 16.11 (Debian 16.11-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+postgres-1  | 2026-01-21 12:10:31.990 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+postgres-1  | 2026-01-21 12:10:31.990 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+postgres-1  | 2026-01-21 12:10:32.001 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres-1  | 2026-01-21 12:10:32.017 UTC [64] LOG:  database system was shut down at 2026-01-21 12:10:31 UTC
+postgres-1  | 2026-01-21 12:10:32.025 UTC [1] LOG:  database system is ready to accept connections
+
+=== All Compose Logs (last 50 lines) ===
+time="2026-01-21T12:12:13Z" level=warning msg="/builds/I548789/individual-project-s3/docker-compose.e2e.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+frontend-1  | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+frontend-1  | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+frontend-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+frontend-1  | 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+frontend-1  | 10-listen-on-ipv6-by-default.sh: info: /etc/nginx/conf.d/default.conf differs from the packaged version
+frontend-1  | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+frontend-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+frontend-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+frontend-1  | /docker-entrypoint.sh: Configuration complete; ready for start up
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: using the "epoll" event method
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: nginx/1.29.4
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: OS: Linux 6.6.87.2-microsoft-standard-WSL2
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker processes
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 29
+postgres-1  | 
+postgres-1  | Data page checksums are disabled.
+postgres-1  | 
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 30
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 31
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 32
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 33
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 34
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 35
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 36
+postgres-1  | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 37
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 38
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 39
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 40
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 41
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 42
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 43
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 44
+postgres-1  | creating subdirectories ... ok
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 45
+postgres-1  | selecting dynamic shared memory implementation ... posix
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 46
+postgres-1  | selecting default max_connections ... 100
+postgres-1  | selecting default shared_buffers ... 128MB
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 47
+postgres-1  | selecting default time zone ... Etc/UTC
+postgres-1  | creating configuration files ... ok
+postgres-1  | running bootstrap script ... ok
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 48
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 49
+frontend-1  | 2026/01/21 12:10:49 [notice] 1#1: start worker process 50
+frontend-1  | 172.19.0.5 - - [21/Jan/2026:12:10:54 +0000] "GET / HTTP/1.1" 200 515 "-" "curl/8.11.1" "-"
+frontend-1  | 172.19.0.5 - - [21/Jan/2026:12:10:55 +0000] "GET / HTTP/1.1" 200 515 "-" "curl/8.11.1" "-"
+frontend-1  | 172.19.0.5 - - [21/Jan/2026:12:10:56 +0000] "GET / HTTP/1.1" 200 515 "-" "curl/8.11.1" "-"
+backend-1   | 
+postgres-1  | performing post-bootstrap initialization ... ok
+postgres-1  | syncing data to disk ... ok
+postgres-1  | initdb: warning: enabling "trust" authentication for local connections
+postgres-1  | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+postgres-1  | 
+postgres-1  | 
+postgres-1  | Success. You can now start the database server using:
+postgres-1  | 
+postgres-1  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+postgres-1  | 
+postgres-1  | waiting for server to start....2026-01-21 12:10:31.452 UTC [48] LOG:  starting PostgreSQL 16.11 (Debian 16.11-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+postgres-1  | 2026-01-21 12:10:31.457 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres-1  | 2026-01-21 12:10:31.476 UTC [51] LOG:  database system was shut down at 2026-01-21 12:10:30 UTC
+postgres-1  | 2026-01-21 12:10:31.485 UTC [48] LOG:  database system is ready to accept connections
+postgres-1  |  done
+postgres-1  | server started
+postgres-1  | CREATE DATABASE
+postgres-1  | 
+postgres-1  | 
+postgres-1  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+postgres-1  | 
+postgres-1  | waiting for server to shut down....2026-01-21 12:10:31.661 UTC [48] LOG:  received fast shutdown request
+postgres-1  | 2026-01-21 12:10:31.666 UTC [48] LOG:  aborting any active transactions
+postgres-1  | 2026-01-21 12:10:31.668 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+postgres-1  | 2026-01-21 12:10:31.668 UTC [49] LOG:  shutting down
+postgres-1  | 2026-01-21 12:10:31.673 UTC [49] LOG:  checkpoint starting: shutdown immediate
+backend-1   |   .   ____          _            __ _ _
+backend-1   |  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+postgres-1  | 2026-01-21 12:10:31.910 UTC [49] LOG:  checkpoint complete: wrote 926 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.021 s, sync=0.190 s, total=0.242 s; sync files=301, longest=0.005 s, average=0.001 s; distance=4273 kB, estimate=4273 kB; lsn=0/191F0D0, redo lsn=0/191F0D0
+backend-1   | ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+backend-1   |  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+backend-1   |   '  |____| .__|_| |_|_| |_\__, | / / / /
+backend-1   |  =========|_|==============|___/=/_/_/_/
+backend-1   | 
+backend-1   |  :: Spring Boot ::                (v3.5.5)
+backend-1   | 
+backend-1   | 2026-01-21 12:10:34.461 [main] INFO  n.f.db3.backend.BackendApplication - Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 1 (/app/app.jar started by root in /app)
+backend-1   | 2026-01-21 12:10:34.464 [main] INFO  n.f.db3.backend.BackendApplication - The following 1 profile is active: "test"
+backend-1   | 2026-01-21 12:10:36.054 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+postgres-1  | 2026-01-21 12:10:31.918 UTC [48] LOG:  database system is shut down
+postgres-1  |  done
+postgres-1  | server stopped
+postgres-1  | 
+postgres-1  | PostgreSQL init process complete; ready for start up.
+postgres-1  | 
+postgres-1  | 2026-01-21 12:10:31.990 UTC [1] LOG:  starting PostgreSQL 16.11 (Debian 16.11-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+postgres-1  | 2026-01-21 12:10:31.990 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+postgres-1  | 2026-01-21 12:10:31.990 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+postgres-1  | 2026-01-21 12:10:32.001 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres-1  | 2026-01-21 12:10:32.017 UTC [64] LOG:  database system was shut down at 2026-01-21 12:10:31 UTC
+backend-1   | 2026-01-21 12:10:36.202 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 132 ms. Found 14 JPA repository interfaces.
+backend-1   | 2026-01-21 12:10:37.206 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+backend-1   | 2026-01-21 12:10:37.232 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+postgres-1  | 2026-01-21 12:10:32.025 UTC [1] LOG:  database system is ready to accept connections
+backend-1   | 2026-01-21 12:10:37.233 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+backend-1   | 2026-01-21 12:10:37.280 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+backend-1   | 2026-01-21 12:10:37.281 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 2748 ms
+backend-1   | 2026-01-21 12:10:37.798 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+backend-1   | 2026-01-21 12:10:38.063 [main] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@23c05889
+backend-1   | 2026-01-21 12:10:38.066 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+backend-1   | 2026-01-21 12:10:38.106 [main] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:postgresql://postgres:5432/testdb (PostgreSQL 16.11)
+backend-1   | 2026-01-21 12:10:38.150 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Schema history table "public"."flyway_schema_history" does not exist yet
+backend-1   | 2026-01-21 12:10:38.156 [main] INFO  o.f.core.internal.command.DbValidate - Successfully validated 4 migrations (execution time 00:00.023s)
+backend-1   | 2026-01-21 12:10:38.167 [main] INFO  org.flywaydb.core.Flyway - All configured schemas are empty; baseline operation skipped. A baseline or migration script with a lower version than the baseline version may execute if available. Check the Schemas parameter if this is not intended.
+backend-1   | 2026-01-21 12:10:38.194 [main] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Creating Schema History table "public"."flyway_schema_history" ...
+backend-1   | 2026-01-21 12:10:38.277 [main] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "public": << Empty Schema >>
+backend-1   | 2026-01-21 12:10:38.301 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "public" to version "1 - Initial schema"
+backend-1   | 2026-01-21 12:10:38.534 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "public" to version "2 - Add missing tables"
+backend-1   | 2026-01-21 12:10:38.863 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "public" to version "3 - Add unique vote user hazard"
+backend-1   | 2026-01-21 12:10:38.892 [main] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "public" to version "4 - Seed roles"
+backend-1   | 2026-01-21 12:10:38.909 [main] INFO  o.f.core.internal.command.DbMigrate - Successfully applied 4 migrations to schema "public", now at version v4 (execution time 00:00.523s)
+backend-1   | 2026-01-21 12:10:39.450 [main] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+backend-1   | 2026-01-21 12:10:41.091 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+backend-1   | 2026-01-21 12:10:41.937 [main] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+backend-1   | 2026-01-21 12:10:43.376 [main] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+backend-1   | 2026-01-21 12:10:44.005 [main] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 1 endpoint beneath base path '/actuator'
+backend-1   | 2026-01-21 12:10:44.768 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Starting...
+backend-1   | 2026-01-21 12:10:44.769 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@11dcc499]]
+backend-1   | 2026-01-21 12:10:44.771 [main] INFO  o.s.m.s.b.SimpleBrokerMessageHandler - Started.
+backend-1   | 2026-01-21 12:10:44.796 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+backend-1   | 2026-01-21 12:10:44.826 [main] INFO  n.f.db3.backend.BackendApplication - Started BackendApplication in 11.228 seconds (process running for 11.95)
+backend-1   | 2026-01-21 12:10:48.248 [http-nio-8080-exec-1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+backend-1   | 2026-01-21 12:10:48.249 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+backend-1   | 2026-01-21 12:10:48.255 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 5 ms
+backend-1   | 2026-01-21 12:11:44.704 [MessageBroker-1] INFO  o.s.w.s.c.WebSocketMessageBrokerStats - WebSocketSession[0 current WS(0)-HttpStream(0)-HttpPoll(0), 0 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(0)-CONNECTED(0)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], outboundChannel[pool size = 0, active threads = 0, queued tasks = 0, completed tasks = 0], sockJsScheduler[pool size = 1, active threads = 1, queued tasks = 0, completed tasks = 0]
+
+=== Docker Container List ===
+CONTAINER ID   IMAGE                 COMMAND                  CREATED              STATUS                        PORTS      NAMES
+09f5ae971a7d   e2e-264690-frontend   "/docker-entrypoint.…"   About a minute ago   Up About a minute             80/tcp     e2e-264690-frontend-1
+c152dcc4c62e   e2e-264690-backend    "java -jar app.jar"      About a minute ago   Up About a minute (healthy)   8080/tcp   e2e-264690-backend-1
+1f955d373b84   postgres:16           "docker-entrypoint.s…"   About a minute ago   Up About a minute (healthy)   5432/tcp   e2e-264690-postgres-1
+
+=== Docker Network List ===
+NETWORK ID     NAME                 DRIVER    SCOPE
+d48eb3bfba26   bridge               bridge    local
+3e2b7821b5cf   e2e-264690_default   bridge    local
+405f235aafa6   host                 host      local
+135ae8525328   none                 null      local
+
+=== Cleaning up ===
+time="2026-01-21T12:12:13Z" level=warning msg="/builds/I548789/individual-project-s3/docker-compose.e2e.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ Container e2e-264690-frontend-1  Stopping
+ Container e2e-264690-frontend-1  Stopped
+ Container e2e-264690-frontend-1  Removing
+ Container e2e-264690-frontend-1  Removed
+ Container e2e-264690-backend-1  Stopping
+ Container e2e-264690-backend-1  Stopped
+ Container e2e-264690-backend-1  Removing
+ Container e2e-264690-backend-1  Removed
+ Container e2e-264690-postgres-1  Stopping
+ Container e2e-264690-postgres-1  Stopped
+ Container e2e-264690-postgres-1  Removing
+ Container e2e-264690-postgres-1  Removed
+ Network e2e-264690_default  Removing
+ Network e2e-264690_default  Removed
+Cleanup complete
+section_end:1768997534:after_script
+[0Ksection_start:1768997534:upload_artifacts_on_failure
+[0K[0K[36;1mUploading artifacts for failed job[0;m[0;m
+[32;1mUploading artifacts...[0;m
+frontend/test-results/: found 3 matching artifact files and directories[0;m 
+frontend/playwright-report/: found 2 matching artifact files and directories[0;m 
+Uploading artifacts as "archive" to coordinator... 201 Created[0;m  correlation_id[0;m=01KFG7GEYS7KPQ85MN7KD7ZZCS id[0;m=928547 responseStatus[0;m=201 Created token[0;m=64_5vwFoJ
+[32;1mUploading artifacts...[0;m
+frontend/test-results/junit.xml: found 1 matching artifact files and directories[0;m 
+Uploading artifacts as "junit" to coordinator... 201 Created[0;m  correlation_id[0;m=01KFG7GF8DW8EFC6QNZC4J7BST id[0;m=928547 responseStatus[0;m=201 Created token[0;m=64_5vwFoJ
+section_end:1768997536:upload_artifacts_on_failure
+[0Ksection_start:1768997536:cleanup_file_variables
+[0K[0K[36;1mCleaning up project directory and file based variables[0;m[0;m
+section_end:1768997536:cleanup_file_variables
+[0K[31;1mERROR: Job failed: exit code 1[0;m

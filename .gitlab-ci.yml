@@ -466,6 +466,9 @@ frontend-e2e:
           echo '=== Running npm ci ==='
           npm ci
           echo ''
+          echo '=== Installing Playwright browsers ==='
+          npx playwright install --with-deps chromium
+          echo ''
           echo '=== Running Playwright tests ==='
           npx playwright test
         "
