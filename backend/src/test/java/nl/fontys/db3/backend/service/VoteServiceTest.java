@@ -141,16 +141,6 @@ class VoteServiceTest {
         verify(statisticsService).incrementVotes(1L);
     }
 
-    @Test
-    @Disabled
-    void voteAsDTO_nullHazardId_throwsException() {
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> voteService.voteAsDTO("voter@example.com", null, VoteType.UPVOTE));
-        assertEquals("hazardId cannot be null", exception.getMessage());
-        verify(userRepo, never()).findByEmail(any());
-        verify(hazardRepo, never()).findById(any());
-    }
 
     @Test
     void voteAsDTO_userNotFound_throwsException() {
