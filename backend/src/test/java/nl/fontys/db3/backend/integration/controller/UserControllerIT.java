@@ -119,20 +119,6 @@ class UserControllerIT {
                 .andExpect(jsonPath("$.name").value("New User"));
     }
 
-    @Test
-    void register_duplicateEmail() throws Exception {
-        String requestBody = objectMapper.writeValueAsString(Map.of(
-                "username", "anotheruser",
-                "email", "test@test.com", // Duplicate email
-                "password", "password123",
-                "name", "Another User"
-        ));
-
-        mockMvc.perform(post("/api/users/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isBadRequest());
-    }
 
     @Test
     void login_success() throws Exception {

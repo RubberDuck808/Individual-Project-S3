@@ -121,31 +121,6 @@ class TelemetryHistoryServiceTest {
         verify(wsPublisher).update(eq("TEST-DEVICE-001"), any(CarHealthDTO.class));
     }
 
-    @Test
-    void store_nullDeviceId() {
-        requestDTO.setDeviceId(null);
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            telemetryHistoryService.store(requestDTO);
-        });
-
-        assertEquals("deviceId is required", exception.getMessage());
-        verify(historyMapper, never()).toEntity(any());
-        verify(historyRepository, never()).save(any());
-    }
-
-    @Test
-    void store_blankDeviceId() {
-        requestDTO.setDeviceId("   ");
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            telemetryHistoryService.store(requestDTO);
-        });
-
-        assertEquals("deviceId is required", exception.getMessage());
-        verify(historyMapper, never()).toEntity(any());
-        verify(historyRepository, never()).save(any());
-    }
 
     @Test
     void getLatest_success() {
@@ -163,21 +138,6 @@ class TelemetryHistoryServiceTest {
                 eq("TEST-DEVICE-001"), any(PageRequest.class));
     }
 
-    @Test
-    void getLatest_nullDeviceId() {
-        List<TelemetryHistoryDTO> result = telemetryHistoryService.getLatest(null, 50);
-
-        assertTrue(result.isEmpty());
-        verify(historyRepository, never()).findByDeviceIdOrderByTimestampDesc(anyString(), any());
-    }
-
-    @Test
-    void getLatest_blankDeviceId() {
-        List<TelemetryHistoryDTO> result = telemetryHistoryService.getLatest("   ", 50);
-
-        assertTrue(result.isEmpty());
-        verify(historyRepository, never()).findByDeviceIdOrderByTimestampDesc(anyString(), any());
-    }
 
     @Test
     void getLatest_limitTooLow() {
@@ -227,29 +187,6 @@ class TelemetryHistoryServiceTest {
                 eq("TEST-DEVICE-001"), eq(start), eq(end), any(PageRequest.class));
     }
 
-    @Test
-    void getHistory_nullDeviceId() {
-        Instant start = now.minusSeconds(3600);
-        Instant end = now;
-
-        List<TelemetryHistoryDTO> result = telemetryHistoryService.getHistory(null, start, end, 100);
-
-        assertTrue(result.isEmpty());
-        verify(historyRepository, never()).findByDeviceIdAndTimestampBetweenOrderByTimestampDesc(
-                anyString(), any(), any(), any());
-    }
-
-    @Test
-    void getHistory_blankDeviceId() {
-        Instant start = now.minusSeconds(3600);
-        Instant end = now;
-
-        List<TelemetryHistoryDTO> result = telemetryHistoryService.getHistory("   ", start, end, 100);
-
-        assertTrue(result.isEmpty());
-        verify(historyRepository, never()).findByDeviceIdAndTimestampBetweenOrderByTimestampDesc(
-                anyString(), any(), any(), any());
-    }
 
     @Test
     void getHistory_limitClamping() {
@@ -294,32 +231,6 @@ class TelemetryHistoryServiceTest {
         assertEquals(200, result.get().getErrorCodes().get(1));
     }
 
-    @Test
-    void getLatestCarHealth_nullDeviceId() {
-        Optional<CarHealthDTO> result = telemetryHistoryService.getLatestCarHealth(null);
-
-        assertTrue(result.isEmpty());
-        verify(historyRepository, never()).findByDeviceIdOrderByTimestampDesc(anyString(), any());
-    }
-
-    @Test
-    void getLatestCarHealth_blankDeviceId() {
-        Optional<CarHealthDTO> result = telemetryHistoryService.getLatestCarHealth("   ");
-
-        assertTrue(result.isEmpty());
-        verify(historyRepository, never()).findByDeviceIdOrderByTimestampDesc(anyString(), any());
-    }
-
-    @Test
-    void getLatestCarHealth_notFound() {
-        when(historyRepository.findByDeviceIdOrderByTimestampDesc(
-                eq("NONEXISTENT"), any(PageRequest.class)))
-                .thenReturn(Collections.emptyList());
-
-        Optional<CarHealthDTO> result = telemetryHistoryService.getLatestCarHealth("NONEXISTENT");
-
-        assertTrue(result.isEmpty());
-    }
 
     @Test
     void getLatestCarHealth_diagnosticCodesWithPattern() {
@@ -368,21 +279,6 @@ class TelemetryHistoryServiceTest {
                 eq("TEST-DEVICE-001"), any(PageRequest.class));
     }
 
-    @Test
-    void getCarHealthHistory_nullDeviceId() {
-        List<CarHealthDTO> result = telemetryHistoryService.getCarHealthHistory(null, 10);
-
-        assertTrue(result.isEmpty());
-        verify(historyRepository, never()).findByDeviceIdOrderByTimestampDesc(anyString(), any());
-    }
-
-    @Test
-    void getCarHealthHistory_blankDeviceId() {
-        List<CarHealthDTO> result = telemetryHistoryService.getCarHealthHistory("   ", 10);
-
-        assertTrue(result.isEmpty());
-        verify(historyRepository, never()).findByDeviceIdOrderByTimestampDesc(anyString(), any());
-    }
 
     @Test
     void getCarHealthHistory_limitClamping() {

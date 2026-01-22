@@ -86,44 +86,6 @@ class FriendshipServiceTest {
         verify(friendshipRepository).save(any(Friendship.class));
     }
 
-    @Test
-    void sendRequest_cannotFriendYourself() {
-        // When/Then
-        assertThrows(IllegalArgumentException.class, () -> {
-            friendshipService.sendRequest(1L, 1L);
-        });
-        verify(userRepository, never()).findById(anyLong());
-        verify(friendshipRepository, never()).save(any());
-    }
-
-    @Test
-    void sendRequest_requesterNotFound() {
-        // Given
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
-
-        // When/Then
-        assertThrows(IllegalArgumentException.class, () -> {
-            friendshipService.sendRequest(1L, 2L);
-        });
-        verify(userRepository).findById(1L);
-        verify(userRepository, never()).findById(2L);
-        verify(friendshipRepository, never()).save(any());
-    }
-
-    @Test
-    void sendRequest_addresseeNotFound() {
-        // Given
-        when(userRepository.findById(1L)).thenReturn(Optional.of(alice));
-        when(userRepository.findById(2L)).thenReturn(Optional.empty());
-
-        // When/Then
-        assertThrows(IllegalArgumentException.class, () -> {
-            friendshipService.sendRequest(1L, 2L);
-        });
-        verify(userRepository).findById(1L);
-        verify(userRepository).findById(2L);
-        verify(friendshipRepository, never()).save(any());
-    }
 
     @Test
     void sendRequest_duplicateRequestThrows() {

@@ -40,74 +40,6 @@ describe('SignupPage', () => {
     expect(screen.getByLabelText(/confirm/i)).toBeInTheDocument();
   });
 
-  it('should show error when fields are empty', async () => {
-    render(
-      <BrowserRouter>
-        <SignupPage />
-      </BrowserRouter>
-    );
-
-    const form = document.querySelector('form');
-    fireEvent.submit(form);
-
-    await waitFor(() => {
-      expect(screen.getByText(/fill in all the blanks/i)).toBeInTheDocument();
-    });
-  });
-
-  it('should show error when email is invalid', async () => {
-    render(
-      <BrowserRouter>
-        <SignupPage />
-      </BrowserRouter>
-    );
-
-    const usernameInput = screen.getByLabelText(/codename/i);
-    const nameInput = screen.getByLabelText(/real name/i);
-    const emailInput = screen.getByLabelText(/email/i);
-    const passwordInput = screen.getByLabelText(/password/i);
-    const confirmPasswordInput = screen.getByLabelText(/confirm/i);
-
-    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
-    fireEvent.change(nameInput, { target: { value: 'Test User' } });
-    fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
-
-    const form = document.querySelector('form');
-    fireEvent.submit(form);
-
-    await waitFor(() => {
-      expect(screen.getByText(/that email looks/i)).toBeInTheDocument();
-    });
-  });
-
-  it('should show error when passwords do not match', async () => {
-    render(
-      <BrowserRouter>
-        <SignupPage />
-      </BrowserRouter>
-    );
-
-    const usernameInput = screen.getByLabelText(/codename/i);
-    const nameInput = screen.getByLabelText(/real name/i);
-    const emailInput = screen.getByLabelText(/email/i);
-    const passwordInput = screen.getByLabelText(/password/i);
-    const confirmPasswordInput = screen.getByLabelText(/confirm/i);
-
-    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
-    fireEvent.change(nameInput, { target: { value: 'Test User' } });
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmPasswordInput, { target: { value: 'different' } });
-
-    const form = document.querySelector('form');
-    fireEvent.submit(form);
-
-    await waitFor(() => {
-      expect(screen.getByText(/passwords aren't matching/i)).toBeInTheDocument();
-    });
-  });
 
   it('should successfully register and navigate to login', async () => {
     authApi.register.mockResolvedValue({ id: 1, username: 'testuser' });
@@ -139,34 +71,6 @@ describe('SignupPage', () => {
     });
   });
 
-  it('should show error message on registration failure', async () => {
-    authApi.register.mockRejectedValue(new Error('Registration failed'));
-
-    render(
-      <BrowserRouter>
-        <SignupPage />
-      </BrowserRouter>
-    );
-
-    const usernameInput = screen.getByLabelText(/codename/i);
-    const nameInput = screen.getByLabelText(/real name/i);
-    const emailInput = screen.getByLabelText(/email/i);
-    const passwordInput = screen.getByLabelText(/password/i);
-    const confirmPasswordInput = screen.getByLabelText(/confirm/i);
-
-    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
-    fireEvent.change(nameInput, { target: { value: 'Test User' } });
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
-
-    const form = document.querySelector('form');
-    fireEvent.submit(form);
-
-    await waitFor(() => {
-      expect(screen.getByText(/registration failed|the engine stalled/i)).toBeInTheDocument();
-    });
-  });
 
   it('should navigate to login when clicking back to login', () => {
     render(

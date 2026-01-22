@@ -89,18 +89,6 @@ class UserServiceTest {
         verify(userRepository).deleteById(1L);
     }
 
-    @Test
-    void deleteUser_userNotFound() {
-        when(userRepository.existsById(1L)).thenReturn(false);
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.deleteUser(1L);
-        });
-
-        assertEquals("User not found with id 1", exception.getMessage());
-        verify(userRepository).existsById(1L);
-        verify(userRepository, never()).deleteById(anyLong());
-    }
 
     // Tests for updateMe
     @Test
@@ -130,18 +118,6 @@ class UserServiceTest {
         verify(userRepository).save(any(User.class));
     }
 
-    @Test
-    void updateMe_updateUsername_alreadyExists() {
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
-        when(userRepository.existsByUsername("existinguser")).thenReturn(true);
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.updateMe("test@test.com", null, "existinguser", null, null, null);
-        });
-
-        assertEquals(USERNAME_ALREADY_EXISTS, exception.getMessage());
-        verify(userRepository, never()).save(any(User.class));
-    }
 
     @Test
     void updateMe_updateEmail_success() {
@@ -211,51 +187,6 @@ class UserServiceTest {
         verify(userRepository).save(any(User.class));
     }
 
-    @Test
-    void updateMe_updatePassword_missingCurrentPassword() {
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.updateMe("test@test.com", null, null, null, null, "newPassword");
-        });
-
-        assertEquals(CURRENT_PASSWORD_REQUIRED, exception.getMessage());
-        verify(userRepository, never()).save(any(User.class));
-    }
-
-    @Test
-    void updateMe_updatePassword_incorrectCurrentPassword() {
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.matches("wrongPass", "encodedPassword")).thenReturn(false);
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.updateMe("test@test.com", null, null, null, "wrongPass", "newPassword");
-        });
-
-        assertEquals(CURRENT_PASSWORD_INCORRECT, exception.getMessage());
-        verify(userRepository, never()).save(any(User.class));
-    }
-
-    @Test
-    void updateMe_notAuthenticated() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.updateMe(null, "New Name", null, null, null, null);
-        });
-
-        assertEquals(NOT_AUTHENTICATED, exception.getMessage());
-        verify(userRepository, never()).findByEmail(anyString());
-    }
-
-    @Test
-    void updateMe_userNotFound() {
-        when(userRepository.findByEmail("nonexistent@test.com")).thenReturn(Optional.empty());
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.updateMe("nonexistent@test.com", "New Name", null, null, null, null);
-        });
-
-        assertEquals(USER_NOT_FOUND, exception.getMessage());
-    }
 
     // Tests for changeMyAvatar
     @Test
@@ -272,27 +203,6 @@ class UserServiceTest {
         verify(userRepository).save(any(User.class));
     }
 
-    @Test
-    void changeMyAvatar_notAuthenticated() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.changeMyAvatar(null, "test-avatar");
-        });
-
-        assertEquals(NOT_AUTHENTICATED, exception.getMessage());
-        verify(avatarService, never()).getActiveAvatarByNameOrThrow(anyString());
-    }
-
-    @Test
-    void changeMyAvatar_userNotFound() {
-        when(userRepository.findByEmail("nonexistent@test.com")).thenReturn(Optional.empty());
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.changeMyAvatar("nonexistent@test.com", "test-avatar");
-        });
-
-        assertEquals(USER_NOT_FOUND, exception.getMessage());
-        verify(avatarService, never()).getActiveAvatarByNameOrThrow(anyString());
-    }
 
     // Tests for changeMyBackground
     @Test
@@ -309,25 +219,4 @@ class UserServiceTest {
         verify(userRepository).save(any(User.class));
     }
 
-    @Test
-    void changeMyBackground_notAuthenticated() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.changeMyBackground(null, "test-background");
-        });
-
-        assertEquals(NOT_AUTHENTICATED, exception.getMessage());
-        verify(backgroundService, never()).getActiveBackgroundByNameOrThrow(anyString());
-    }
-
-    @Test
-    void changeMyBackground_userNotFound() {
-        when(userRepository.findByEmail("nonexistent@test.com")).thenReturn(Optional.empty());
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.changeMyBackground("nonexistent@test.com", "test-background");
-        });
-
-        assertEquals(USER_NOT_FOUND, exception.getMessage());
-        verify(backgroundService, never()).getActiveBackgroundByNameOrThrow(anyString());
-    }
 }

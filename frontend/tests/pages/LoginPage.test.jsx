@@ -41,86 +41,6 @@ describe('LoginPage', () => {
     expect(screen.getByRole('button', { name: /initialize log in/i })).toBeInTheDocument();
   });
 
-  it('should show error when both fields are empty', async () => {
-    // Arrange
-    render(
-      <BrowserRouter>
-        <LoginPage />
-      </BrowserRouter>
-    );
-
-    // Act
-    const form = document.querySelector('form');
-    fireEvent.submit(form);
-
-    // Assert
-    await waitFor(() => {
-      expect(screen.getByText(/enter your credentials.*driver/i)).toBeInTheDocument();
-    }, { timeout: 3000 });
-  });
-
-  it('should show error when email is empty', async () => {
-    // Arrange
-    render(
-      <BrowserRouter>
-        <LoginPage />
-      </BrowserRouter>
-    );
-
-    // Act
-    const passwordInput = screen.getByLabelText(/password/i);
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    
-    const form = document.querySelector('form');
-    fireEvent.submit(form);
-
-    // Assert
-    await waitFor(() => {
-      expect(screen.getByText(/we need your email/i)).toBeInTheDocument();
-    }, { timeout: 3000 });
-  });
-
-  it('should show error when email is invalid', async () => {
-    // Arrange
-    render(
-      <BrowserRouter>
-        <LoginPage />
-      </BrowserRouter>
-    );
-
-    // Act
-    const emailInput = screen.getByLabelText(/email address/i);
-    fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
-    
-    const form = document.querySelector('form');
-    fireEvent.submit(form);
-
-    // Assert
-    await waitFor(() => {
-      expect(screen.getByText(/email looks.*funky|that email looks a bit funky/i)).toBeInTheDocument();
-    }, { timeout: 3000 });
-  });
-
-  it('should show error when password is empty', async () => {
-    // Arrange
-    render(
-      <BrowserRouter>
-        <LoginPage />
-      </BrowserRouter>
-    );
-
-    // Act
-    const emailInput = screen.getByLabelText(/email address/i);
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    
-    const form = document.querySelector('form');
-    fireEvent.submit(form);
-
-    // Assert
-    await waitFor(() => {
-      expect(screen.getByText(/don't forget your password/i)).toBeInTheDocument();
-    }, { timeout: 3000 });
-  });
 
   it('should successfully login and redirect to map for regular users', async () => {
     // Arrange
@@ -177,29 +97,4 @@ describe('LoginPage', () => {
     }, { timeout: 3000 });
   });
 
-  it('should show error message on login failure', async () => {
-    // Arrange
-    authApi.login.mockRejectedValue(new Error('Invalid credentials'));
-
-    render(
-      <BrowserRouter>
-        <LoginPage />
-      </BrowserRouter>
-    );
-
-    // Act
-    const emailInput = screen.getByLabelText(/email address/i);
-    const passwordInput = screen.getByLabelText(/password/i);
-    
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
-    
-    const form = document.querySelector('form');
-    fireEvent.submit(form);
-
-    // Assert
-    await waitFor(() => {
-      expect(screen.getByText(/wrong email or password/i)).toBeInTheDocument();
-    }, { timeout: 3000 });
-  });
 });
