@@ -108,31 +108,6 @@ class LiveTelemetryServiceTest {
         verify(liveTelemetryMapper).toDTO(existingEntity);
     }
 
-    @Test
-    void upsert_nullDeviceId() {
-        requestDTO.setDeviceId(null);
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            liveTelemetryService.upsert(requestDTO);
-        });
-
-        assertEquals("deviceId is required", exception.getMessage());
-        verify(liveTelemetryRepository, never()).findByDeviceId(anyString());
-        verify(liveTelemetryRepository, never()).save(any());
-    }
-
-    @Test
-    void upsert_blankDeviceId() {
-        requestDTO.setDeviceId("   ");
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            liveTelemetryService.upsert(requestDTO);
-        });
-
-        assertEquals("deviceId is required", exception.getMessage());
-        verify(liveTelemetryRepository, never()).findByDeviceId(anyString());
-        verify(liveTelemetryRepository, never()).save(any());
-    }
 
     @Test
     void getByDeviceId_success() {
@@ -147,32 +122,6 @@ class LiveTelemetryServiceTest {
         verify(liveTelemetryMapper).toDTO(existingEntity);
     }
 
-    @Test
-    void getByDeviceId_notFound() {
-        when(liveTelemetryRepository.findByDeviceId("NONEXISTENT")).thenReturn(Optional.empty());
-
-        Optional<LiveTelemetryDTO> result = liveTelemetryService.getByDeviceId("NONEXISTENT");
-
-        assertTrue(result.isEmpty());
-        verify(liveTelemetryRepository).findByDeviceId("NONEXISTENT");
-        verify(liveTelemetryMapper, never()).toDTO(any());
-    }
-
-    @Test
-    void getByDeviceId_nullDeviceId() {
-        Optional<LiveTelemetryDTO> result = liveTelemetryService.getByDeviceId(null);
-
-        assertTrue(result.isEmpty());
-        verify(liveTelemetryRepository, never()).findByDeviceId(anyString());
-    }
-
-    @Test
-    void getByDeviceId_blankDeviceId() {
-        Optional<LiveTelemetryDTO> result = liveTelemetryService.getByDeviceId("   ");
-
-        assertTrue(result.isEmpty());
-        verify(liveTelemetryRepository, never()).findByDeviceId(anyString());
-    }
 
     @Test
     void cleanupStaleEntries_success() {

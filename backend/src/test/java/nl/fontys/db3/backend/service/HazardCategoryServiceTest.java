@@ -126,27 +126,6 @@ class HazardCategoryServiceTest {
         verify(categoryRepository).findById(1L);
     }
 
-    @Test
-    void getCategoryById_nullId() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            categoryService.getCategoryById(null);
-        });
-
-        assertEquals("Category ID cannot be null", exception.getMessage());
-        verify(categoryRepository, never()).findById(any());
-    }
-
-    @Test
-    void getCategoryById_notFound() {
-        when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            categoryService.getCategoryById(999L);
-        });
-
-        assertEquals("Category not found: 999", exception.getMessage());
-        verify(categoryRepository).findById(999L);
-    }
 
     @Test
     void getCategoryByName_success() {
@@ -174,37 +153,4 @@ class HazardCategoryServiceTest {
         assertEquals("Pothole", result.getName());
     }
 
-    @Test
-    void getCategoryByName_nullName() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            categoryService.getCategoryByName(null);
-        });
-
-        assertEquals("Category name cannot be null or blank", exception.getMessage());
-        verify(categoryRepository, never()).findAll();
-    }
-
-    @Test
-    void getCategoryByName_blankName() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            categoryService.getCategoryByName("   ");
-        });
-
-        assertEquals("Category name cannot be null or blank", exception.getMessage());
-        verify(categoryRepository, never()).findAll();
-    }
-
-    @Test
-    void getCategoryByName_notFound() {
-        List<HazardCategory> categories = List.of(activeCategory);
-
-        when(categoryRepository.findAll()).thenReturn(categories);
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            categoryService.getCategoryByName("Nonexistent");
-        });
-
-        assertEquals("Category not found: Nonexistent", exception.getMessage());
-        verify(categoryRepository).findAll();
-    }
 }

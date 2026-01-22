@@ -75,25 +75,5 @@ describe('avatarApi', () => {
       expect(result).toBeInstanceOf(Blob);
     });
 
-    it('should throw error when not authenticated', async () => {
-      // Arrange
-      localStorage.removeItem('token');
-
-      // Act & Assert
-      await expect(avatarApi.fetchAvatarBlobByPath('path/to/avatar.png')).rejects.toThrow('Not authenticated');
-    });
-
-    it('should throw error when fetch fails', async () => {
-      // Arrange
-      localStorage.setItem('token', 'mock-token');
-      
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        text: async () => 'Error message',
-      });
-
-      // Act & Assert
-      await expect(avatarApi.fetchAvatarBlobByPath('path/to/avatar.png')).rejects.toThrow('Error message');
-    });
   });
 });

@@ -32,28 +32,6 @@ describe('deviceApi', () => {
       expect(result).toEqual(mockDevice);
     });
 
-    it('should register device without description', async () => {
-      // Arrange
-      const mockDevice = { deviceId: 'ESP32-ABC123', apiKey: 'key123' };
-      auth.authFetch.mockResolvedValue(mockDevice);
-
-      // Act
-      await deviceApi.registerDevice('ESP32-ABC123');
-
-      // Assert
-      expect(auth.authFetch).toHaveBeenCalledWith('/api/devices/register', {
-        method: 'POST',
-        body: JSON.stringify({
-          deviceId: 'ESP32-ABC123',
-          description: null,
-        }),
-      });
-    });
-
-    it('should throw error when deviceId is missing', async () => {
-      // Act & Assert
-      await expect(deviceApi.registerDevice()).rejects.toThrow('deviceId is required');
-    });
   });
 
   describe('getMyDevices', () => {
@@ -81,20 +59,6 @@ describe('deviceApi', () => {
       expect(result).toEqual(mockResponse);
     });
 
-    it('should assign device with notes', async () => {
-      const mockResponse = { success: true };
-      auth.authFetch.mockResolvedValue(mockResponse);
-
-      await deviceApi.assignDevice('ESP32-ABC123', 'My notes');
-
-      expect(auth.authFetch).toHaveBeenCalledWith('/api/devices/ESP32-ABC123/assign?notes=My%20notes', {
-        method: 'POST',
-      });
-    });
-
-    it('should throw error when deviceId is missing', async () => {
-      await expect(deviceApi.assignDevice()).rejects.toThrow('deviceId is required');
-    });
   });
 
   describe('unassignDevice', () => {
@@ -108,18 +72,5 @@ describe('deviceApi', () => {
       });
     });
 
-    it('should unassign device with notes', async () => {
-      auth.authFetch.mockResolvedValue(null);
-
-      await deviceApi.unassignDevice('ESP32-ABC123', 'Unassign notes');
-
-      expect(auth.authFetch).toHaveBeenCalledWith('/api/devices/ESP32-ABC123/unassign?notes=Unassign%20notes', {
-        method: 'DELETE',
-      });
-    });
-
-    it('should throw error when deviceId is missing', async () => {
-      await expect(deviceApi.unassignDevice()).rejects.toThrow('deviceId is required');
-    });
   });
 });

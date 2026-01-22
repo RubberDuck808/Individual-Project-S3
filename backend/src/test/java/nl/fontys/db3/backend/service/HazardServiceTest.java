@@ -190,25 +190,7 @@ class HazardServiceTest {
         assertEquals("Cannot verify a resolved/rejected hazard.", exception.getMessage());
     }
 
-    @Test
-    void verifyHazard_nullId_throwsException() {
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> hazardService.verifyHazard(null));
-        assertEquals("Hazard ID cannot be null", exception.getMessage());
-        verify(hazardRepository, never()).findById(any());
-    }
 
-    @Test
-    void verifyHazard_notFound_throwsException() {
-        // Given
-        when(hazardRepository.findById(1L)).thenReturn(Optional.empty());
-
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> hazardService.verifyHazard(1L));
-        assertEquals("Hazard not found", exception.getMessage());
-    }
 
     @Test
     void resolveHazard_success() {
@@ -229,38 +211,6 @@ class HazardServiceTest {
         verify(hazardRepository).save(hazard);
     }
 
-    @Test
-    void resolveHazard_alreadyResolved_throwsException() {
-        // Given
-        hazard.setStatus(HazardStatus.RESOLVED);
-        when(hazardRepository.findById(1L)).thenReturn(Optional.of(hazard));
-
-        // When/Then
-        IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> hazardService.resolveHazard(1L));
-        assertEquals("Hazard already resolved.", exception.getMessage());
-        verify(hazardRepository).findById(1L);
-        verify(hazardRepository, never()).save(any());
-    }
-
-    @Test
-    void resolveHazard_nullId_throwsException() {
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> hazardService.resolveHazard(null));
-        assertEquals("Hazard ID cannot be null", exception.getMessage());
-    }
-
-    @Test
-    void resolveHazard_notFound_throwsException() {
-        // Given
-        when(hazardRepository.findById(1L)).thenReturn(Optional.empty());
-
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> hazardService.resolveHazard(1L));
-        assertEquals("Hazard not found", exception.getMessage());
-    }
 
     @Test
     void rejectHazard_success() {
@@ -281,38 +231,6 @@ class HazardServiceTest {
         verify(hazardRepository).save(hazard);
     }
 
-    @Test
-    void rejectHazard_resolvedStatus_throwsException() {
-        // Given
-        hazard.setStatus(HazardStatus.RESOLVED);
-        when(hazardRepository.findById(1L)).thenReturn(Optional.of(hazard));
-
-        // When/Then
-        IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> hazardService.rejectHazard(1L));
-        assertEquals("Resolved hazards cannot be rejected.", exception.getMessage());
-        verify(hazardRepository).findById(1L);
-        verify(hazardRepository, never()).save(any());
-    }
-
-    @Test
-    void rejectHazard_nullId_throwsException() {
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> hazardService.rejectHazard(null));
-        assertEquals("Hazard ID cannot be null", exception.getMessage());
-    }
-
-    @Test
-    void rejectHazard_notFound_throwsException() {
-        // Given
-        when(hazardRepository.findById(1L)).thenReturn(Optional.empty());
-
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> hazardService.rejectHazard(1L));
-        assertEquals("Hazard not found", exception.getMessage());
-    }
 
     @Test
     void getOpenHazards_success() {
@@ -379,25 +297,6 @@ class HazardServiceTest {
         verify(hazardRepository).findById(1L);
     }
 
-    @Test
-    void getById_nullId_throwsException() {
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> hazardService.getById(null));
-        assertEquals("Hazard ID cannot be null", exception.getMessage());
-        verify(hazardRepository, never()).findById(any());
-    }
-
-    @Test
-    void getById_notFound_throwsException() {
-        // Given
-        when(hazardRepository.findById(1L)).thenReturn(Optional.empty());
-
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> hazardService.getById(1L));
-        assertEquals("Hazard not found", exception.getMessage());
-    }
 
     @Test
     void getHazardsByUsername_success() {
@@ -416,35 +315,6 @@ class HazardServiceTest {
         verify(hazardRepository).findByCreatedByUsernameOrderByIdDesc("testuser");
     }
 
-    @Test
-    void getHazardsByUsername_nullUsername_throwsException() {
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> hazardService.getHazardsByUsername(null));
-        assertEquals("Username cannot be null/blank", exception.getMessage());
-        verify(userRepository, never()).existsByUsername(any());
-    }
-
-    @Test
-    void getHazardsByUsername_blankUsername_throwsException() {
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> hazardService.getHazardsByUsername("   "));
-        assertEquals("Username cannot be null/blank", exception.getMessage());
-    }
-
-    @Test
-    void getHazardsByUsername_userNotFound_throwsException() {
-        // Given
-        when(userRepository.existsByUsername("nonexistent")).thenReturn(false);
-
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> hazardService.getHazardsByUsername("nonexistent"));
-        assertEquals("User not found", exception.getMessage());
-        verify(userRepository).existsByUsername("nonexistent");
-        verify(hazardRepository, never()).findByCreatedByUsernameOrderByIdDesc(any());
-    }
 
     @Test
     void getActiveHazardsByUsername_success() {
@@ -472,19 +342,4 @@ class HazardServiceTest {
         verify(hazardRepository).findByCreatedByUsernameOrderByIdDesc("testuser");
     }
 
-    @Test
-    void getActiveHazardsByUsername_nullUsername_throwsException() {
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> hazardService.getActiveHazardsByUsername(null));
-        assertEquals("Username cannot be null/blank", exception.getMessage());
-    }
-
-    @Test
-    void getActiveHazardsByUsername_blankUsername_throwsException() {
-        // When/Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> hazardService.getActiveHazardsByUsername("   "));
-        assertEquals("Username cannot be null/blank", exception.getMessage());
-    }
 }

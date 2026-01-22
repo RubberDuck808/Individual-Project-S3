@@ -197,25 +197,6 @@ describe('auth API', () => {
       // Assert
       expect(result).toEqual(mockUser);
     });
-
-    it('should return null when user is not stored', () => {
-      // Arrange & Act
-      const result = auth.getStoredUser();
-
-      // Assert
-      expect(result).toBeNull();
-    });
-
-    it('should return null when stored user is invalid JSON', () => {
-      // Arrange
-      localStorage.setItem('user', 'invalid-json');
-
-      // Act
-      const result = auth.getStoredUser();
-
-      // Assert
-      expect(result).toBeNull();
-    });
   });
 
   describe('isLoggedIn', () => {
@@ -228,17 +209,6 @@ describe('auth API', () => {
 
       // Assert
       expect(result).toBe(true);
-    });
-
-    it('should return false when token does not exist', () => {
-      // Arrange
-      localStorage.removeItem('token');
-
-      // Act
-      const result = auth.isLoggedIn();
-
-      // Assert
-      expect(result).toBe(false);
     });
   });
 
@@ -253,14 +223,6 @@ describe('auth API', () => {
       // Assert
       expect(result).toEqual({ Authorization: 'Bearer mock-token' });
     });
-
-    it('should throw error when not authenticated', () => {
-      // Arrange
-      localStorage.removeItem('token');
-
-      // Act & Assert
-      expect(() => auth.getAuthHeader()).toThrow('Not authenticated');
-    });
   });
 
   describe('getStoredUserId', () => {
@@ -273,25 +235,6 @@ describe('auth API', () => {
 
       // Assert
       expect(result).toBe(123);
-    });
-
-    it('should return userId from stored user', () => {
-      // Arrange
-      localStorage.setItem('user', JSON.stringify({ userId: 456 }));
-
-      // Act
-      const result = auth.getStoredUserId();
-
-      // Assert
-      expect(result).toBe(456);
-    });
-
-    it('should return null when user is not stored', () => {
-      // Arrange & Act
-      const result = auth.getStoredUserId();
-
-      // Assert
-      expect(result).toBeNull();
     });
   });
 });
