@@ -92,3 +92,7 @@ Firmware lives in `hardware/` (PlatformIO project, board `esp32dev`). Device sec
 ## CI/CD & Deployment
 
 GitLab CI runs build → test → sonar → docker → deploy, deploying to Google Cloud Run on merges to `main`. See [docs/deployment.md](docs/deployment.md).
+
+## License
+
+[MIT](LICENSE)
