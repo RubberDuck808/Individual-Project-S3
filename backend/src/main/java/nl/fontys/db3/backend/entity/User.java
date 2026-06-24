@@ -49,6 +49,10 @@ public class User {
 
     private LocalDateTime createdAt;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean active = true;
+
     @OneToMany(mappedBy = "requester")
     @ToString.Exclude
     @Builder.Default

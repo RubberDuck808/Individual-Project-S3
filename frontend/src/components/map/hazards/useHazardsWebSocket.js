@@ -3,7 +3,7 @@ import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { getAuthHeader } from "../../../api/auth";
 
-export function useHazardsWebSocket({ enabled, onEvent }) {
+export function useHazardsWebSocket({ enabled, onEvent, onAuthError }) {
   useEffect(() => {
     if (!enabled) return;
 
@@ -17,7 +17,7 @@ export function useHazardsWebSocket({ enabled, onEvent }) {
     try {
       authHeader = getAuthHeader();
     } catch {
-      console.warn("Failed to get auth header for WebSocket");
+      onAuthError?.("Not logged in — live hazard updates are unavailable.");
       return;
     }
 
@@ -60,5 +60,5 @@ export function useHazardsWebSocket({ enabled, onEvent }) {
     return () => {
       client.deactivate();
     };
-  }, [enabled, onEvent]);
+  }, [enabled, onEvent, onAuthError]);
 }

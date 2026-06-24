@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { getAllDevices, activateDevice, deactivateDevice, updateDeviceDescription } from "../../api/adminApi";
 import { Cpu, Power, PowerOff, Edit, Activity, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useToast } from "../../context/ToastContext";
 
 export default function AdminDevicesPage() {
+  const toast = useToast();
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,7 +40,7 @@ export default function AdminDevicesPage() {
       }
       fetchDevices();
     } catch (err) {
-      alert("Failed to update device: " + err.message);
+      toast.error("Failed to update device: " + err.message);
     }
   };
 
@@ -48,7 +50,7 @@ export default function AdminDevicesPage() {
       setEditingDescription(null);
       fetchDevices();
     } catch (err) {
-      alert("Failed to update description: " + err.message);
+      toast.error("Failed to update description: " + err.message);
     }
   };
 

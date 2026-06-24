@@ -134,9 +134,8 @@ class FriendshipServiceTest {
 
     @Test
     void sendRequestByUsername_usernameNormalized() {
-        // Given - service normalizes "  BOB  " to "BOB" by trimming (not lowercasing)
-        // normalizeUsername only trims, doesn't lowercase
-        when(userRepository.findByUsername("BOB")).thenReturn(Optional.of(bob));
+        // Given - service normalizes "  BOB  " to "bob" by trimming and lowercasing
+        when(userRepository.findByUsername("bob")).thenReturn(Optional.of(bob));
         when(userRepository.findById(1L)).thenReturn(Optional.of(alice));
         when(userRepository.findById(2L)).thenReturn(Optional.of(bob));
         when(friendshipRepository.findBetweenUsers(1L, 2L)).thenReturn(Optional.empty());
@@ -147,13 +146,13 @@ class FriendshipServiceTest {
             return f;
         });
 
-        // When - username has whitespace (should be trimmed to "BOB")
+        // When - username has whitespace and mixed case (should be normalized to "bob")
         friendshipService.sendRequestByUsername(1L, "  BOB  ");
 
-        // Then - verify username was normalized (trimmed) before lookup
-        verify(userRepository).findByUsername("BOB"); // Normalized from "  BOB  " to "BOB" (trim only)
-        verify(userRepository).findById(1L); // Requester lookup
-        verify(userRepository).findById(2L); // Addressee lookup
+        // Then - verify username was normalized (trimmed and lowercased) before lookup
+        verify(userRepository).findByUsername("bob");
+        verify(userRepository).findById(1L);
+        verify(userRepository).findById(2L);
         verify(friendshipRepository).save(any(Friendship.class));
     }
 

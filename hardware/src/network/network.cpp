@@ -113,3 +113,52 @@ void initWiFi() {
     Serial.println(wlStatusToStr(WiFi.status()));
   }
 }
+
+bool reconnectIfNeeded() {
+  if (WiFi.status() == WL_CONNECTED) {
+    return true;
+  }
+
+  static unsigned long lastAttempt = 0;
+  static uint8_t backoffCount = 0;
+
+  // Exponential backoff: 5s, 10s, 20s, 40s, then cap at 60s
+  unsigned long backoffMs = min(5000UL << backoffCount, 60000UL);
+
+  if (millis() - lastAttempt < backoffMs) {
+    return false;  // Not time yet
+  }
+
+  lastAttempt = millis();
+  Serial.printf("[WiFi] Disconnected. Reconnect attempt #%d (backoff %lus)...\n",
+                backoffCount + 1, backoffMs / 1000);
+
+  WiFi.disconnect(false, false);
+  delay(100);
+
+#ifdef WIFI_USERNAME
+  esp_wifi_sta_wpa2_ent_set_identity((uint8_t *)WIFI_USERNAME, strlen(WIFI_USERNAME));
+  esp_wifi_sta_wpa2_ent_set_username((uint8_t *)WIFI_USERNAME, strlen(WIFI_USERNAME));
+  esp_wifi_sta_wpa2_ent_set_password((uint8_t *)WIFI_PASS, strlen(WIFI_PASS));
+  esp_wifi_sta_wpa2_ent_enable();
+  WiFi.begin(WIFI_SSID);
+#else
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+#endif
+
+  // Wait up to 10 s for connection
+  unsigned long start = millis();
+  while (millis() - start < 10000) {
+    if (WiFi.status() == WL_CONNECTED) {
+      Serial.println("[WiFi] Reconnected!");
+      printWifiInfo();
+      backoffCount = 0;  // Reset backoff on success
+      return true;
+    }
+    delay(250);
+  }
+
+  Serial.printf("[WiFi] Reconnect failed. Status: %s\n", wlStatusToStr(WiFi.status()));
+  if (backoffCount < 3) backoffCount++;  // Increase backoff (cap at 40s)
+  return false;
+}

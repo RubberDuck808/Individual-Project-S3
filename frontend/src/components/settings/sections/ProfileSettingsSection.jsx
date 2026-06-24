@@ -21,7 +21,7 @@ export default function ProfileSettingsSection({ me, setMe }) {
           currentAvatarName={me?.avatarName || ""}
           onUpdated={(updatedUser) => {
             setMe(updatedUser);
-            localStorage.setItem("user", JSON.stringify(updatedUser));
+            sessionStorage.setItem("user", JSON.stringify(updatedUser));
           }}
         />
       </div>
@@ -37,7 +37,7 @@ export default function ProfileSettingsSection({ me, setMe }) {
           currentBackgroundName={me?.backgroundName || ""}
           onUpdated={(updatedUser) => {
             setMe(updatedUser);
-            localStorage.setItem("user", JSON.stringify(updatedUser));
+            sessionStorage.setItem("user", JSON.stringify(updatedUser));
           }}
         />
       </div>

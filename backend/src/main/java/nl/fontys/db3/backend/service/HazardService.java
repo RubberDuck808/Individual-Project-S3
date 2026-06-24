@@ -3,6 +3,7 @@ package nl.fontys.db3.backend.service;
 import lombok.extern.slf4j.Slf4j;
 import nl.fontys.db3.backend.dto.HazardCreateRequestDTO;
 import nl.fontys.db3.backend.entity.*;
+import nl.fontys.db3.backend.exception.NotFoundException;
 import nl.fontys.db3.backend.mapper.HazardMapper;
 import nl.fontys.db3.backend.repository.HazardReportRepository;
 import nl.fontys.db3.backend.repository.UserRepository;
@@ -128,7 +129,7 @@ public class HazardService {
         return hazardRepository.findById(id)
                 .orElseThrow(() -> {
                     log.warn("Hazard {} failed - hazard not found: hazardId: {}", operation, id);
-                    return new IllegalArgumentException(HAZARD_NOT_FOUND);
+                    return new NotFoundException(HAZARD_NOT_FOUND);
                 });
     }
 
@@ -146,14 +147,14 @@ public class HazardService {
 
     @Transactional(readOnly = true)
     public List<HazardReport> getOpenHazards() {
-        return hazardRepository.findByStatus(HazardStatus.OPEN).stream()
+        return hazardRepository.findByStatusWithVotes(HazardStatus.OPEN).stream()
                 .filter(h -> !h.isExpired())
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<HazardReport> getActiveHazards() {
-        return hazardRepository.findByStatusIn(List.of(
+        return hazardRepository.findByStatusInWithVotes(List.of(
                 HazardStatus.OPEN,
                 HazardStatus.VERIFIED
         )).stream()
@@ -167,7 +168,7 @@ public class HazardService {
             throw new IllegalArgumentException("Hazard ID cannot be null");
         }
         return hazardRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException(HAZARD_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(HAZARD_NOT_FOUND));
     }
 
     @Transactional(readOnly = true)
@@ -179,7 +180,7 @@ public class HazardService {
         if (!userRepository.existsByUsername(username.trim().toLowerCase())) {
             throw new IllegalArgumentException("User not found");
         }
-        return hazardRepository.findByCreatedByUsernameOrderByIdDesc(username);
+        return hazardRepository.findByCreatedByUsernameWithVotes(username);
     }
 
     @Transactional(readOnly = true)
@@ -187,7 +188,7 @@ public class HazardService {
         if (username == null || username.isBlank()) {
             throw new IllegalArgumentException("Username cannot be null/blank");
         }
-        return hazardRepository.findByCreatedByUsernameOrderByIdDesc(username).stream()
+        return hazardRepository.findByCreatedByUsernameWithVotes(username).stream()
                 .filter(h -> !h.isExpired())
                 .toList();
     }

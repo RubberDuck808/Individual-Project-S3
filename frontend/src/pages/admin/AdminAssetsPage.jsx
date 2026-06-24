@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { getAllAvatars, getAllBackgrounds, createAvatar, createBackground, updateAvatar, updateBackground, deleteAvatar, deleteBackground, deactivateAvatar, deactivateBackground } from "../../api/adminApi";
 import { Image, Plus, Edit, Trash2, Eye, EyeOff, Users } from "lucide-react";
+import { useToast } from "../../context/ToastContext";
 
 export default function AdminAssetsPage() {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState("avatars"); // "avatars" or "backgrounds"
   const [avatars, setAvatars] = useState([]);
   const [backgrounds, setBackgrounds] = useState([]);
@@ -44,7 +46,7 @@ export default function AdminAssetsPage() {
       setFormData({ name: "", imagePath: "", active: true });
       fetchAssets();
     } catch (err) {
-      alert("Failed to create asset: " + err.message);
+      toast.error("Failed to create asset: " + err.message);
     }
   };
 
@@ -59,7 +61,7 @@ export default function AdminAssetsPage() {
       setFormData({ name: "", imagePath: "", active: true });
       fetchAssets();
     } catch (err) {
-      alert("Failed to update asset: " + err.message);
+      toast.error("Failed to update asset: " + err.message);
     }
   };
 
@@ -74,7 +76,7 @@ export default function AdminAssetsPage() {
       }
       fetchAssets();
     } catch (err) {
-      alert("Failed to delete asset: " + err.message);
+      toast.error("Failed to delete asset: " + err.message);
     }
   };
 
@@ -93,7 +95,7 @@ export default function AdminAssetsPage() {
       }
       fetchAssets();
     } catch (err) {
-      alert("Failed to update asset: " + err.message);
+      toast.error("Failed to update asset: " + err.message);
     }
   };
 

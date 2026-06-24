@@ -13,7 +13,7 @@ export async function changeMyAvatar(avatarName) {
 
 // Fetch image
 export async function fetchAvatarBlobByPath(imagePath) {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   if (!token) throw new Error("Not authenticated");
 
   const res = await fetch(

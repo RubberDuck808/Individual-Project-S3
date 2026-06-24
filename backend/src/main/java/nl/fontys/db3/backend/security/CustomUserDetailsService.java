@@ -23,11 +23,15 @@ public class CustomUserDetailsService implements UserDetailsService {
         var user = userService.findByUsernameOrEmail(null, email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+        if (!user.isActive()) {
+            throw new UsernameNotFoundException("Account is deactivated");
+        }
+
         // Include role in authorities
         String roleName = user.getRole() != null && user.getRole().getName() != null
                 ? "ROLE_" + user.getRole().getName().toUpperCase()
                 : "ROLE_USER";
-        
+
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),

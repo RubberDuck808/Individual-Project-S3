@@ -41,6 +41,9 @@ class UserServiceTest {
     @Mock
     private BackgroundService backgroundService;
 
+    @Mock
+    private StatisticsService statisticsService;
+
     @InjectMocks
     private UserService userService;
 

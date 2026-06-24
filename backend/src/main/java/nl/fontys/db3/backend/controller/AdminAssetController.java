@@ -62,7 +62,7 @@ public class AdminAssetController {
     @PutMapping("/avatars/{id}/deactivate")
     public ResponseEntity<Void> deactivateAvatar(@PathVariable Long id) {
         avatarService.deactivateAvatar(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/backgrounds")
@@ -105,6 +105,6 @@ public class AdminAssetController {
     @PutMapping("/backgrounds/{id}/deactivate")
     public ResponseEntity<Void> deactivateBackground(@PathVariable Long id) {
         backgroundService.deactivateBackground(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }

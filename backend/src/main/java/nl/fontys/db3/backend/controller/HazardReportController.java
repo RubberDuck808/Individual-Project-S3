@@ -7,6 +7,7 @@ import nl.fontys.db3.backend.mapper.HazardMapper;
 import nl.fontys.db3.backend.service.HazardService;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class HazardReportController {
     }
 
     @PostMapping
-    public HazardReportDTO create(@RequestBody HazardCreateRequestDTO dto, Authentication authentication) {
+    public HazardReportDTO create(@Valid @RequestBody HazardCreateRequestDTO dto, Authentication authentication) {
         String email = authentication.getName();
         log.info("Creating hazard - email: {}, categoryId: {}, lat: {}, lng: {}", 
                 email, dto.getCategoryId(), dto.getLatitude(), dto.getLongitude());

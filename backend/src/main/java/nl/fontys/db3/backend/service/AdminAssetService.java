@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,24 +26,32 @@ public class AdminAssetService {
 
     @Transactional(readOnly = true)
     public List<AdminAssetDTO> getAllAvatars() {
+        // Single query to fetch all usage counts — avoids N+1
+        Map<Long, Long> usageById = buildUsageMap(userRepository.findAvatarUsageCounts());
         return avatarRepository.findAll().stream()
-                .map(this::toAdminAssetDTO)
+                .map(a -> toAdminAssetDTO(a, usageById.getOrDefault(a.getId(), 0L)))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<AdminAssetDTO> getAllBackgrounds() {
+        // Single query to fetch all usage counts — avoids N+1
+        Map<Long, Long> usageById = buildUsageMap(userRepository.findBackgroundUsageCounts());
         return backgroundRepository.findAll().stream()
-                .map(this::toAdminAssetDTO)
+                .map(b -> toAdminAssetDTO(b, usageById.getOrDefault(b.getId(), 0L)))
                 .toList();
     }
 
-    private AdminAssetDTO toAdminAssetDTO(Avatar avatar) {
-        // Count how many users are using this avatar
-        long usageCount = userRepository.findAll().stream()
-                .filter(u -> u.getAvatar() != null && u.getAvatar().getId().equals(avatar.getId()))
-                .count();
+    /** Converts JPQL [id, count] rows into a Map<id, count>. */
+    private Map<Long, Long> buildUsageMap(List<Object[]> rows) {
+        return rows.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
 
+    private AdminAssetDTO toAdminAssetDTO(Avatar avatar, long usageCount) {
         return AdminAssetDTO.builder()
                 .id(avatar.getId())
                 .name(avatar.getName())
@@ -52,12 +62,7 @@ public class AdminAssetService {
                 .build();
     }
 
-    private AdminAssetDTO toAdminAssetDTO(Background background) {
-        // Count how many users are using this background
-        long usageCount = userRepository.findAll().stream()
-                .filter(u -> u.getBackground() != null && u.getBackground().getId().equals(background.getId()))
-                .count();
-
+    private AdminAssetDTO toAdminAssetDTO(Background background, long usageCount) {
         return AdminAssetDTO.builder()
                 .id(background.getId())
                 .name(background.getName())

@@ -11,6 +11,8 @@ import nl.fontys.db3.backend.entity.Role;
 import nl.fontys.db3.backend.entity.Avatar;
 import nl.fontys.db3.backend.entity.Background;
 
+import nl.fontys.db3.backend.exception.NotFoundException;
+
 import static nl.fontys.db3.backend.service.Constants.USER_NOT_FOUND;
 import static nl.fontys.db3.backend.service.Constants.ROLE_USER;
 
@@ -115,7 +117,7 @@ public class UserService {
         log.info("Deleting user - userId: {}", id);
         if (!userRepository.existsById(id)) {
             log.warn("User deletion failed - user not found: userId: {}", id);
-            throw new IllegalArgumentException("User not found with id " + id);
+            throw new NotFoundException("User not found with id " + id);
         }
         userRepository.deleteById(id);
         log.info("User deleted successfully - userId: {}", id);
@@ -133,7 +135,7 @@ public class UserService {
         return userRepository.findByUsername(username.trim().toLowerCase())
                 .orElseThrow(() -> {
                     log.warn("Get user failed - user not found: username: {}", username);
-                    return new IllegalArgumentException(USER_NOT_FOUND);
+                    return new NotFoundException(USER_NOT_FOUND);
                 });
     }
 

@@ -102,7 +102,8 @@ const UserLocationMap = forwardRef((props, ref) => {
     try {
       if (map.getLayer?.(ROUTE_ID)) map.removeLayer(ROUTE_ID);
       if (map.getSource?.(ROUTE_ID)) map.removeSource(ROUTE_ID);
-    } catch {
+    } catch (err) {
+      console.warn("[UserLocationMap] Failed to remove route layer/source:", err);
     }
   };
 

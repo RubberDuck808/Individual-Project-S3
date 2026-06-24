@@ -1,5 +1,6 @@
 package nl.fontys.db3.backend.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.*;
@@ -8,18 +9,16 @@ import org.springframework.web.socket.config.annotation.*;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    /** Reuses the same CORS_ALLOWED_ORIGINS env-var as CorsConfig. */
+    @Value("${cors.allowed-origins:http://localhost:5173}")
+    private String allowedOriginsRaw;
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        String[] origins = allowedOriginsRaw.split(",");
         registry.addEndpoint("/ws")
-            .setAllowedOrigins(
-                // CI / docker-compose e2e
-                "http://frontend",
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "https://tripwire-frontend-166064655547.europe-west4.run.app"
-            )
+            .setAllowedOrigins(origins)
             .withSockJS();
-
     }
 
     @Override

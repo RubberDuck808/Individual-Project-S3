@@ -3,6 +3,7 @@ package nl.fontys.db3.backend.service;
 import nl.fontys.db3.backend.entity.Friendship;
 import nl.fontys.db3.backend.entity.FriendshipStatus;
 import nl.fontys.db3.backend.entity.User;
+import nl.fontys.db3.backend.exception.NotFoundException;
 import nl.fontys.db3.backend.repository.FriendshipRepository;
 import nl.fontys.db3.backend.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -34,10 +35,10 @@ public class FriendshipService {
         }
 
         User requester = userRepository.findById(requesterId)
-                .orElseThrow(() -> new IllegalArgumentException("Requester not found"));
+                .orElseThrow(() -> new NotFoundException("Requester not found"));
 
         User addressee = userRepository.findById(addresseeId)
-                .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND));
 
         friendshipRepository.findBetweenUsers(requesterId, addresseeId)
                 .ifPresent(existing -> {
@@ -73,7 +74,7 @@ public class FriendshipService {
         String username = normalizeUsername(addresseeUsername);
 
         User addressee = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND));
 
         // Inline the sendRequest logic to avoid transactional method call via 'this'
         return sendRequestInternal(requesterId, addressee.getId());
@@ -84,7 +85,7 @@ public class FriendshipService {
         String username = normalizeUsername(otherUsername);
 
         User other = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND));
 
         // Inline the unfriend logic to avoid transactional method call via 'this'
         unfriendInternal(userId, other.getId());
@@ -111,7 +112,7 @@ public class FriendshipService {
 
     private User findUserById(Long userId, String errorMessage) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException(errorMessage));
+                .orElseThrow(() -> new NotFoundException(errorMessage));
     }
 
     private Friendship createFriendshipRequest(User requester, User addressee) {
@@ -146,7 +147,7 @@ public class FriendshipService {
     private void unfriendInternal(Long userId, Long otherUserId) {
         Friendship friendship = friendshipRepository
                 .findBetweenUsers(userId, otherUserId)
-                .orElseThrow(() -> new IllegalArgumentException("Friendship not found"));
+                .orElseThrow(() -> new NotFoundException("Friendship not found"));
         validateFriendshipStatus(friendship);
         friendshipRepository.delete(friendship);
     }
@@ -156,10 +157,10 @@ public class FriendshipService {
         String username = normalizeUsername(requesterUsername);
 
         User requester = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND));
 
         Friendship friendship = friendshipRepository.findBetweenUsers(meId, requester.getId())
-                .orElseThrow(() -> new IllegalArgumentException(FRIEND_REQUEST_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(FRIEND_REQUEST_NOT_FOUND));
 
         if (friendship.getStatus() != FriendshipStatus.REQUESTED) {
             throw new IllegalArgumentException("Only pending requests can be accepted");
@@ -178,10 +179,10 @@ public class FriendshipService {
         String username = normalizeUsername(requesterUsername);
 
         User requester = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND));
 
         Friendship friendship = friendshipRepository.findBetweenUsers(meId, requester.getId())
-                .orElseThrow(() -> new IllegalArgumentException(FRIEND_REQUEST_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(FRIEND_REQUEST_NOT_FOUND));
 
         if (friendship.getStatus() != FriendshipStatus.REQUESTED) {
             throw new IllegalArgumentException("Only pending requests can be declined");
@@ -199,10 +200,10 @@ public class FriendshipService {
         String username = normalizeUsername(addresseeUsername);
 
         User addressee = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND));
 
         Friendship friendship = friendshipRepository.findBetweenUsers(meId, addressee.getId())
-                .orElseThrow(() -> new IllegalArgumentException(FRIEND_REQUEST_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(FRIEND_REQUEST_NOT_FOUND));
 
         if (friendship.getStatus() != FriendshipStatus.REQUESTED) {
             throw new IllegalArgumentException("Only pending requests can be cancelled");
@@ -239,14 +240,14 @@ public class FriendshipService {
         if (username == null || username.isBlank()) {
             throw new IllegalArgumentException("Username is required");
         }
-        return username.trim();
+        return username.trim().toLowerCase();
     }
 
     public List<Friendship> getFriendsOfUsername(String username) {
         String u = normalizeUsername(username);
 
         User user = userRepository.findByUsername(u)
-                .orElseThrow(() -> new IllegalArgumentException(USER_NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND));
 
         return getFriends(user.getId());
     }

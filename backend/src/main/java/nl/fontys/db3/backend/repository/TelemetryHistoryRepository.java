@@ -18,4 +18,6 @@ public interface TelemetryHistoryRepository extends JpaRepository<TelemetryHisto
     void deleteByDeviceIdAndTimestampBefore(String deviceId, Instant cutoff);
     
     long countByDeviceId(String deviceId);
+
+    TelemetryHistory findTopByOrderByTimestampDesc();
 }
