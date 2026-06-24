@@ -12,7 +12,6 @@ import HomePage from "./pages/HomePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import RealLocationProvider from "./providers/RealLocationProvider";
-import SimulatedRouteProvider from "./providers/SimulatedRouteProvider";
 import { AssetsCacheProvider } from "./context/AssetsCacheContext";
 
 // Lazy load admin pages (code splitting)
@@ -32,11 +31,8 @@ const LoadingSpinner = () => (
 );
 
 export default function App() {
-  const USE_SPOOF = false;
-  const Provider = USE_SPOOF ? SimulatedRouteProvider : RealLocationProvider;
-
   return (
-    <Provider>
+    <RealLocationProvider>
       <AssetsCacheProvider>
         <Routes>
           {/* Public */}
@@ -99,6 +95,6 @@ export default function App() {
           </Route>
         </Routes>
       </AssetsCacheProvider>
-    </Provider>
+    </RealLocationProvider>
   );
 }

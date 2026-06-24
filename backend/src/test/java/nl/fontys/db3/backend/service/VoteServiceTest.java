@@ -17,6 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -100,17 +104,19 @@ class VoteServiceTest {
                 .user(hazardCreator)
                 .voteType(VoteType.DOWNVOTE)
                 .build();
-        when(voteRepo.findAll()).thenReturn(List.of(vote, vote2));
+        PageRequest pageable = PageRequest.of(0, 50);
+        Page<Vote> votePage = new PageImpl<>(List.of(vote, vote2), pageable, 2);
+        when(voteRepo.findAll(pageable)).thenReturn(votePage);
 
         // When
-        List<VoteDTO> result = voteService.getAllVotes();
+        Page<VoteDTO> result = voteService.getAllVotes(pageable);
 
         // Then
         assertNotNull(result);
-        assertEquals(2, result.size());
-        assertEquals(1L, result.get(0).getId());
-        assertEquals("UPVOTE", result.get(0).getVoteType());
-        verify(voteRepo).findAll();
+        assertEquals(2, result.getTotalElements());
+        assertEquals(1L, result.getContent().get(0).getId());
+        assertEquals("UPVOTE", result.getContent().get(0).getVoteType());
+        verify(voteRepo).findAll(pageable);
     }
 
     @Test

@@ -36,7 +36,7 @@ export default function AccountSettingsSection({ me, setMe, onUsernameChanged })
       };
 
       const updatedUser = await updateCurrentUser(payload);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      sessionStorage.setItem("user", JSON.stringify(updatedUser));
 
       setMe(updatedUser);
       setSuccess("Account updated successfully.");

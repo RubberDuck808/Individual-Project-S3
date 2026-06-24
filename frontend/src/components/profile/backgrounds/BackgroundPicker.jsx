@@ -68,7 +68,7 @@ export default function BackgroundPicker({ currentBackgroundName, onUpdated }) {
     setError("");
     try {
       const updatedUser = await changeMyBackground(selected);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      sessionStorage.setItem("user", JSON.stringify(updatedUser));
       onUpdated?.(updatedUser);
     } catch (e) {
       setError(e?.message || "Failed to change background");

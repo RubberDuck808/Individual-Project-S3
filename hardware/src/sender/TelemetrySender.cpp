@@ -39,7 +39,16 @@ bool TelemetrySender::sendRequest(const String& endpoint, const String& method, 
 
   if (backendUrl.startsWith("https://")) {
     WiFiClientSecure client;
+
+#ifdef BACKEND_ROOT_CA
+    // Use certificate validation when a root CA is configured in secrets.h
+    client.setCACert(BACKEND_ROOT_CA);
+#else
+    // No root CA configured — disabling certificate validation.
+    // Set BACKEND_ROOT_CA in secrets.h to enable proper TLS verification.
+    #pragma message("WARNING: BACKEND_ROOT_CA not defined — TLS certificate validation is disabled. Set BACKEND_ROOT_CA in secrets.h for production use.")
     client.setInsecure();
+#endif
 
     if (!http.begin(client, fullUrl)) {
       Serial.printf("[TelemetrySender] Failed to begin HTTPS connection to %s\n", fullUrl.c_str());
@@ -112,6 +121,23 @@ bool TelemetrySender::sendRequest(const String& endpoint, const String& method, 
   }
 }
 
+/** Escape backslashes and double-quotes so strings are safe inside JSON. */
+static String escapeJson(const String& s) {
+  String out;
+  out.reserve(s.length() + 8);
+  for (size_t i = 0; i < s.length(); i++) {
+    char c = s[i];
+    if (c == '\\') {
+      out += "\\\\";
+    } else if (c == '"') {
+      out += "\\\"";
+    } else {
+      out += c;
+    }
+  }
+  return out;
+}
+
 String TelemetrySender::toLiveJson(const Telemetry& t) {
   String json;
   json.reserve(200);
@@ -163,7 +189,7 @@ String TelemetrySender::toHistoryJson(const Telemetry& t) {
     json += ",\"timingAdvance\":" + String(t.timingAdvance, 1);
   }
   if (t.diagnosticCodes.length() > 0) {
-    json += ",\"diagnosticCodes\":\"" + t.diagnosticCodes + "\"";
+    json += ",\"diagnosticCodes\":\"" + escapeJson(t.diagnosticCodes) + "\"";
   }
 
   json += "}";

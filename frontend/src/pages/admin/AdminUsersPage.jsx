@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { getAllUsers, updateUserRole, deactivateUser } from "../../api/adminApi";
 import { User, Shield, Trash2, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useToast } from "../../context/ToastContext";
 
 export default function AdminUsersPage() {
+  const toast = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,6 +13,7 @@ export default function AdminUsersPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [editingRole, setEditingRole] = useState(null);
   const [newRole, setNewRole] = useState("");
+  const [confirmDeactivate, setConfirmDeactivate] = useState(null); // userId awaiting confirmation
 
   useEffect(() => {
     fetchUsers();
@@ -35,18 +38,19 @@ export default function AdminUsersPage() {
       setEditingRole(null);
       fetchUsers();
     } catch (err) {
-      alert("Failed to update role: " + err.message);
+      toast.error("Failed to update role: " + err.message);
     }
   };
 
-  const handleDeactivate = async (userId) => {
-    if (!confirm("Are you sure you want to deactivate this user?")) return;
-    
+  const handleDeactivateConfirmed = async () => {
+    if (!confirmDeactivate) return;
     try {
-      await deactivateUser(userId);
+      await deactivateUser(confirmDeactivate);
+      setConfirmDeactivate(null);
       fetchUsers();
     } catch (err) {
-      alert("Failed to deactivate user: " + err.message);
+      toast.error("Failed to deactivate user: " + err.message);
+      setConfirmDeactivate(null);
     }
   };
 
@@ -142,7 +146,7 @@ export default function AdminUsersPage() {
                   </td>
                   <td className="px-6 py-4">
                     <button
-                      onClick={() => handleDeactivate(user.id)}
+                      onClick={() => setConfirmDeactivate(user.id)}
                       className="text-red-600 hover:text-red-800"
                       title="Deactivate user"
                     >
@@ -178,6 +182,31 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+      {/* Deactivate confirmation modal */}
+      {confirmDeactivate !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white border-[3px] border-black rounded-2xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-80">
+            <h2 className="font-black text-lg uppercase mb-2">Deactivate User?</h2>
+            <p className="text-sm text-gray-600 mb-6">
+              This will prevent the user from logging in. The action can be reversed by a developer.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeactivateConfirmed}
+                className="flex-1 py-2 bg-red-500 text-white font-black uppercase rounded-xl border-[2px] border-black hover:bg-red-600 transition-colors"
+              >
+                Deactivate
+              </button>
+              <button
+                onClick={() => setConfirmDeactivate(null)}
+                className="flex-1 py-2 bg-gray-100 font-black uppercase rounded-xl border-[2px] border-black hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

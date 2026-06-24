@@ -57,7 +57,9 @@ public class SecurityConfig {
                 .requestMatchers("/ws/**").permitAll()
                 // Device registration requires user authentication
                 .requestMatchers(HttpMethod.POST, "/api/devices/register").authenticated()
-                // Telemetry endpoints require device API key (handled by filter)
+                // Telemetry endpoints are authenticated via the DeviceApiKeyAuthFilter.
+                // The filter validates the device API key header and blocks unauthorized requests.
+                // permitAll() here bypasses Spring Security's JWT check; the device filter is the gate.
                 .requestMatchers("/api/telemetry/live", "/api/telemetry/history").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/telemetry/live/**").permitAll()
                 // Admin endpoints require ADMIN role

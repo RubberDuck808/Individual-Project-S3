@@ -38,14 +38,14 @@ export async function login(email, password) {
 
   const data = await res.json();
 
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("user", JSON.stringify(data.user));
+  sessionStorage.setItem("token", data.token);
+  sessionStorage.setItem("user", JSON.stringify(data.user));
 
   return data;
 }
 
 export async function authFetch(path, options = {}) {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   if (!token) throw new Error("Not authenticated");
 
   const defaultHeaders = {
@@ -61,6 +61,14 @@ export async function authFetch(path, options = {}) {
     },
   });
 
+  if (res.status === 401) {
+    // Token expired or invalid — clear session and redirect to login
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+    window.location.href = "/login";
+    throw new Error("Session expired. Please log in again.");
+  }
+
   if (!res.ok) {
     throw new Error((await readError(res)) || "Request failed");
   }
@@ -74,17 +82,17 @@ export async function authFetch(path, options = {}) {
 
 export async function fetchCurrentUser() {
   const user = await authFetch("/api/users/me");
-  localStorage.setItem("user", JSON.stringify(user));
+  sessionStorage.setItem("user", JSON.stringify(user));
   return user;
 }
 
 export function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+  sessionStorage.removeItem("token");
+  sessionStorage.removeItem("user");
 }
 
 export function getStoredUser() {
-  const raw = localStorage.getItem("user");
+  const raw = sessionStorage.getItem("user");
   if (!raw) return null;
   try {
     return JSON.parse(raw);
@@ -94,11 +102,11 @@ export function getStoredUser() {
 }
 
 export function isLoggedIn() {
-  return !!localStorage.getItem("token");
+  return !!sessionStorage.getItem("token");
 }
 
 export function getAuthHeader() {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   if (!token) throw new Error("Not authenticated");
   return { Authorization: `Bearer ${token}` };
 }

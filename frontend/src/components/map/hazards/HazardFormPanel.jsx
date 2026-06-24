@@ -41,7 +41,7 @@ export default function HazardFormPanel({ coords, onClose }) {
 
   const handleSelect = async (categoryId) => {
     if (locating) return showToast({ type: "info", msg: "Scanning for location..." });
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) return showToast({ type: "error", msg: "Log in to report, driver!" });
 
     setSubmitting(true);

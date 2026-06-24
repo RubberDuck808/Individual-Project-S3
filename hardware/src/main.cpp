@@ -91,7 +91,7 @@ void setup() {
 void loop() {
   SerialCommands::process();
   
-  if (WiFi.status() != WL_CONNECTED) {
+  if (!reconnectIfNeeded()) {
     delay(1000);
     return;
   }

@@ -1,70 +1,98 @@
-# Getting Started with Create React App
+# TripWire
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A driving companion application: drivers report and view road hazards on a live map, track GPS trips, see vehicle telemetry streamed from an ESP32 device, and connect with friends. Admins manage users, devices, and profile assets from a dedicated dashboard.
 
-## Available Scripts
+## Tech Stack
 
-In the project directory, you can run:
+| Layer | Technology |
+|-------|-----------|
+| Backend | Java 21, Spring Boot, Spring Security (JWT), Spring WebSocket (STOMP), JPA, Flyway, PostgreSQL |
+| Frontend | React 19, Vite, Tailwind CSS, Mapbox GL |
+| Hardware | ESP32 (PlatformIO, C++) |
+| Cloud | GCP Cloud Run, Docker Hub, Supabase |
+| CI/CD | GitLab CI |
 
-### `npm start`
+## Project Structure
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```
+individual-project-s3/
+  backend/       Spring Boot REST + WebSocket API
+  frontend/      React SPA (Vite)
+  hardware/      ESP32 firmware (PlatformIO)
+  supabase/      Database config
+  docs/          Full documentation (see below)
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Documentation
 
-### `npm test`
+Detailed docs live in [`docs/`](docs/README.md):
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- [Architecture](docs/architecture.md) — backend layering, auth, real-time messaging, frontend routing
+- [API reference](docs/api.md) — every REST endpoint and WebSocket topic
+- [Database](docs/database.md) — schema and Flyway migration history
+- [Hardware](docs/hardware.md) — ESP32 firmware structure and build/flash workflow
+- [Testing](docs/testing.md) — backend, frontend, and E2E test setup
+- [Deployment](docs/deployment.md) — CI/CD pipeline and Cloud Run deploy
+- [Environment variables](docs/environment.md) — every variable, what reads it, where to set it
 
-### `npm run build`
+A deep, file-by-file backend walkthrough also exists at [`BACKEND_GUIDE.md`](BACKEND_GUIDE.md).
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Local Development
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Prerequisites
+- Java 21, Gradle
+- Node.js 20+
+- Docker (for local PostgreSQL or `docker-compose`)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 1. Configure environment
 
-### `npm run eject`
+Copy `.env.example` to `.env` and fill in your credentials (see [docs/environment.md](docs/environment.md) for what each variable does):
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```sh
+cp .env.example .env
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 2. Run with Docker Compose
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```sh
+docker-compose up
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+This starts the backend (port 8080) and frontend (port 5173).
 
-## Learn More
+### 3. Run backend only
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```sh
+cd backend
+./gradlew bootRun
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### 4. Run frontend only
 
-### Code Splitting
+```sh
+cd frontend
+npm install
+npm run dev
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Running Tests
 
-### Analyzing the Bundle Size
+```sh
+cd backend && ./gradlew test          # backend unit + integration tests
+cd frontend && npm test               # frontend unit tests (Vitest)
+cd frontend && npm run test:e2e       # E2E tests (Playwright)
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+See [docs/testing.md](docs/testing.md) for what each suite actually covers and how it runs in CI.
 
-### Making a Progressive Web App
+## Hardware (ESP32)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Firmware lives in `hardware/` (PlatformIO project, board `esp32dev`). Device secrets (Wi-Fi credentials, API key) go in `hardware/src/secrets.h`, gitignored — copy from `secrets.h.example`. See [docs/hardware.md](docs/hardware.md) for firmware structure and the build/flash workflow.
 
-### Advanced Configuration
+## CI/CD & Deployment
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+GitLab CI runs build → test → sonar → docker → deploy, deploying to Google Cloud Run on merges to `main`. See [docs/deployment.md](docs/deployment.md).
 
-### Deployment
+## License
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+[MIT](LICENSE)

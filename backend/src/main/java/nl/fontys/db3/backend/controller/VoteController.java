@@ -5,12 +5,14 @@ import nl.fontys.db3.backend.dto.VoteDTO;
 import nl.fontys.db3.backend.dto.VoteRequestDTO;
 import nl.fontys.db3.backend.entity.VoteType;
 import nl.fontys.db3.backend.service.VoteService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -25,9 +27,8 @@ public class VoteController {
     }
 
     @GetMapping
-    public ResponseEntity<List<VoteDTO>> getAllVotes() {
-        List<VoteDTO> votes = voteService.getAllVotes();
-        return ResponseEntity.ok(votes);
+    public ResponseEntity<Page<VoteDTO>> getAllVotes(@PageableDefault(size = 50) Pageable pageable) {
+        return ResponseEntity.ok(voteService.getAllVotes(pageable));
     }
 
     @PostMapping
@@ -69,6 +70,12 @@ public class VoteController {
         counts.put("downvotes", downvotes);
 
         return ResponseEntity.ok(counts);
+    }
+
+    @GetMapping("/user/{username}/cast")
+    public ResponseEntity<Map<String, Long>> getLifetimeVotesCastByUser(@PathVariable String username) {
+        long total = voteService.getLifetimeVotesCastByUser(username);
+        return ResponseEntity.ok(Map.of("total", total));
     }
 
     @GetMapping("/{hazardId}/mine")

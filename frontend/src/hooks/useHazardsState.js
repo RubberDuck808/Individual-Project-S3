@@ -10,6 +10,7 @@ export function useHazardsState({
   rearmDistanceMeters = 50,
   voteTimeSeconds = 15,
   enabled = true,
+  onWsAuthError,
 } = {}) {
   const [hazards, setHazards] = useState([]);
 
@@ -110,6 +111,7 @@ export function useHazardsState({
   useHazardsWebSocket({
     enabled,
     onEvent: onWsEvent,
+    onAuthError: onWsAuthError,
   });
 
   const isHazardFromCurrentUser = useCallback((h) => {

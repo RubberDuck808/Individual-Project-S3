@@ -16,7 +16,7 @@ export async function updateCurrentUser(updates) {
 }
 
 export function getStoredUser() {
-  const raw = localStorage.getItem("user");
+  const raw = sessionStorage.getItem("user");
   if (!raw) return null;
   try {
     return JSON.parse(raw);

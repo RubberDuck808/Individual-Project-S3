@@ -12,6 +12,9 @@ import nl.fontys.db3.backend.repository.VoteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Map;
 
@@ -36,8 +39,8 @@ public class VoteService {
         this.statisticsService = statisticsService;
     }
 
-    public List<VoteDTO> getAllVotes() {
-        return voteRepo.findAll().stream().map(this::toDTO).toList();
+    public Page<VoteDTO> getAllVotes(Pageable pageable) {
+        return voteRepo.findAll(pageable).map(this::toDTO);
     }
 
     @Transactional

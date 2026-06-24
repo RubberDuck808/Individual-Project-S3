@@ -52,7 +52,7 @@ export default function AvatarPicker({ currentAvatarName, onUpdated }) {
     setError("");
     try {
       const updatedUser = await changeMyAvatar(selected);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      sessionStorage.setItem("user", JSON.stringify(updatedUser));
       onUpdated?.(updatedUser);
     } catch (e) {
       setError(e?.message || "Failed to change avatar");

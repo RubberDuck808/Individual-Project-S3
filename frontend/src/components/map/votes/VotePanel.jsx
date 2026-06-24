@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import PropTypes from "prop-types";
 import { submitVote, getVoteCounts } from "../../../api/voteApi";
 import { haversineMeters } from "../../../utils/geo";
@@ -53,6 +53,7 @@ export default function VotePanel({
   const [votes, setVotes] = useState({ upvotes: 0, downvotes: 0 });
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const toastTimerRef = useRef(null);
 
   const hazardId = hazard?.id;
 
@@ -116,12 +117,12 @@ export default function VotePanel({
 
   const showToast = useCallback((t) => {
     setToast(t);
-    globalThis.clearTimeout(showToast._t);
-    showToast._t = globalThis.setTimeout(() => setToast(null), 2400);
+    clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToast(null), 2400);
   }, []);
 
   const handleVote = async (type) => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) {
       showToast({ type: "error", msg: "Log in first!" });
       return;

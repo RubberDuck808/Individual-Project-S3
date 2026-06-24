@@ -19,6 +19,7 @@ import TripNavigationHUD from "../components/map/trip/TripNavigationHUD";
 
 import { useHazardsState } from "../hooks/useHazardsState";
 import { getStoredUser } from "../api/auth";
+import { useToast } from "../context/ToastContext";
 
 const OPEN_DISTANCE_METERS = 150;
 const REARM_DISTANCE_METERS = 50;
@@ -31,6 +32,7 @@ export default function MapPage() {
   const location = useLocation();
   const { darkMode } = useTheme();
   const trip = useTrip();
+  const toast = useToast();
 
   const me = getStoredUser();
   const currentUsername = me?.username ?? null;
@@ -55,6 +57,7 @@ export default function MapPage() {
       rearmDistanceMeters: REARM_DISTANCE_METERS,
       voteTimeSeconds: VOTE_TIME_SECONDS,
       enabled: true,
+      onWsAuthError: (msg) => toast.warn(msg),
     });
 
   useEffect(() => {
@@ -84,7 +87,7 @@ export default function MapPage() {
 
   const openHazardForm = useCallback(() => {
     if (!location) {
-      alert("Still determining your location…");
+      toast.warn("Still determining your location…");
       return;
     }
     setReportOpen(true);
@@ -125,7 +128,7 @@ export default function MapPage() {
 
       resetRoutePreview();
     } catch (e) {
-      alert(e?.message || "Failed to save trip");
+      toast.error(e?.message || "Failed to save trip");
     }
   }, [location, trip, resetRoutePreview]);
 
@@ -222,7 +225,7 @@ export default function MapPage() {
   if (!location || !routeInfo) return;
 
   if (routeInfo.endLat == null || routeInfo.endLng == null) {
-    alert("Missing destination coords (endLat/endLng) in routeInfo.");
+    toast.error("Missing destination coordinates in route info.");
     return;
   }
 

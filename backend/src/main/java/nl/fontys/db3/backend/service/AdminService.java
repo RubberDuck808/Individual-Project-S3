@@ -15,11 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 import static nl.fontys.db3.backend.service.Constants.DEVICE_ACTIVE_THRESHOLD_HOURS;
 import static nl.fontys.db3.backend.service.Constants.ROLE_ADMIN;
-import static nl.fontys.db3.backend.service.Constants.DEFAULT_DISTANCE_KM;
 
 @Slf4j
 @Service
@@ -81,11 +79,13 @@ public class AdminService {
     @Transactional
     public void deactivateUser(Long userId) {
         log.info("Deactivating user - userId: {}", userId);
-        userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.warn("Deactivate user failed - user not found: userId: {}", userId);
                     return new NotFoundException(USER_NOT_FOUND_MSG + userId);
                 });
+        user.setActive(false);
+        userRepository.save(user);
         log.info("User deactivated successfully - userId: {}", userId);
     }
 
@@ -97,7 +97,7 @@ public class AdminService {
                 .email(user.getEmail())
                 .roleName(user.getRole() != null ? user.getRole().getName() : null)
                 .createdAt(user.getCreatedAt())
-                .active(true)
+                .active(user.isActive())
                 .avatarId(user.getAvatar() != null ? user.getAvatar().getId() : null)
                 .avatarName(user.getAvatar() != null ? user.getAvatar().getName() : null)
                 .backgroundId(user.getBackground() != null ? user.getBackground().getId() : null)
@@ -109,30 +109,19 @@ public class AdminService {
     public AdminStatisticsDTO getStatistics() {
         try {
             long totalUsers = userRepository.count();
-            long adminUsers = userRepository.findAll().stream()
-                    .filter(u -> u.getRole() != null && ROLE_ADMIN.equalsIgnoreCase(u.getRole().getName()))
-                    .count();
-            long activeUsers = userRepository.findAll().stream()
-                    .filter(u -> {
-                        boolean hasRecentHazards = !hazardReportRepository.findByCreatedBy_Id(u.getId()).isEmpty();
-                        boolean hasRecentTrips = !tripRepository.findByUser_UsernameOrderByIdDesc(u.getUsername()).isEmpty();
-                        return hasRecentHazards || hasRecentTrips;
-                    })
-                    .count();
+            long adminUsers = userRepository.countByRole_Name(ROLE_ADMIN);
+            long activeUsers = userRepository.countUsersWithActivity();
 
             long totalHazards = hazardReportRepository.count();
-            long openHazards = hazardReportRepository.findByStatus(HazardStatus.OPEN).size();
-            long verifiedHazards = hazardReportRepository.findByStatus(HazardStatus.VERIFIED).size();
-            long resolvedHazards = hazardReportRepository.findByStatus(HazardStatus.RESOLVED).size();
+            long openHazards = hazardReportRepository.countByStatus(HazardStatus.OPEN);
+            long verifiedHazards = hazardReportRepository.countByStatus(HazardStatus.VERIFIED);
+            long resolvedHazards = hazardReportRepository.countByStatus(HazardStatus.RESOLVED);
 
             DeviceStatistics deviceStats = getDeviceStatistics();
             TelemetryStatistics telemetryStats = getTelemetryStatistics();
 
-            List<Trip> allTrips = tripRepository.findAll();
-            long totalTrips = allTrips.size();
-            double totalDistanceKm = allTrips.stream()
-                    .mapToDouble(t -> t.getDistanceKm() != null ? t.getDistanceKm() : DEFAULT_DISTANCE_KM)
-                    .sum();
+            long totalTrips = tripRepository.count();
+            double totalDistanceKm = tripRepository.sumTotalDistanceKm();
 
             AssetStatistics assetStats = getAssetStatistics();
 
@@ -168,12 +157,8 @@ public class AdminService {
     private DeviceStatistics getDeviceStatistics() {
         try {
             long totalDevices = deviceRepository.count();
-            long activeDevices = deviceRepository.findAll().stream()
-                    .filter(d -> {
-                        if (d.getLastSeenAt() == null) return false;
-                        return d.getLastSeenAt().isAfter(LocalDateTime.now().minus(DEVICE_ACTIVE_THRESHOLD_HOURS, ChronoUnit.HOURS));
-                    })
-                    .count();
+            LocalDateTime threshold = LocalDateTime.now().minus(DEVICE_ACTIVE_THRESHOLD_HOURS, ChronoUnit.HOURS);
+            long activeDevices = deviceRepository.countByLastSeenAtAfter(threshold);
             long inactiveDevices = totalDevices - activeDevices;
             return new DeviceStatistics(totalDevices, activeDevices, inactiveDevices);
         } catch (RuntimeException e) {
@@ -185,10 +170,8 @@ public class AdminService {
     private TelemetryStatistics getTelemetryStatistics() {
         try {
             long totalTelemetryRecords = telemetryHistoryRepository.count();
-            Instant lastTelemetryTimestamp = telemetryHistoryRepository.findAll().stream()
-                    .map(TelemetryHistory::getTimestamp)
-                    .max(Instant::compareTo)
-                    .orElse(null);
+            TelemetryHistory latest = telemetryHistoryRepository.findTopByOrderByTimestampDesc();
+            Instant lastTelemetryTimestamp = latest != null ? latest.getTimestamp() : null;
             long devicesWithTelemetry = liveTelemetryRepository.count();
             return new TelemetryStatistics(totalTelemetryRecords, lastTelemetryTimestamp, devicesWithTelemetry);
         } catch (RuntimeException e) {
@@ -200,9 +183,9 @@ public class AdminService {
     private AssetStatistics getAssetStatistics() {
         try {
             long totalAvatars = avatarRepository.count();
-            long activeAvatars = avatarRepository.findAllByActiveTrueOrderByNameAsc().size();
+            long activeAvatars = avatarRepository.countByActiveTrue();
             long totalBackgrounds = backgroundRepository.count();
-            long activeBackgrounds = backgroundRepository.findAllByActiveTrueOrderByNameAsc().size();
+            long activeBackgrounds = backgroundRepository.countByActiveTrue();
             return new AssetStatistics(totalAvatars, activeAvatars, totalBackgrounds, activeBackgrounds);
         } catch (RuntimeException e) {
             // Asset tables may not exist yet or database error

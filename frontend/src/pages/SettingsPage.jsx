@@ -40,8 +40,8 @@ export default function SettingsPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
     navigate("/");
   };
 

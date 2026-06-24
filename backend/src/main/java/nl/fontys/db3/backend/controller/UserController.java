@@ -18,6 +18,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import nl.fontys.db3.backend.dto.ChangeAvatarRequest;
 import nl.fontys.db3.backend.dto.ChangeBackgroundRequest;
 
@@ -46,7 +49,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserDTO> register(@RequestBody RegisterRequest req) {
+    public ResponseEntity<UserDTO> register(@Valid @RequestBody RegisterRequest req) {
         log.info("User registration attempt - username: {}, email: {}", req.username(), req.email());
         try {
             User created = userService.createUser(
@@ -59,7 +62,7 @@ public class UserController {
             );
             log.info("User registered successfully - userId: {}, username: {}, email: {}", 
                     created.getId(), created.getUsername(), created.getEmail());
-            return ResponseEntity.ok(userMapper.toUserDTO(created));
+            return ResponseEntity.status(201).body(userMapper.toUserDTO(created));
         } catch (IllegalArgumentException e) {
             log.warn("User registration failed - username: {}, email: {}, reason: {}", 
                     req.username(), req.email(), e.getMessage());
@@ -71,7 +74,23 @@ public class UserController {
         }
     }
 
-    public record RegisterRequest(String username, String email, String password, String name) {}
+    public record RegisterRequest(
+            @NotBlank(message = "Username is required")
+            @Size(min = 3, max = 30, message = "Username must be 3–30 characters")
+            String username,
+
+            @NotBlank(message = "Email is required")
+            @Email(message = "Email must be valid")
+            String email,
+
+            @NotBlank(message = "Password is required")
+            @Size(min = 8, message = "Password must be at least 8 characters")
+            String password,
+
+            @NotBlank(message = "Name is required")
+            @Size(max = 100, message = "Name must be at most 100 characters")
+            String name
+    ) {}
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
